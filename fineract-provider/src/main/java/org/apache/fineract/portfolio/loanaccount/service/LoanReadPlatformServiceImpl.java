@@ -105,6 +105,10 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanTransactionNotFoundException;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanOverdueReminderData;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanRepaymentConfirmationData;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanRepaymentReminderData;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanRepaymentScheduleData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanSchedulePeriodData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.OverdueLoanScheduleData;
@@ -672,6 +676,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " lir.compounding_frequency_on_day as compoundingFrequencyOnDay, "
                     + " lir.is_compounding_to_be_posted_as_transaction as isCompoundingToBePostedAsTransaction, "
                     + " lir.allow_compounding_on_eod as allowCompoundingOnEod, "
+                    + " lir.advance_payment_interest_for_exact_days_in_period as advancePaymentInterestForExactDaysInPeriod,"
                     + " l.is_floating_interest_rate as isFloatingInterestRate, "
                     + " l.interest_rate_differential as interestRateDifferential, "
                     + " l.create_standing_instruction_at_disbursement as createStandingInstructionAtDisbursement, "
@@ -954,6 +959,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 final EnumOptionData restFrequencyType = LoanEnumerations.interestRecalculationFrequencyType(restFrequencyEnumValue);
                 final int restFrequencyInterval = JdbcSupport.getInteger(rs, "restFrequencyInterval");
                 final Integer restFrequencyNthDayEnumValue = JdbcSupport.getInteger(rs, "restFrequencyNthDayEnum");
+                final boolean advancePaymentInterestForExactDaysInPeriod = rs.getBoolean("advancePaymentInterestForExactDaysInPeriod");
                 EnumOptionData restFrequencyNthDayEnum = null;
                 if (restFrequencyNthDayEnumValue != null) {
                     restFrequencyNthDayEnum = LoanEnumerations.interestRecalculationCompoundingNthDayType(restFrequencyNthDayEnumValue);
@@ -992,7 +998,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                         rescheduleStrategyType, calendarData, restFrequencyType, restFrequencyInterval, restFrequencyNthDayEnum,
                         restFrequencyWeekDayEnum, restFrequencyOnDay, compoundingCalendarData, compoundingFrequencyType,
                         compoundingInterval, compoundingFrequencyNthDayEnum, compoundingFrequencyWeekDayEnum, compoundingFrequencyOnDay,
-                        isCompoundingToBePostedAsTransaction, allowCompoundingOnEod);
+                        isCompoundingToBePostedAsTransaction, allowCompoundingOnEod, advancePaymentInterestForExactDaysInPeriod);
             }
 
             final boolean canUseForTopup = rs.getBoolean("canUseForTopup");
@@ -2348,6 +2354,38 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         return collectionData;
     }
 
+    @Override
+    public List<LoanRepaymentReminderData> findLoanRepaymentReminderData(Integer numberOfDaysToDueDate) {
+        final LoanRepaymentReminderDataMapper mapper = new LoanRepaymentReminderDataMapper(sqlGenerator);
+        String sql = "select " + mapper.schema(numberOfDaysToDueDate);
+        List<LoanRepaymentReminderData> repaymentReminderData = this.jdbcTemplate.query(sql, mapper);
+        return repaymentReminderData;
+    }
+
+    @Override
+    public LoanRepaymentConfirmationData generateLoanPaymentReceipt(Long transactionId) {
+        final LoanRepaymentConfirmationDataMapper mapper = new LoanRepaymentConfirmationDataMapper(sqlGenerator);
+        String sql = "select " + mapper.schema();
+        LoanRepaymentConfirmationData repaymentConfirmationData = this.jdbcTemplate.queryForObject(sql, mapper, transactionId);
+        return repaymentConfirmationData;
+    }
+
+    @Override
+    public List<LoanRepaymentScheduleData> getLoanRepaymentScheduleData(Long loanId) {
+        final LoanRepaymentScheduleDataMapper mapper = new LoanRepaymentScheduleDataMapper(sqlGenerator);
+        String sql = "select " + mapper.schema();
+        List<LoanRepaymentScheduleData> loanRepaymentScheduleData = this.jdbcTemplate.query(sql, mapper, loanId);
+        return loanRepaymentScheduleData;
+    }
+
+    @Override
+    public List<LoanOverdueReminderData> findLoanOverdueReminderData(Integer numberOfDaysToDueDate) {
+        final LoanOverdueReminderDataMapper mapper = new LoanOverdueReminderDataMapper(sqlGenerator);
+        String sql = "select " + mapper.schema(numberOfDaysToDueDate);
+        List<LoanOverdueReminderData> overdueReminderData = this.jdbcTemplate.query(sql, mapper);
+        return overdueReminderData;
+    }
+
     private static final class CollectionDataMapper implements RowMapper<CollectionData> {
 
         private final DatabaseSpecificSQLGenerator sqlGenerator;
@@ -2393,6 +2431,275 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
             return CollectionData.instance(availableDisbursementAmount, pastDueDays, nextPaymentDueDate, delinquentDays, delinquentDate,
                     delinquentAmount, lastPaymentDate, lastPaymentAmount);
+        }
+    }
+
+    private static final class LoanRepaymentReminderDataMapper implements RowMapper<LoanRepaymentReminderData> {
+
+        private final DatabaseSpecificSQLGenerator sqlGenerator;
+
+        LoanRepaymentReminderDataMapper(DatabaseSpecificSQLGenerator sqlGenerator) {
+            this.sqlGenerator = sqlGenerator;
+        }
+
+        public String schema(Integer numberOfDaysToDueDate) {
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.append(sqlGenerator.charDistinct("l.id", "as loanId, "));
+            sqlBuilder.append(
+                    " COALESCE(mc.id,null) as clientId,COALESCE(grp.id,null) as groupId,mpl.id as loanProductId,sch.id as loanScheduleId, ");
+            sqlBuilder.append(" sch.duedate as dueDate,sch.installment as installmentNumber, ");
+
+            sqlBuilder.append(
+                    " (COALESCE(sch.principal_amount, 0.0) - (COALESCE(sch.principal_completed_derived, 0.0) + COALESCE(sch.principal_writtenoff_derived, 0.0)))   as principalAmountOutStanding, ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.interest_amount, 0.0) - (COALESCE(sch.interest_completed_derived, 0.0) + COALESCE(sch.interest_waived_derived, 0.0) +COALESCE(sch.interest_writtenoff_derived, 0.0)))  as interestAmountOutStanding, ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.fee_charges_amount, 0.0) - (COALESCE(sch.fee_charges_completed_derived, 0.0) + COALESCE(sch.fee_charges_waived_derived, 0.0) +COALESCE(sch.fee_charges_writtenoff_derived, 0.0)))   as feesChargeAmountOutStanding, ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.penalty_charges_amount, 0.0) - (COALESCE(sch.penalty_charges_amount, 0.0) + COALESCE(sch.penalty_charges_waived_derived, 0.0) +COALESCE(sch.penalty_charges_writtenoff_derived, 0.0)))   as penaltyChargeAmountOutStanding, ");
+
+            sqlBuilder.append(
+                    " ((COALESCE(sch.principal_amount, 0.0) - (COALESCE(sch.principal_completed_derived, 0.0) + COALESCE(sch.principal_writtenoff_derived, 0.0))) + ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.interest_amount, 0.0) - (COALESCE(sch.interest_completed_derived, 0.0) + COALESCE(sch.interest_waived_derived, 0.0) +COALESCE(sch.interest_writtenoff_derived, 0.0))) + ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.fee_charges_amount, 0.0) - (COALESCE(sch.fee_charges_completed_derived, 0.0) + COALESCE(sch.fee_charges_waived_derived, 0.0) +COALESCE(sch.fee_charges_writtenoff_derived, 0.0))) + ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.penalty_charges_amount, 0.0) - (COALESCE(sch.penalty_charges_amount, 0.0) + COALESCE(sch.penalty_charges_waived_derived, 0.0) +COALESCE(sch.penalty_charges_writtenoff_derived, 0.0))))  AS totalAmountOutStanding, ");
+
+            sqlBuilder.append(
+                    " mpl.name productName, mc.display_name as clientName, grp.display_name as groupName,aging.total_overdue_derived    as totalOverdueAmount ");
+            sqlBuilder.append(
+                    " FROM m_loan_repayment_schedule sch   INNER JOIN m_loan l on sch.loan_id = l.id  LEFT JOIN  m_client mc on l.client_id = mc.id  LEFT JOIN m_loan_arrears_aging aging on l.id = aging.loan_id  ");
+            sqlBuilder.append(
+                    " LEFT JOIN  m_group grp on l.group_id = grp.id   INNER JOIN m_product_loan mpl on l.product_id = mpl.id where  ");
+            sqlBuilder.append(" sch.duedate = ");
+            sqlBuilder.append(sqlGenerator.addDate(sqlGenerator.currentBusinessDate(), numberOfDaysToDueDate.toString()));
+            sqlBuilder.append(
+                    " and sch.completed_derived = false   and sch.obligations_met_on_date is null   and l.loan_status_id = 300 ORDER BY l.id ,sch.duedate,sch.installment ASC ");
+
+            return sqlBuilder.toString();
+        }
+
+        @Override
+        public LoanRepaymentReminderData mapRow(ResultSet rs, int rowNum) throws SQLException {
+            final Long loanId = rs.getLong("loanId");
+            final Long clientId = rs.getLong("clientId");
+            final Long groupId = rs.getLong("groupId");
+            final Long loanProductId = rs.getLong("loanProductId");
+            final Long loanScheduleId = rs.getLong("loanScheduleId");
+            final LocalDate dueDate = JdbcSupport.getLocalDate(rs, "dueDate");
+            final Integer installmentNumber = rs.getInt("installmentNumber");
+            final BigDecimal principalAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalAmountOutStanding");
+            final BigDecimal interestAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestAmountOutStanding");
+            final BigDecimal feesChargeAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feesChargeAmountOutStanding");
+            final BigDecimal penaltyChargeAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,
+                    "penaltyChargeAmountOutStanding");
+            final BigDecimal totalAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "totalAmountOutStanding");
+            final String productName = rs.getString("productName");
+            final String clientName = rs.getString("clientName");
+            final String groupName = rs.getString("groupName");
+            final BigDecimal totalOverdueAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "totalOverdueAmount");
+
+            return new LoanRepaymentReminderData(loanId, clientId, groupId, loanProductId, loanScheduleId, dueDate, installmentNumber,
+                    principalAmountOutStanding, interestAmountOutStanding, feesChargeAmountOutStanding, penaltyChargeAmountOutStanding,
+                    totalAmountOutStanding, productName, clientName, groupName, totalOverdueAmount);
+        }
+    }
+
+    private static final class LoanRepaymentConfirmationDataMapper implements RowMapper<LoanRepaymentConfirmationData> {
+
+        private final DatabaseSpecificSQLGenerator sqlGenerator;
+
+        LoanRepaymentConfirmationDataMapper(DatabaseSpecificSQLGenerator sqlGenerator) {
+            this.sqlGenerator = sqlGenerator;
+        }
+
+        public String schema() {
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.append(
+                    " tran.id AS transactionId,tran.loan_id AS loanId, tran.transaction_type_enum AS transactionTypeEnum,tran.transaction_date  AS transactionDate,tran.amount AS Amount, ");
+            sqlBuilder.append(
+                    " tran.principal_portion_derived AS principalPortionDerived, tran.interest_portion_derived AS interestPortionDerived, tran.fee_charges_portion_derived AS feeChargesPortionDerived, ");
+
+            sqlBuilder.append(
+                    " tran.penalty_charges_portion_derived AS penaltyChargePortionDerived,tran.outstanding_loan_balance_derived AS outstandingLoanBalanceDerived,tran.transaction_date AS transcactionDate, ");
+            sqlBuilder.append(" COALESCE(mc.id, null)   as clientId,COALESCE(grp.id, null)  as groupId,  mpl.id  as loanProductId, ");
+            sqlBuilder.append(
+                    " mc.display_name as clientName, grp.display_name as groupName, mpl.name productName,aging.total_overdue_derived    as totalOverdueAmount ");
+            sqlBuilder.append(
+                    " FROM m_loan_transaction tran INNER JOIN m_loan ml on tran.loan_id = ml.id INNER JOIN m_product_loan mpl on ml.product_id = mpl.id ");
+
+            sqlBuilder.append(
+                    " LEFT JOIN m_group grp on ml.group_id = grp.id  LEFT JOIN m_client mc on ml.client_id = mc.id LEFT JOIN m_loan_arrears_aging aging on ml.id = aging.loan_id ");
+            sqlBuilder.append(" WHERE tran.id = ? ");
+
+            return sqlBuilder.toString();
+        }
+
+        @Override
+        public LoanRepaymentConfirmationData mapRow(ResultSet rs, int rowNum) throws SQLException {
+            final Long transactionId = rs.getLong("transactionId");
+            final Long transactionTypeEnum = rs.getLong("transactionTypeEnum");
+            final String transactionDate = rs.getString("transactionDate");
+            final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "amount");
+            final BigDecimal principalPortionDerived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalPortionDerived");
+            final BigDecimal interestPortionDerived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestPortionDerived");
+            final BigDecimal feeChargesPortionDerived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargesPortionDerived");
+            final BigDecimal penaltyChargePortionDerived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargePortionDerived");
+            final BigDecimal outstandingLoanBalanceDerived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,
+                    "outstandingLoanBalanceDerived");
+            final Long clientId = rs.getLong("clientId");
+            final Long loanId = rs.getLong("loanId");
+            final Long groupId = rs.getLong("groupId");
+            final Long loanProductId = rs.getLong("loanProductId");
+            final String productName = rs.getString("productName");
+            final String clientName = rs.getString("clientName");
+            final String groupName = rs.getString("groupName");
+            final BigDecimal totalOverdueAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "totalOverdueAmount");
+
+            return new LoanRepaymentConfirmationData(transactionId, loanId, transactionTypeEnum, transactionDate, amount,
+                    principalPortionDerived, interestPortionDerived, feeChargesPortionDerived, penaltyChargePortionDerived,
+                    outstandingLoanBalanceDerived, clientId, groupId, loanProductId, productName, clientName, groupName,
+                    totalOverdueAmount);
+        }
+    }
+
+    private static final class LoanRepaymentScheduleDataMapper implements RowMapper<LoanRepaymentScheduleData> {
+
+        private final DatabaseSpecificSQLGenerator sqlGenerator;
+
+        LoanRepaymentScheduleDataMapper(DatabaseSpecificSQLGenerator sqlGenerator) {
+            this.sqlGenerator = sqlGenerator;
+        }
+
+        public String schema() {
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.append(" ls.id  as Id,ls.fromdate  as fromDate, ls.duedate as dueDate, ");
+            sqlBuilder.append(
+                    " ls.installment  as installmentNo, ls.principal_amount  as principalAmount, ls.principal_completed_derived  as principalPaid, ");
+
+            sqlBuilder.append(
+                    " ls.principal_writtenoff_derived    as principalWrittenOff,ls.interest_amount   as interestAmount, ls.interest_completed_derived   as interestPaid, ");
+            sqlBuilder.append(
+                    " ls.interest_waived_derived  as interestWrittenOff,ls.interest_waived_derived   as interestWaived, ls.fee_charges_amount  as feeChargesAmount, ");
+            sqlBuilder.append(
+                    " ls.fee_charges_completed_derived  as feePaid,ls.fee_charges_writtenoff_derived  as feeChargesWrittenOff,ls.fee_charges_waived_derived  as feeChargeWaived, ");
+            sqlBuilder.append(
+                    " ls.penalty_charges_amount as penaltyChargesAmount,ls.penalty_charges_completed_derived as penaltyChargePaid,ls.penalty_charges_writtenoff_derived as penaltyChargesWrittenOff, ");
+
+            sqlBuilder.append(
+                    " ls.penalty_charges_waived_derived as penaltyChargesWaived ,ls.completed_derived as completedDerived,ls.obligations_met_on_date as obligationMetOnDate ");
+            sqlBuilder.append("from m_loan_repayment_schedule ls where ls.loan_id = ? order by ls.installment ");
+
+            return sqlBuilder.toString();
+        }
+
+        @Override
+        public LoanRepaymentScheduleData mapRow(ResultSet rs, int rowNum) throws SQLException {
+            final Integer id = rs.getInt("id");
+            final String fromDate = rs.getString("fromDate");
+            final String dueDate = rs.getString("dueDate");
+            final Integer installmentNo = rs.getInt("installmentNo");
+            final BigDecimal principalAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalAmount");
+            final BigDecimal principalPaid = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalPaid");
+            final BigDecimal principalWrittenOff = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalWrittenOff");
+
+            final BigDecimal interestAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestAmount");
+            final BigDecimal interestPaid = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestPaid");
+            final BigDecimal interestWrittenOff = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestWrittenOff");
+            final BigDecimal interestWaived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestWaived");
+
+            final BigDecimal feeChargesAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargesAmount");
+            final BigDecimal feePaid = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feePaid");
+            final BigDecimal feeChargesWrittenOff = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargesWrittenOff");
+            final BigDecimal feeChargeWaived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feeChargeWaived");
+
+            final BigDecimal penaltyChargesAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargesAmount");
+            final BigDecimal penaltyChargePaid = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargePaid");
+            final BigDecimal penaltyChargesWrittenOff = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargesWrittenOff");
+            final BigDecimal penaltyChargesWaived = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "penaltyChargesWaived");
+
+            final Boolean completedDerived = rs.getBoolean("completedDerived");
+            final String obligationMetOnDate = rs.getString("obligationMetOnDate");
+
+            return new LoanRepaymentScheduleData(id, fromDate, dueDate, installmentNo, principalAmount, principalPaid, principalWrittenOff,
+                    interestAmount, interestPaid, interestWrittenOff, interestWaived, feeChargesAmount, feePaid, feeChargesWrittenOff,
+                    feeChargeWaived, penaltyChargesAmount, penaltyChargePaid, penaltyChargesWrittenOff, penaltyChargesWaived,
+                    completedDerived, obligationMetOnDate);
+        }
+    }
+
+    private static final class LoanOverdueReminderDataMapper implements RowMapper<LoanOverdueReminderData> {
+
+        private final DatabaseSpecificSQLGenerator sqlGenerator;
+
+        LoanOverdueReminderDataMapper(DatabaseSpecificSQLGenerator sqlGenerator) {
+            this.sqlGenerator = sqlGenerator;
+        }
+
+        public String schema(Integer numberOfDaysToDueDate) {
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.append(sqlGenerator.charDistinct("l.id", "as loanId, "));
+            sqlBuilder.append(
+                    " COALESCE(mc.id,null) as clientId,COALESCE(grp.id,null) as groupId,mpl.id as loanProductId,sch.id as loanScheduleId, ");
+            sqlBuilder.append(" sch.duedate as dueDate,sch.installment as installmentNumber, ");
+
+            sqlBuilder.append(
+                    " (COALESCE(sch.principal_amount, 0.0) - (COALESCE(sch.principal_completed_derived, 0.0) + COALESCE(sch.principal_writtenoff_derived, 0.0)))   as principalAmountOutStanding, ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.interest_amount, 0.0) - (COALESCE(sch.interest_completed_derived, 0.0) + COALESCE(sch.interest_waived_derived, 0.0) +COALESCE(sch.interest_writtenoff_derived, 0.0)))  as interestAmountOutStanding, ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.fee_charges_amount, 0.0) - (COALESCE(sch.fee_charges_completed_derived, 0.0) + COALESCE(sch.fee_charges_waived_derived, 0.0) +COALESCE(sch.fee_charges_writtenoff_derived, 0.0)))   as feesChargeAmountOutStanding, ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.penalty_charges_amount, 0.0) - (COALESCE(sch.penalty_charges_amount, 0.0) + COALESCE(sch.penalty_charges_waived_derived, 0.0) +COALESCE(sch.penalty_charges_writtenoff_derived, 0.0)))   as penaltyChargeAmountOutStanding, ");
+
+            sqlBuilder.append(
+                    " ((COALESCE(sch.principal_amount, 0.0) - (COALESCE(sch.principal_completed_derived, 0.0) + COALESCE(sch.principal_writtenoff_derived, 0.0))) + ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.interest_amount, 0.0) - (COALESCE(sch.interest_completed_derived, 0.0) + COALESCE(sch.interest_waived_derived, 0.0) +COALESCE(sch.interest_writtenoff_derived, 0.0))) + ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.fee_charges_amount, 0.0) - (COALESCE(sch.fee_charges_completed_derived, 0.0) + COALESCE(sch.fee_charges_waived_derived, 0.0) +COALESCE(sch.fee_charges_writtenoff_derived, 0.0))) + ");
+            sqlBuilder.append(
+                    " (COALESCE(sch.penalty_charges_amount, 0.0) - (COALESCE(sch.penalty_charges_amount, 0.0) + COALESCE(sch.penalty_charges_waived_derived, 0.0) +COALESCE(sch.penalty_charges_writtenoff_derived, 0.0))))  AS totalAmountOutStanding, ");
+
+            sqlBuilder.append(
+                    " mpl.name productName, mc.display_name as clientName, grp.display_name as groupName,aging.total_overdue_derived    as totalOverdueAmount ");
+            sqlBuilder.append(
+                    " FROM m_loan_repayment_schedule sch   INNER JOIN m_loan l on sch.loan_id = l.id  LEFT JOIN  m_client mc on l.client_id = mc.id  LEFT JOIN m_loan_arrears_aging aging on l.id = aging.loan_id  ");
+            sqlBuilder.append(
+                    " LEFT JOIN  m_group grp on l.group_id = grp.id   INNER JOIN m_product_loan mpl on l.product_id = mpl.id where  ");
+            sqlBuilder.append(" sch.duedate < ");
+            sqlBuilder.append(sqlGenerator.addDate(sqlGenerator.currentBusinessDate(), numberOfDaysToDueDate.toString()));
+            sqlBuilder.append(
+                    " and sch.completed_derived = false   and sch.obligations_met_on_date is null   and l.loan_status_id = 300 ORDER BY l.id ,sch.duedate,sch.installment ASC ");
+
+            return sqlBuilder.toString();
+        }
+
+        @Override
+        public LoanOverdueReminderData mapRow(ResultSet rs, int rowNum) throws SQLException {
+            final Long loanId = rs.getLong("loanId");
+            final Long clientId = rs.getLong("clientId");
+            final Long groupId = rs.getLong("groupId");
+            final Long loanProductId = rs.getLong("loanProductId");
+            final Long loanScheduleId = rs.getLong("loanScheduleId");
+            final LocalDate dueDate = JdbcSupport.getLocalDate(rs, "dueDate");
+            final Integer installmentNumber = rs.getInt("installmentNumber");
+            final BigDecimal principalAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalAmountOutStanding");
+            final BigDecimal interestAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "interestAmountOutStanding");
+            final BigDecimal feesChargeAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "feesChargeAmountOutStanding");
+            final BigDecimal penaltyChargeAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs,
+                    "penaltyChargeAmountOutStanding");
+            final BigDecimal totalAmountOutStanding = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "totalAmountOutStanding");
+            final String productName = rs.getString("productName");
+            final String clientName = rs.getString("clientName");
+            final String groupName = rs.getString("groupName");
+            final BigDecimal totalOverdueAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "totalOverdueAmount");
+
+            return new LoanOverdueReminderData(loanId, clientId, groupId, loanProductId, loanScheduleId, dueDate, installmentNumber,
+                    principalAmountOutStanding, interestAmountOutStanding, feesChargeAmountOutStanding, penaltyChargeAmountOutStanding,
+                    totalAmountOutStanding, productName, clientName, groupName, totalOverdueAmount);
         }
     }
 }

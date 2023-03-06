@@ -20,15 +20,19 @@
 
 -->
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="naphlin@fiter.io" id="MON-93_add_partial_liquidation_permission_1">
+    <changeSet author="naphlin@fiter.io" id="MON-93_add_partial_liquidation_permission_2">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 Select count(1) from m_permission where code = 'PARTIALLY_LIQUIDATE_FIXEDDEPOSITACCOUNT';
             </sqlCheck>
         </preConditions>
-        <sql>
-            INSERT INTO m_permission (grouping, code, entity_name, action_name) VALUES ('transaction_savings', 'PARTIALLY_LIQUIDATE_FIXEDDEPOSITACCOUNT', 'FIXEDDEPOSITACCOUNT', 'PARTIALLY_LIQUIDATE');
-        </sql>
+        <insert tableName="m_permission">
+            <column name="grouping" value="transaction_savings" />
+            <column name="code" value="PARTIALLY_LIQUIDATE_FIXEDDEPOSITACCOUNT" />
+            <column name="entity_name" value="FIXEDDEPOSITACCOUNT" />
+            <column name="action_name" value="PARTIALLY_LIQUIDATE" />
+            <column name="can_maker_checker" valueBoolean="false" />
+        </insert>
 
     </changeSet>
     <changeSet author="naphlin@fiter.io" id="MON-93_add_preclosure_charge_id_2">

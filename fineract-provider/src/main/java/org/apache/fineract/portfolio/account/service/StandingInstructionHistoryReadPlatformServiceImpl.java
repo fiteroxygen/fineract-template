@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
@@ -36,6 +37,7 @@ import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecific
 import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
+import org.apache.fineract.portfolio.account.api.StandingInstructionApiConstants;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
 import org.apache.fineract.portfolio.account.data.StandingInstructionDTO;
 import org.apache.fineract.portfolio.account.data.StandingInstructionHistoryData;
@@ -66,6 +68,35 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
         this.standingInstructionHistoryMapper = new StandingInstructionHistoryMapper();
         this.columnValidator = columnValidator;
         this.paginationHelper = paginationHelper;
+    }
+
+    @Override
+    public Collection<StandingInstructionHistoryData> retrieveAllFailedWithInsufficientBalance(
+            StandingInstructionDTO standingInstructionDTO) {
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select " + sqlGenerator.calcFoundRows() + " ");
+        sqlBuilder.append(this.standingInstructionHistoryMapper.schema());
+        sqlBuilder.append(" where ");
+        List<Object> paramObj = new ArrayList<>();
+
+        // adding condition for SI with failed status
+        sqlBuilder.append(" atsih.status=? ");
+        paramObj.add("failed");
+
+        sqlBuilder.append(" and ");
+
+        // adding condition for SI with failed status with insufficient balance
+        sqlBuilder.append(" atsih.error_log=? ");
+        paramObj.add(StandingInstructionApiConstants.insufficientBalanceExceptionMessage);
+
+        sqlBuilder.append(" and ");
+
+        // adding condition for getting SI for which notification is not sent
+        sqlBuilder.append(" atsih.is_notification_sent=? ");
+        paramObj.add(false);
+
+        final Object[] finalObjectArray = paramObj.toArray();
+        return this.jdbcTemplate.query(sqlBuilder.toString(), this.standingInstructionHistoryMapper, finalObjectArray);
     }
 
     @Override

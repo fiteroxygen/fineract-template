@@ -105,6 +105,8 @@ import org.apache.fineract.portfolio.fund.data.FundData;
 import org.apache.fineract.portfolio.fund.service.FundReadPlatformService;
 import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.group.service.GroupReadPlatformService;
+import org.apache.fineract.portfolio.interestratechart.data.InterestRateChartData;
+import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartReadPlatformService;
 import org.apache.fineract.portfolio.loanaccount.data.CollectionData;
 import org.apache.fineract.portfolio.loanaccount.data.DisbursementData;
 import org.apache.fineract.portfolio.loanaccount.data.GlimRepaymentTemplate;
@@ -260,6 +262,7 @@ public class LoansApiResource {
     private final DefaultToApiJsonSerializer<GlimRepaymentTemplate> glimTemplateToApiJsonSerializer;
     private final GLIMAccountInfoReadPlatformService glimAccountInfoReadPlatformService;
     private final LoanCollateralManagementReadPlatformService loanCollateralManagementReadPlatformService;
+    private final InterestRateChartReadPlatformService chartReadPlatformService;
 
     public LoansApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
             final LoanProductReadPlatformService loanProductReadPlatformService,
@@ -284,7 +287,8 @@ public class LoansApiResource {
             final ConfigurationDomainService configurationDomainService,
             final DefaultToApiJsonSerializer<GlimRepaymentTemplate> glimTemplateToApiJsonSerializer,
             final GLIMAccountInfoReadPlatformService glimAccountInfoReadPlatformService,
-            final LoanCollateralManagementReadPlatformService loanCollateralManagementReadPlatformService) {
+            final LoanCollateralManagementReadPlatformService loanCollateralManagementReadPlatformService,
+            InterestRateChartReadPlatformService chartReadPlatformService) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -316,6 +320,7 @@ public class LoansApiResource {
         this.glimTemplateToApiJsonSerializer = glimTemplateToApiJsonSerializer;
         this.glimAccountInfoReadPlatformService = glimAccountInfoReadPlatformService;
         this.loanCollateralManagementReadPlatformService = loanCollateralManagementReadPlatformService;
+        this.chartReadPlatformService = chartReadPlatformService;
     }
 
     /*
@@ -461,6 +466,12 @@ public class LoansApiResource {
         final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
                 .retrieveTemplates(StatusEnum.CREATE.getCode().longValue(), EntityTables.LOAN.getName(), productId);
         newLoanAccount.setDatatables(datatableTemplates);
+
+        if (productId != null) {
+            final Collection<InterestRateChartData> charts = this.chartReadPlatformService
+                    .retrieveAllWithSlabsWithTemplateForLoan(productId);
+            newLoanAccount.setInterestRateCharts(charts);
+        }
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, newLoanAccount, this.loanDataParameters);

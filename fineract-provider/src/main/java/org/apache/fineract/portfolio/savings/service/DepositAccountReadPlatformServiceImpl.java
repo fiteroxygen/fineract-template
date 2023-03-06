@@ -223,7 +223,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         sqlBuilder.append("SELECT ");
         sqlBuilder.append(this.depositAccountForMaturityRowMapper.schema());
         sqlBuilder.append(" WHERE da.deposit_type_enum in (?, ?) and da.status_enum = ?");
-
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.depositAccountForMaturityRowMapper,
                 new Object[] { DepositAccountType.FIXED_DEPOSIT.getValue(), DepositAccountType.RECURRING_DEPOSIT.getValue(),
                         SavingsAccountStatusType.ACTIVE.getValue() });
@@ -973,7 +972,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Integer depositTypeId = JdbcSupport.getInteger(rs, "depositTypeId");
             final EnumOptionData depositType = (depositTypeId == null) ? null : SavingsEnumerations.depositType(depositTypeId);
 
-            return DepositAccountData.lookup(id, name, depositType);
+            return DepositAccountData.lookup(id, name, depositType, null, null, null);
         }
     }
 
@@ -1411,15 +1410,19 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
 
         private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+        // edit this qury to return more params to check target on RD
         public String schema() {
             LocalDate today = DateUtils.getBusinessLocalDate();
             String formattedToday = formatter.format(today);
             final StringBuilder sqlBuilder = new StringBuilder(200);
             sqlBuilder.append("da.id as id, ");
             sqlBuilder.append("da.account_no as accountNumber, ");
-            sqlBuilder.append("da.deposit_type_enum as depositTypeId ");
+            sqlBuilder.append(
+                    "da.deposit_type_enum as depositTypeId ,dat.deposit_amount   AS principalAmount,da.total_deposits_derived  AS depositTillDate, ");
+            sqlBuilder.append(" sp.add_penalty_on_missed_target_savings AS addPenaltyOnMissedTargetSavings ");
             sqlBuilder.append("FROM m_savings_account da ");
             sqlBuilder.append("inner join m_deposit_account_term_and_preclosure dat on dat.savings_account_id = da.id ");
+            sqlBuilder.append("INNER JOIN m_savings_product sp ON da.product_id = sp.id ");
             sqlBuilder.append("and dat.maturity_date is not null and dat.maturity_date <= '" + formattedToday + "' ");
 
             return sqlBuilder.toString();
@@ -1431,9 +1434,12 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final Long id = rs.getLong("id");
             final String name = rs.getString("accountNumber");
             final Integer depositTypeId = JdbcSupport.getInteger(rs, "depositTypeId");
+            final BigDecimal depositTillDate = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "depositTillDate");
+            final BigDecimal principalAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "principalAmount");
             final EnumOptionData depositType = (depositTypeId == null) ? null : SavingsEnumerations.depositType(depositTypeId);
+            final Boolean addPenaltyOnMissedTargetSavings = rs.getBoolean("addPenaltyOnMissedTargetSavings");
 
-            return DepositAccountData.lookup(id, name, depositType);
+            return DepositAccountData.lookup(id, name, depositType, principalAmount, depositTillDate, addPenaltyOnMissedTargetSavings);
         }
     }
 
@@ -1545,7 +1551,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         } else {
             sqlBuilder.append(" AND tr.transaction_type_enum in (?,?) ");
         }
-        sqlBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC ");
         try {
             return this.jdbcTemplate.queryForObject(sqlBuilder.toString(), Long.class,
                     new Object[] { savingsId, depositAccountType.getValue(),

@@ -148,6 +148,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("sp.lockin_period_frequency_enum as lockinPeriodFrequencyType, ");
             sqlBuilder.append("sp.accounting_type as accountingType, ");
             sqlBuilder.append("sp.min_balance_for_interest_calculation as minBalanceForInterestCalculation, ");
+            sqlBuilder.append("sp.add_penalty_on_missed_target_savings as addPenaltyOnMissedTargetSavings, ");
             sqlBuilder.append(
                     "sp.withhold_tax as withHoldTax, sp.is_usd_product as isUSDProduct, sp.allow_manually_enter_interest_rate as allowManuallyEnterInterestRate,");
             sqlBuilder.append("tg.id as taxGroupId, tg.name as taxGroupName ");
@@ -204,6 +205,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final BigDecimal minBalanceForInterestCalculation = rs.getBigDecimal("minBalanceForInterestCalculation");
 
             final boolean withHoldTax = rs.getBoolean("withHoldTax");
+            final boolean addPenaltyOnMissedTargetSavings = rs.getBoolean("addPenaltyOnMissedTargetSavings");
             final Long taxGroupId = JdbcSupport.getLong(rs, "taxGroupId");
             final String taxGroupName = rs.getString("taxGroupName");
             TaxGroupData taxGroupData = null;
@@ -216,7 +218,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             return DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation, withHoldTax,
-                    taxGroupData, isUSDProduct, allowManuallyEnterInterestRate);
+                    taxGroupData, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings);
         }
     }
 

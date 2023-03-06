@@ -22,7 +22,7 @@ import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.fineract.infrastructure.core.config.EnableFineractEventsCondition;
-import org.apache.fineract.notification.eventandlistener.NotificationEventListener;
+import org.apache.fineract.notification.eventandlistener.ActiveMQNotificationEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,22 +44,26 @@ public class MessagingConfiguration {
     private Environment env;
 
     @Autowired
-    private NotificationEventListener notificationEventListener;
+    private ActiveMQNotificationEventListener notificationEventListener;
 
     @Bean
     public Logger loggerBean() {
         return LoggerFactory.getLogger(MessagingConfiguration.class);
     }
 
-    private static final String DEFAULT_BROKER_URL = "tcp://localhost:61616";
 
     @Bean
     public ActiveMQConnectionFactory amqConnectionFactory() {
         ActiveMQConnectionFactory amqConnectionFactory = new ActiveMQConnectionFactory(); // NOSONAR
+        amqConnectionFactory.setTrustAllPackages(true);
         try {
-            amqConnectionFactory.setBrokerURL(DEFAULT_BROKER_URL);
+            amqConnectionFactory.setBrokerURL(this.env.getProperty("fineract.activemq.brokerUrl"));
+            amqConnectionFactory.setUserName(this.env.getProperty("fineract.activemq.brokerUsername"));
+            amqConnectionFactory.setPassword(this.env.getProperty("fineract.activemq.brokerPassword"));
         } catch (Exception e) {
-            amqConnectionFactory.setBrokerURL(this.env.getProperty("brokerUrl"));
+            amqConnectionFactory.setBrokerURL(this.env.getProperty("fineract.activemq.brokerUrl"));
+            amqConnectionFactory.setUserName(this.env.getProperty("fineract.activemq.brokerUsername"));
+            amqConnectionFactory.setPassword(this.env.getProperty("fineract.activemq.brokerPassword"));
         }
         return amqConnectionFactory;
     }

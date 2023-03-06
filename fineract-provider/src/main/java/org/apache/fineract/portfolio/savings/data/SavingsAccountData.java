@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -155,6 +156,8 @@ public final class SavingsAccountData implements Serializable {
     private BigDecimal vaultTargetAmount;
     private LocalDate vaultTargetDate;
     private AccountType accountType;
+    private Boolean useFloatingInterestRate = false;
+    private Collection<SavingsAccountFloatingInterestRateData> floatingInterestRates = Collections.EMPTY_LIST;
 
     public static SavingsAccountData importInstanceIndividual(Long clientId, Long productId, Long fieldOfficerId, LocalDate submittedOnDate,
             BigDecimal nominalAnnualInterestRate, EnumOptionData interestCompoundingPeriodTypeEnum,
@@ -1179,5 +1182,21 @@ public final class SavingsAccountData implements Serializable {
 
     public void setTransactionSize(Long transactionSize) {
         this.transactionSize = transactionSize;
+    }
+
+    public Boolean getUseFloatingInterestRate() {
+        return useFloatingInterestRate;
+    }
+
+    public void setUseFloatingInterestRate(Boolean useFloatingInterestRate) {
+        this.useFloatingInterestRate = useFloatingInterestRate;
+    }
+
+    public Collection<SavingsAccountFloatingInterestRateData> getFloatingInterestRates() {
+        return floatingInterestRates;
+    }
+
+    public void setFloatingInterestRates(Collection<SavingsAccountFloatingInterestRateData> floatingInterestRates) {
+        this.floatingInterestRates = floatingInterestRates;
     }
 }

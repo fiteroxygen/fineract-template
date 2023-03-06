@@ -365,6 +365,8 @@ public class DepositAccountAssembler {
             account.validateNewApplicationState(DateUtils.getBusinessLocalDate(), depositAccountType.resourceName());
         }
 
+        account.setUseFloatingInterestRate(false);
+
         return account;
     }
 

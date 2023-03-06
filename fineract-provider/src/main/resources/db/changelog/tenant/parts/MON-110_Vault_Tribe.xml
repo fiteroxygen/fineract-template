@@ -75,15 +75,19 @@
             </column>
         </addColumn>
     </changeSet>
-    <changeSet author="bosco@fiter.io" id="add_m_permissions_UNLOCK_SAVINGSACCOUNT_2">
+    <changeSet author="bosco@fiter.io" id="add_m_permissions_UNLOCK_SAVINGSACCOUNT_3">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM m_permission WHERE code = 'UNLOCK_SAVINGSACCOUNT'
+                SELECT COUNT(1) FROM m_permission WHERE code = 'UNLOCK_SAVINGSACCOUNT'
             </sqlCheck>
         </preConditions>
-        <sql>
-            INSERT INTO m_permission (grouping, code, entity_name, action_name, can_maker_checker) VALUES ('transaction_savings', 'UNLOCK_SAVINGSACCOUNT', 'SAVINGSACCOUNT', 'UNLOCK', '0');
-        </sql>
+        <insert tableName="m_permission">
+            <column name="grouping" value="transaction_savings" />
+            <column name="code" value="UNLOCK_SAVINGSACCOUNT" />
+            <column name="entity_name" value="SAVINGSACCOUNT" />
+            <column name="action_name" value="UNLOCK" />
+            <column name="can_maker_checker" valueBoolean="false" />
+        </insert>
     </changeSet>
     <changeSet author="bosco@fiter.io" id="add_m_payment_detail_actual_transaction_type">
 

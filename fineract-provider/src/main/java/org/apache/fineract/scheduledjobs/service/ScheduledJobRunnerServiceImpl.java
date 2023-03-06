@@ -47,10 +47,10 @@ import org.apache.fineract.infrastructure.jobs.service.JobExecuter;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.infrastructure.jobs.service.JobRegisterService;
 import org.apache.fineract.infrastructure.jobs.service.JobRunner;
-import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
@@ -91,6 +91,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final DatabaseTypeResolver databaseTypeResolver;
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final JobExecuter jobExecuter;
+    private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
 
     @Autowired
     public ScheduledJobRunnerServiceImpl(final RoutingDataSourceServiceFactory dataSourceServiceFactory,
@@ -103,7 +104,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final TrialBalanceRepositoryWrapper trialBalanceRepositoryWrapper, @Lazy final JobRegisterService jobRegisterService,
             final ScheduledJobDetailRepository scheduledJobDetailsRepository, final FineractProperties fineractProperties,
             DatabaseSpecificSQLGenerator sqlGenerator, DatabaseTypeResolver databaseTypeResolver,
-            final SavingsAccountReadPlatformService savingsAccountReadPlatformService, final JobExecuter jobExecuter) {
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService, final JobExecuter jobExecuter,
+            SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -119,6 +121,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.databaseTypeResolver = databaseTypeResolver;
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.jobExecuter = jobExecuter;
+        this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
     }
 
     @Override
@@ -226,8 +229,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         for (final DepositAccountData depositAccount : depositAccounts) {
             try {
-                final DepositAccountType depositAccountType = DepositAccountType.fromInt(depositAccount.depositType().getId().intValue());
-                this.depositAccountWritePlatformService.updateMaturityDetails(depositAccount.id(), depositAccountType);
+                this.depositAccountWritePlatformService.updateMaturityDetails(depositAccount);
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {

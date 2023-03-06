@@ -94,35 +94,47 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="bosco@fiter.io" id="add_m_permissions_m_permissions_2">
+    <changeSet author="bosco@fiter.io" id="add_m_permissions_m_permissions_3">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM m_permission WHERE code = 'POSTACCRUALINTEREST_SAVINGSACCOUNT'
+                SELECT COUNT(1) FROM m_permission WHERE code = 'POSTACCRUALINTEREST_SAVINGSACCOUNT'
             </sqlCheck>
         </preConditions>
-        <sql>
-            INSERT INTO m_permission (grouping, code, entity_name, action_name, can_maker_checker) VALUES ('transaction_savings', 'POSTACCRUALINTEREST_SAVINGSACCOUNT', 'SAVINGSACCOUNT', 'POSTACCRUALINTEREST', '0');
-        </sql>
+        <insert tableName="m_permission">
+            <column name="grouping" value="transaction_savings" />
+            <column name="code" value="POSTACCRUALINTEREST_SAVINGSACCOUNT" />
+            <column name="entity_name" value="SAVINGSACCOUNT" />
+            <column name="action_name" value="POSTACCRUALINTEREST" />
+            <column name="can_maker_checker" valueBoolean="false" />
+        </insert>
     </changeSet>
-    <changeSet author="bosco@fiter.io" id="add_m_permissions_POSTACCRUALINTEREST_FIXEDDEPOSITACCOUNT_2">
+    <changeSet author="bosco@fiter.io" id="add_m_permissions_POSTACCRUALINTEREST_FIXEDDEPOSITACCOUNT_4">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM m_permission WHERE code = 'POSTACCRUALINTEREST_FIXEDDEPOSITACCOUNT'
+                SELECT COUNT(1) FROM m_permission WHERE code = 'POSTACCRUALINTEREST_FIXEDDEPOSITACCOUNT'
             </sqlCheck>
         </preConditions>
-        <sql>
-            INSERT INTO m_permission (grouping, code, entity_name, action_name, can_maker_checker) VALUES ('transaction_savings', 'POSTACCRUALINTEREST_FIXEDDEPOSITACCOUNT', 'FIXEDDEPOSITACCOUNT', 'POSTACCRUALINTEREST', '0');
-        </sql>
+        <insert tableName="m_permission">
+            <column name="grouping" value="transaction_savings" />
+            <column name="code" value="POSTACCRUALINTEREST_FIXEDDEPOSITACCOUNT" />
+            <column name="entity_name" value="FIXEDDEPOSITACCOUNT" />
+            <column name="action_name" value="POSTACCRUALINTEREST" />
+            <column name="can_maker_checker" valueBoolean="false" />
+        </insert>
     </changeSet>
-    <changeSet author="bosco@fiter.io" id="add_m_permissions_POSTACCRUALINTEREST_RECURRINGDEPOSITACCOUNT_3">
+    <changeSet author="bosco@fiter.io" id="add_m_permissions_POSTACCRUALINTEREST_RECURRINGDEPOSITACCOUNT_5">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM m_permission WHERE code = 'POSTACCRUALINTEREST_RECURRINGDEPOSITACCOUNT'
+                SELECT COUNT(1) FROM m_permission WHERE code = 'POSTACCRUALINTEREST_RECURRINGDEPOSITACCOUNT'
             </sqlCheck>
         </preConditions>
-        <sql>
-            INSERT INTO m_permission (grouping, code, entity_name, action_name, can_maker_checker) VALUES ('transaction_savings', 'POSTACCRUALINTEREST_RECURRINGDEPOSITACCOUNT', 'RECURRINGDEPOSITACCOUNT', 'POSTACCRUALINTEREST', '0');
-        </sql>
+        <insert tableName="m_permission">
+            <column name="grouping" value="transaction_savings" />
+            <column name="code" value="POSTACCRUALINTEREST_RECURRINGDEPOSITACCOUNT" />
+            <column name="entity_name" value="RECURRINGDEPOSITACCOUNT" />
+            <column name="action_name" value="POSTACCRUALINTEREST" />
+            <column name="can_maker_checker" valueBoolean="false" />
+        </insert>
     </changeSet>
     <changeSet author="bosco@fiter.io" id="add_loan_term_includes_toppedup_loan_term_m_product_loan">
 
@@ -150,5 +162,7 @@
             </column>
         </addColumn>
     </changeSet>
+
+
 
 </databaseChangeLog>

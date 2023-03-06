@@ -217,7 +217,8 @@ public class LoanDropdownReadPlatformServiceImpl implements LoanDropdownReadPlat
 
         final List<EnumOptionData> preCloseInterestCalculationStrategyOptions = Arrays.asList(
                 preCloseInterestCalculationStrategy(LoanPreClosureInterestCalculationStrategy.TILL_PRE_CLOSURE_DATE),
-                preCloseInterestCalculationStrategy(LoanPreClosureInterestCalculationStrategy.TILL_REST_FREQUENCY_DATE));
+                preCloseInterestCalculationStrategy(LoanPreClosureInterestCalculationStrategy.TILL_REST_FREQUENCY_DATE),
+                preCloseInterestCalculationStrategy(LoanPreClosureInterestCalculationStrategy.TILL_EXPECTED_MATURITY_DATE));
         return preCloseInterestCalculationStrategyOptions;
     }
 }

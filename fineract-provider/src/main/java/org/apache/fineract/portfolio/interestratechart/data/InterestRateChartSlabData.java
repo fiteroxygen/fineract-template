@@ -205,4 +205,7 @@ public final class InterestRateChartSlabData {
         return this.clientClassificationOptions;
     }
 
+    public Long getId() {
+        return id;
+    }
 }

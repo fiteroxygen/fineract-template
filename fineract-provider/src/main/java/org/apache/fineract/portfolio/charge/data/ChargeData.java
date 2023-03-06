@@ -244,7 +244,8 @@ public final class ChargeData implements Comparable<ChargeData>, Serializable {
             final List<EnumOptionData> shareChargeCalculationTypeOptions, final List<EnumOptionData> shareChargeTimeTypeOptions,
             final String accountMappingForChargeConfig, final List<GLAccountData> expenseAccountOptions,
             final List<GLAccountData> assetAccountOptions, final BigDecimal minAmount, final BigDecimal maxAmount,
-            final Collection<EnumOptionData> periodTypes, final Boolean varyAmounts, final List<ChargeSlabData> charges, final Integer maxOccurrence) {
+            final Collection<EnumOptionData> periodTypes, final Boolean varyAmounts, final List<ChargeSlabData> charges,
+            final Integer maxOccurrence) {
         this.id = id;
         this.name = name;
         this.amount = amount;
@@ -416,5 +417,13 @@ public final class ChargeData implements Comparable<ChargeData>, Serializable {
 
     public void setCharges(List<ChargeSlabData> charges) {
         this.charges = charges;
+    }
+
+    public EnumOptionData getChargeAppliesTo() {
+        return chargeAppliesTo;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }

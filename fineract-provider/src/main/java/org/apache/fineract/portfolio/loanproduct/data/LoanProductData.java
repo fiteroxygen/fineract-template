@@ -41,6 +41,7 @@ import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.common.service.CommonEnumerations;
 import org.apache.fineract.portfolio.floatingrates.data.FloatingRateData;
 import org.apache.fineract.portfolio.fund.data.FundData;
+import org.apache.fineract.portfolio.interestratechart.data.InterestRateChartData;
 import org.apache.fineract.portfolio.loanaccount.data.LoanInterestRecalculationData;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
@@ -203,6 +204,10 @@ public class LoanProductData implements Serializable {
 
     private final boolean isAccountLevelArrearsToleranceEnable;
 
+    // interest rate charts
+    private Collection<InterestRateChartData> interestRateCharts;
+    private InterestRateChartData activeChart;
+
     /**
      * Used when returning lookup information about loan product for dropdowns.
      */
@@ -306,7 +311,8 @@ public class LoanProductData implements Serializable {
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
-                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm, isAccountLevelArrearsToleranceEnable);
+                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
+                isAccountLevelArrearsToleranceEnable);
 
     }
 
@@ -411,7 +417,8 @@ public class LoanProductData implements Serializable {
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
-                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm, isAccountLevelArrearsToleranceEnable);
+                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
+                isAccountLevelArrearsToleranceEnable);
 
     }
 
@@ -524,7 +531,8 @@ public class LoanProductData implements Serializable {
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
-                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm, isAccountLevelArrearsToleranceEnable);
+                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
+                isAccountLevelArrearsToleranceEnable);
 
     }
 
@@ -631,7 +639,8 @@ public class LoanProductData implements Serializable {
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
-                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm, isAccountLevelArrearsToleranceEnable);
+                fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
+                isAccountLevelArrearsToleranceEnable);
 
     }
 
@@ -1178,7 +1187,7 @@ public class LoanProductData implements Serializable {
                 getInterestRecalculationRestOnDayType(), compoundingCalendarData, getRecalculationCompoundingFrequencyType(),
                 getRecalculationCompoundingFrequencyInterval(), getInterestRecalculationCompoundingNthDayType(),
                 getInterestRecalculationCompoundingWeekDayType(), getInterestRecalculationCompoundingOnDayType(),
-                isCompoundingToBePostedAsTransaction(), allowCompoundingOnEod());
+                isCompoundingToBePostedAsTransaction(), allowCompoundingOnEod(), isAdvancePaymentInterestForExactDaysInPeriod());
     }
 
     private EnumOptionData getRescheduleStrategyType() {
@@ -1275,6 +1284,10 @@ public class LoanProductData implements Serializable {
         return isInterestRecalculationEnabled() ? this.interestRecalculationData.allowCompoundingOnEod() : null;
     }
 
+    public Boolean isAdvancePaymentInterestForExactDaysInPeriod() {
+        return isInterestRecalculationEnabled() ? this.interestRecalculationData.isAdvancePaymentInterestForExactDaysInPeriod() : Boolean.FALSE;
+    }
+
     public boolean canDefineInstallmentAmount() {
         return this.canDefineInstallmentAmount;
     }
@@ -1365,5 +1378,25 @@ public class LoanProductData implements Serializable {
 
     public BigDecimal getFixedPrincipalPercentagePerInstallment() {
         return fixedPrincipalPercentagePerInstallment;
+    }
+
+    public static InterestRateChartData activeChart(Collection<InterestRateChartData> interestRateCharts) {
+        InterestRateChartData activeChart = null;
+        if (interestRateCharts != null) {
+            for (InterestRateChartData chartData : interestRateCharts) {
+                if (activeChart == null) {
+                    activeChart = chartData;
+                } else {
+                    if (!activeChart.isFromDateAfter(chartData.endDate())) {
+                        activeChart = chartData;
+                    }
+                }
+            }
+        }
+        return activeChart;
+    }
+
+    public void setInterestRateCharts(Collection<InterestRateChartData> interestRateCharts) {
+        this.activeChart = activeChart(interestRateCharts);
     }
 }

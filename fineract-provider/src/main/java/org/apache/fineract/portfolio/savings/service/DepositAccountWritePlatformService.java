@@ -27,6 +27,7 @@ import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
@@ -88,7 +89,7 @@ public interface DepositAccountWritePlatformService {
 
     void applyChargeDue(Long savingsAccountChargeId, Long accountId, DepositAccountType depositAccountType);
 
-    void updateMaturityDetails(Long depositAccountId, DepositAccountType depositAccountType);
+    void updateMaturityDetails(DepositAccountData depositAccount);
 
     void transferInterestToSavings() throws JobExecutionException;
 

@@ -66,14 +66,18 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.accounting.common.AccountingRuleType;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.charge.exception.ChargeCannotBeAppliedToException;
 import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
@@ -279,12 +283,36 @@ public class DepositProductAssembler {
         }
 
         final boolean withHoldTax = command.booleanPrimitiveValueOfParameterNamed(withHoldTaxParamName);
+        final Boolean addPenaltyOnMissedTargetSavings = command
+                .booleanPrimitiveValueOfParameterNamed(SavingsApiConstants.ADD_PENALTY_ON_MISSED_TARGET_SAVINGS);
+        if (addPenaltyOnMissedTargetSavings) {
+            if (CollectionUtils.isEmpty(charges)) {
+                throw new GeneralPlatformDomainRuleException(
+                        "addPenaltyOnMissedTargetSavings.requires.a.specified.due.charge.of.type.flat.on.this.product",
+                        "addPenaltyOnMissedTargetSavings requires a charge of ChargeTimeType [specified due date ] and ChargeCalculationType [ flat ] on this product");
+            }
+            List<Charge> chargeList = new ArrayList<>();
+
+            for (Charge charge : charges) {
+                if (ChargeCalculationType.fromInt(charge.getChargeCalculation()).equals(ChargeCalculationType.FLAT)
+                        && ChargeTimeType.fromInt(charge.getChargeTimeType()).equals(ChargeTimeType.SPECIFIED_DUE_DATE)) {
+                    chargeList.add(charge);
+                }
+            }
+            if (chargeList.size() == 0) {
+                throw new GeneralPlatformDomainRuleException(
+                        "addPenaltyOnMissedTargetSavings.requires.a.specified.due.charge.of.type.flat.on.this.product.but.it's not.supplied",
+                        "addPenaltyOnMissedTargetSavings requires a charge of ChargeTimeType [specified due date ] and ChargeCalculationType [ flat ]  on this product but it's not supplied");
+
+            }
+        }
         final TaxGroup taxGroup = assembleTaxGroup(command);
 
         RecurringDepositProduct recurringDepositProduct = RecurringDepositProduct.createNew(name, shortName, description, currency,
                 interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, charges,
-                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation, taxGroup, withHoldTax);
+                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation, taxGroup, withHoldTax,
+                addPenaltyOnMissedTargetSavings);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(recurringDepositProduct);
@@ -599,7 +627,7 @@ public class DepositProductAssembler {
         return charges;
     }
 
-    private Set<InterestRateChart> assembleListOfCharts(JsonCommand command, String currencyCode, DataValidatorBuilder baseDataValidator) {
+    public Set<InterestRateChart> assembleListOfCharts(JsonCommand command, String currencyCode, DataValidatorBuilder baseDataValidator) {
         final Set<InterestRateChart> charts = new HashSet<>();
         if (command.parameterExists(chartsParamName)) {
             final JsonArray chartsArray = command.arrayOfParameterNamed(chartsParamName);

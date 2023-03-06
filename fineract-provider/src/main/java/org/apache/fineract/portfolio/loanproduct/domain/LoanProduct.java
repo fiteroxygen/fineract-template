@@ -58,6 +58,7 @@ import org.apache.fineract.portfolio.floatingrates.data.FloatingRateDTO;
 import org.apache.fineract.portfolio.floatingrates.data.FloatingRatePeriodData;
 import org.apache.fineract.portfolio.floatingrates.domain.FloatingRate;
 import org.apache.fineract.portfolio.fund.domain.Fund;
+import org.apache.fineract.portfolio.interestratechart.domain.InterestRateChart;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.AprCalculator;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.exception.LoanProductGeneralRuleException;
@@ -203,6 +204,10 @@ public class LoanProduct extends AbstractPersistableCustom {
     @Column(name = "is_account_level_arrears_tolerance_enable", nullable = false)
     private boolean isAccountLevelArrearsToleranceEnable;
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "m_product_loan_interest_rate_chart", joinColumns = @JoinColumn(name = "loan_product_id"), inverseJoinColumns = @JoinColumn(name = "interest_rate_chart_id", unique = true))
+    protected Set<InterestRateChart> charts;
+
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
             final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator, FloatingRate floatingRate,
             final List<Rate> productRates) {
@@ -288,6 +293,9 @@ public class LoanProduct extends AbstractPersistableCustom {
         final LocalDate startDate = command.localDateValueOfParameterNamed("startDate");
         final LocalDate closeDate = command.localDateValueOfParameterNamed("closeDate");
         final String externalId = command.stringValueOfParameterNamedAllowingNull("externalId");
+
+        final boolean advancePaymentInterestForExactDaysInPeriod = command
+                .booleanPrimitiveValueOfParameterNamed("advancePaymentInterestForExactDaysInPeriod");
 
         final boolean useBorrowerCycle = command
                 .booleanPrimitiveValueOfParameterNamed(LoanProductConstants.USE_BORROWER_CYCLE_PARAMETER_NAME);
@@ -637,8 +645,8 @@ public class LoanProduct extends AbstractPersistableCustom {
             final boolean syncExpectedWithDisbursementDate, final boolean canUseForTopup, final boolean isEqualAmortization,
             final List<Rate> rates, final BigDecimal fixedPrincipalPercentagePerInstallment, final boolean disallowExpectedDisbursements,
             final boolean allowApprovedDisbursedAmountsOverApplied, final String overAppliedCalculationType,
-            final Integer overAppliedNumber, final Integer maxNumberOfLoanExtensionsAllowed,
-            final boolean loanTermIncludesToppedUpLoanTerm, final boolean isAccountLevelArrearsToleranceEnable) {
+            final Integer overAppliedNumber, final Integer maxNumberOfLoanExtensionsAllowed, final boolean loanTermIncludesToppedUpLoanTerm,
+            final boolean isAccountLevelArrearsToleranceEnable) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -1232,8 +1240,10 @@ public class LoanProduct extends AbstractPersistableCustom {
             this.maxNumberOfLoanExtensionsAllowed = newValue;
         }
 
-        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.IS_ACCOUNT_LEVEL_ARREARS_TOLERANCE_ENABLE, this.isAccountLevelArrearsToleranceEnable)) {
-            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.IS_ACCOUNT_LEVEL_ARREARS_TOLERANCE_ENABLE);
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.IS_ACCOUNT_LEVEL_ARREARS_TOLERANCE_ENABLE,
+                this.isAccountLevelArrearsToleranceEnable)) {
+            final boolean newValue = command
+                    .booleanPrimitiveValueOfParameterNamed(LoanProductConstants.IS_ACCOUNT_LEVEL_ARREARS_TOLERANCE_ENABLE);
             actualChanges.put(LoanProductConstants.IS_ACCOUNT_LEVEL_ARREARS_TOLERANCE_ENABLE, newValue);
             this.isAccountLevelArrearsToleranceEnable = newValue;
         }
@@ -1627,4 +1637,41 @@ public class LoanProduct extends AbstractPersistableCustom {
     public boolean isAccountLevelArrearsToleranceEnable() {
         return this.isAccountLevelArrearsToleranceEnable;
     }
+
+    public Set<InterestRateChart> getCharts() {
+        return charts;
+    }
+
+    public void setCharts(Set<InterestRateChart> charts) {
+        this.charts = charts;
+    }
+
+    public InterestRateChart findChart(Long chartId) {
+        final Set<InterestRateChart> charts = setOfCharts();
+
+        for (InterestRateChart chart : charts) {
+            if (chart.getId().equals(chartId)) {
+                return chart;
+            }
+        }
+        return null;
+    }
+
+    public boolean removeChart(InterestRateChart chart) {
+        Set<InterestRateChart> charts = setOfCharts();
+        return charts.remove(chart);
+    }
+
+    public Set<InterestRateChart> setOfCharts() {
+        if (this.charts == null) {
+            this.charts = new HashSet<>();
+        }
+        return this.charts;
+    }
+
+    public void addChart(final InterestRateChart newChart) {
+        final Set<InterestRateChart> existingCharts = setOfCharts();
+        existingCharts.add(newChart);
+    }
+
 }

@@ -217,6 +217,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lpr.compounding_frequency_on_day as compoundingFrequencyOnDay, "
                     + "lpr.is_compounding_to_be_posted_as_transaction as isCompoundingToBePostedAsTransaction, "
                     + "lpr.allow_compounding_on_eod as allowCompoundingOnEod, " + "lp.hold_guarantee_funds as holdGuaranteeFunds, "
+                    + "lpr.advance_payment_interest_for_exact_days_in_period as advancePaymentInterestForExactDaysInPeriod,"
                     + "lp.principal_threshold_for_last_installment as principalThresholdForLastInstallment, "
                     + "lp.fixed_principal_percentage_per_installment fixedPrincipalPercentagePerInstallment, "
                     + "lp.sync_expected_with_disbursement_date as syncExpectedWithDisbursementDate, "
@@ -238,8 +239,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lvi.maximum_gap as maximumGap, "
                     + "lp.can_use_for_topup as canUseForTopup, lp.is_equal_amortization as isEqualAmortization, lp.is_loan_term_includes_topped_up_loan_term as loanTermIncludesToppedUpLoanTerm ,"
                     + "lp.max_number_of_loan_extensions_allowed as maxNumberOfLoanExtensionsAllowed, "
-                    + "lp.is_account_level_arrears_tolerance_enable as isAccountLevelArrearsToleranceEnable "
-                    + " from m_product_loan lp "
+                    + "lp.is_account_level_arrears_tolerance_enable as isAccountLevelArrearsToleranceEnable " + " from m_product_loan lp "
                     + " left join m_fund f on f.id = lp.fund_id "
                     + " left join m_product_loan_recalculation_details lpr on lpr.product_id=lp.id "
                     + " left join m_product_loan_guarantee_details lpg on lpg.loan_product_id=lp.id "
@@ -428,11 +428,13 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                         .preCloseInterestCalculationStrategy(preCloseInterestCalculationStrategyEnumValue);
                 final boolean allowCompoundingOnEod = rs.getBoolean("allowCompoundingOnEod");
 
+                boolean advancePaymentInterestForExactDaysInPeriod = rs.getBoolean("advancePaymentInterestForExactDaysInPeriod");
                 interestRecalculationData = new LoanProductInterestRecalculationData(lprId, productId, interestRecalculationCompoundingType,
                         rescheduleStrategyType, restFrequencyType, restFrequencyInterval, restFrequencyNthDayEnum, restFrequencyWeekDayEnum,
                         restFrequencyOnDay, compoundingFrequencyType, compoundingInterval, compoundingFrequencyNthDayEnum,
                         compoundingFrequencyWeekDayEnum, compoundingFrequencyOnDay, isArrearsBasedOnOriginalSchedule,
-                        isCompoundingToBePostedAsTransaction, preCloseInterestCalculationStrategy, allowCompoundingOnEod);
+                        isCompoundingToBePostedAsTransaction, preCloseInterestCalculationStrategy, allowCompoundingOnEod,
+                        advancePaymentInterestForExactDaysInPeriod);
             }
 
             final boolean amortization = rs.getBoolean("amortizationBoolean");
