@@ -51,7 +51,6 @@ public class MessagingConfiguration {
         return LoggerFactory.getLogger(MessagingConfiguration.class);
     }
 
-
     @Bean
     public ActiveMQConnectionFactory amqConnectionFactory() {
         ActiveMQConnectionFactory amqConnectionFactory = new ActiveMQConnectionFactory(); // NOSONAR

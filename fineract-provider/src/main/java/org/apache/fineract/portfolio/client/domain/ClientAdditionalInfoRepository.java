@@ -16,16 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.domain;
 
-import java.util.List;
+package org.apache.fineract.portfolio.client.domain;
+
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-public interface LoanTransactionRepository extends JpaRepository<LoanTransaction, Long>, JpaSpecificationExecutor<LoanTransaction> {
+import java.util.Optional;
 
-    @Query("select tx from LoanTransaction tx where tx.loan.id = :loanId AND tx.typeOf = 2 ORDER BY tx.id DESC")
-    List<LoanTransaction> findLastLoanTransaction(@Param("loanId") Long loanId);
+public interface ClientAdditionalInfoRepository extends JpaRepository<ClientAdditionalInfo, Long>, JpaSpecificationExecutor<ClientAdditionalInfo> {
+
+    Optional<ClientAdditionalInfo> findByClient(Client client);
+
 }

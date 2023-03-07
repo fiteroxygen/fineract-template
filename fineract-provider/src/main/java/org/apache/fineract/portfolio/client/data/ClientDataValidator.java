@@ -99,6 +99,16 @@ public final class ClientDataValidator {
             baseDataValidator.reset().parameter(ClientApiConstants.accountNoParamName).value(accountNo).notBlank().notExceedingLengthOf(20);
         }
 
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.maritalStatusIdParamName, element)) {
+            final Long maritalStatusId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.maritalStatusIdParamName, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.maritalStatusIdParamName).value(maritalStatusId).ignoreIfNull().longGreaterThanZero();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.titleParam, element)) {
+            final Long maritalStatusId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.titleParam, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.titleParam).value(maritalStatusId).ignoreIfNull().longGreaterThanZero();
+        }
+
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.savingsProductIdParamName, element)) {
             final Long savingsProductId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.savingsProductIdParamName, element);
             baseDataValidator.reset().parameter(ClientApiConstants.savingsProductIdParamName).value(savingsProductId).ignoreIfNull()
@@ -510,6 +520,17 @@ public final class ClientDataValidator {
         if (this.fromApiJsonHelper.parameterExists("isStaff", element)) {
             final Boolean isStaffFlag = this.fromApiJsonHelper.extractBooleanNamed("isStaff", element);
             baseDataValidator.reset().parameter("isStaff").value(isStaffFlag).notNull();
+        }
+
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.maritalStatusIdParamName, element)) {
+            final Long maritalStatusId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.maritalStatusIdParamName, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.maritalStatusIdParamName).value(maritalStatusId).ignoreIfNull().longGreaterThanZero();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.titleParam, element)) {
+            final Long maritalStatusId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.titleParam, element);
+            baseDataValidator.reset().parameter(ClientApiConstants.titleParam).value(maritalStatusId).ignoreIfNull().longGreaterThanZero();
         }
 
         Map<String, Object> parameterUpdateStatusDetails = getParameterUpdateStatusAndDataValidationErrorsForUpdateOnClientNonPerson(

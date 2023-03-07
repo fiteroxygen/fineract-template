@@ -2715,7 +2715,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         LocalDate calculateTill = onDate;
         if (loanApplicationTerms.getPreClosureInterestCalculationStrategy().calculateTillRestFrequencyEnabled()) {
             calculateTill = getNextRestScheduleDate(onDate.minusDays(1), loanApplicationTerms, holidayDetailDTO);
-        }else if (loanApplicationTerms.getPreClosureInterestCalculationStrategy().calculateTillExpectedMaturityDateEnabled()){
+        } else if (loanApplicationTerms.getPreClosureInterestCalculationStrategy().calculateTillExpectedMaturityDateEnabled()) {
             calculateTill = loan.getExpectedMaturityDate();
         }
 

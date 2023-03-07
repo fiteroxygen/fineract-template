@@ -264,7 +264,7 @@ public class SavingsProduct extends AbstractPersistableCustom {
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, lienAllowed, maxAllowedLienLimit,
                 minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax,
                 taxGroup, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, isInterestPostingConfigUpdate,
-                numOfCreditTransaction, numOfDebitTransaction, false, false,useFloatingInterestRate,false);
+                numOfCreditTransaction, numOfDebitTransaction, false, false, useFloatingInterestRate, false);
     }
 
     protected SavingsProduct() {
@@ -286,8 +286,8 @@ public class SavingsProduct extends AbstractPersistableCustom {
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
                 false, null, false, null, minBalanceForInterestCalculation, null, null, withHoldTax, taxGroup, null, null, null, null,
-                isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, isUSDProduct, allowManuallyEnterInterestRate
-                ,useFloatingInterestRate,addPenaltyOnMissedTargetSavings);
+                isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, isUSDProduct, allowManuallyEnterInterestRate,
+                useFloatingInterestRate, addPenaltyOnMissedTargetSavings);
     }
 
     protected SavingsProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -302,7 +302,8 @@ public class SavingsProduct extends AbstractPersistableCustom {
             final BigDecimal minOverdraftForInterestCalculation, final boolean withHoldTax, final TaxGroup taxGroup,
             final Boolean isDormancyTrackingActive, final Long daysToInactive, final Long daysToDormancy, final Long daysToEscheat,
             final Boolean isInterestPostingConfigUpdate, final Long numOfCreditTransaction, final Long numOfDebitTransaction,
-            boolean isUSDProduct, boolean allowManuallyEnterInterestRate,final Boolean useFloatingInterestRate, Boolean addPenaltyOnMissedTargetSavings) {
+            boolean isUSDProduct, boolean allowManuallyEnterInterestRate, final Boolean useFloatingInterestRate,
+            Boolean addPenaltyOnMissedTargetSavings) {
 
         this.name = name;
         this.shortName = shortName;

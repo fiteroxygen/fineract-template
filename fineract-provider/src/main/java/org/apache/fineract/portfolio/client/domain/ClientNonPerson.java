@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 
 @Entity
@@ -63,9 +64,15 @@ public class ClientNonPerson extends AbstractPersistableCustom {
     @Column(name = "remarks", length = 150, nullable = true)
     private String remarks;
 
+    @Column(name = "in_business_since", nullable = true)
+    private LocalDate inBusinessSince;
+
+    @Column(name = "is_registered", nullable = true)
+    private Boolean isRegistered;
+
     public static ClientNonPerson createNew(final Client client, final CodeValue constitution, final CodeValue mainBusinessLine,
-            String incorpNumber, LocalDate incorpValidityTill, String remarks) {
-        return new ClientNonPerson(client, constitution, mainBusinessLine, incorpNumber, incorpValidityTill, remarks);
+            String incorpNumber, LocalDate incorpValidityTill, String remarks,LocalDate inBusinessSince,Boolean isRegistered) {
+        return new ClientNonPerson(client, constitution, mainBusinessLine, incorpNumber, incorpValidityTill, remarks,inBusinessSince,isRegistered);
     }
 
     protected ClientNonPerson() {
@@ -73,7 +80,7 @@ public class ClientNonPerson extends AbstractPersistableCustom {
     }
 
     private ClientNonPerson(final Client client, final CodeValue constitution, final CodeValue mainBusinessLine, final String incorpNumber,
-            final LocalDate incorpValidityTill, final String remarks) {
+            final LocalDate incorpValidityTill, final String remarks,LocalDate inBusinessSince,Boolean isRegistered) {
         if (client != null) {
             this.client = client;
         }
@@ -96,12 +103,16 @@ public class ClientNonPerson extends AbstractPersistableCustom {
             this.remarks = remarks.trim();
         }
 
+        this.inBusinessSince = inBusinessSince;
+        this.isRegistered = isRegistered;
+
         validate(client);
     }
 
     private void validate(final Client client) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         validateIncorpValidityTillDate(client, dataValidationErrors);
+        validateInBusinessSinceTillDate(client, dataValidationErrors);
 
         if (this.constitution == null) {
             dataValidationErrors.add(ApiParameterError.parameterError("error.msg.clients.constitutionid.is.null",
@@ -126,8 +137,25 @@ public class ClientNonPerson extends AbstractPersistableCustom {
         }
     }
 
+    private void validateInBusinessSinceTillDate(final Client client, final List<ApiParameterError> dataValidationErrors) {
+
+        if (getInBusinessSinceLocalDate() != null && getInBusinessSinceLocalDate().isAfter(DateUtils.getLocalDateOfTenant())) {
+
+            final String defaultUserMessage = "In business since date cannot be after the current date of the tenant";
+            final ApiParameterError error = ApiParameterError.parameterError("error.msg.clients.inbusinesssince.after.tenant.date",
+                    defaultUserMessage, ClientApiConstants.inBusinessSinceParamName, this.inBusinessSince);
+
+            dataValidationErrors.add(error);
+        }
+    }
+
+
     public LocalDate getIncorpValidityTillLocalDate() {
         return this.incorpValidityTill;
+    }
+
+    public LocalDate getInBusinessSinceLocalDate(){
+        return this.inBusinessSince;
     }
 
     public Long constitutionId() {
@@ -173,6 +201,14 @@ public class ClientNonPerson extends AbstractPersistableCustom {
         final String dateFormatAsInput = command.dateFormat();
         final String localeAsInput = command.locale();
 
+        if (command.isChangeInLocalDateParameterNamed(ClientApiConstants.inBusinessSinceParamName, getInBusinessSinceLocalDate())) {
+            final LocalDate newValue = command.localDateValueOfParameterNamed(ClientApiConstants.inBusinessSinceParamName);
+            actualChanges.put(ClientApiConstants.inBusinessSinceParamName, newValue);
+            actualChanges.put(ClientApiConstants.dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(ClientApiConstants.localeParamName, localeAsInput);
+            this.inBusinessSince = newValue;
+        }
+
         if (command.isChangeInLocalDateParameterNamed(ClientApiConstants.incorpValidityTillParamName, getIncorpValidityTillLocalDate())) {
             final String valueAsInput = command.stringValueOfParameterNamed(ClientApiConstants.incorpValidityTillParamName);
             actualChanges.put(ClientApiConstants.incorpValidityTillParamName, valueAsInput);
@@ -180,6 +216,13 @@ public class ClientNonPerson extends AbstractPersistableCustom {
             actualChanges.put(ClientApiConstants.localeParamName, localeAsInput);
 
             this.incorpValidityTill = command.localDateValueOfParameterNamed(ClientApiConstants.incorpValidityTillParamName);
+        }
+
+
+        if (command.isChangeInBooleanParameterNamed(ClientApiConstants.isRegisteredParam, this.isRegistered)) {
+            final Boolean newValue = command.booleanObjectValueOfParameterNamed(ClientApiConstants.isRegisteredParam);
+            actualChanges.put(ClientApiConstants.isRegisteredParam, newValue);
+            this.isRegistered = newValue;
         }
 
         if (command.isChangeInLongParameterNamed(ClientApiConstants.constitutionIdParamName, constitutionId())) {

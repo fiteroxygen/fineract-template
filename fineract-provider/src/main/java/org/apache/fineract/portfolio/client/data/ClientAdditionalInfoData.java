@@ -16,16 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.domain;
+package org.apache.fineract.portfolio.client.data;
 
-import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.Builder;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 
-public interface LoanTransactionRepository extends JpaRepository<LoanTransaction, Long>, JpaSpecificationExecutor<LoanTransaction> {
+@lombok.Data
+@Builder
+public class ClientAdditionalInfoData {
 
-    @Query("select tx from LoanTransaction tx where tx.loan.id = :loanId AND tx.typeOf = 2 ORDER BY tx.id DESC")
-    List<LoanTransaction> findLastLoanTransaction(@Param("loanId") Long loanId);
+    private final String mnemonics;
+    private final CodeValueData maritalStatus;
+    private final CodeValueData title;
+    private final String initials;
+    private final String altMobileNo;
+
+
 }

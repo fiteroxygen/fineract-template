@@ -26,11 +26,13 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 import org.apache.fineract.infrastructure.core.domain.AbstractAuditableCustom;
+import org.apache.fineract.infrastructure.core.domain.LocalDateInterval;
 
 @Entity
 @Table(name = "m_savings_account_floating_interest_rate")
-public class SavingsAccountFloatingInterestRate extends AbstractAuditableCustom {
+public class SavingsAccountFloatingInterestRate extends AbstractAuditableCustom implements Comparable<SavingsAccountFloatingInterestRate> {
 
     @ManyToOne
     @JoinColumn(name = "savings_account_id")
@@ -111,5 +113,15 @@ public class SavingsAccountFloatingInterestRate extends AbstractAuditableCustom 
     @Override
     public int hashCode() {
         return Objects.hash(this.savingsAccount.getId(), this.fromDate, this.floatingInterestRate);
+    }
+
+    @Override
+    public int compareTo(@NotNull SavingsAccountFloatingInterestRate o) {
+        return this.fromDate.compareTo(o.fromDate);
+    }
+
+    public Boolean isApplicableFloatingInterestRateForDate(final LocalDateInterval targetDateInterval) {
+        final LocalDateInterval interval = LocalDateInterval.create(this.fromDate, this.endDate);
+        return interval.contains(targetDateInterval);
     }
 }

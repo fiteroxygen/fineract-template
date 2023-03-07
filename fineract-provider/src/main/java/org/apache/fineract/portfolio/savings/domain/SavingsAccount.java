@@ -348,7 +348,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     public transient ConfigurationDomainService configurationDomainService;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<SavingsAccountBlockNarrationHistory> savingsAccountBlockNarrationHistory = new HashSet<>();
 
     @ManyToOne
@@ -1149,7 +1149,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
                     this.currency, compoundingPeriodType, interestCalculationType, interestRateAsFraction, daysInYearType.getValue(),
                     upToInterestCalculationDate, interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, overdraftInterestRateAsFraction, minOverdraftForInterestCalculation,
-                    isUserPosting, financialYearBeginningMonth);
+                    isUserPosting, financialYearBeginningMonth, this, mc);
 
             periodStartingBalance = postingPeriod.closingBalance();
 
@@ -1262,7 +1262,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
                     interestCalculationType, interestRateAsFraction, daysInYearType.getValue(), upToInterestCalculationDate,
                     interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, overdraftInterestRateAsFraction, minOverdraftForInterestCalculation,
-                    isUserPosting, financialYearBeginningMonth, includePostingAndWithHoldTax);
+                    isUserPosting, financialYearBeginningMonth, includePostingAndWithHoldTax, this, mc);
 
             periodStartingBalance = postingPeriod.closingBalance();
             allPostingPeriods.add(postingPeriod);
@@ -4650,7 +4650,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
                     compoundingPeriodType, savingsInterestCalculationType, interestRateAsFraction, daysInYearType.getValue(),
                     interestPostingUpToDate, interestPostTransactions, isInterestTransfer, minBalForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, overdraftInterestRateAsFraction, minOdForInterestCalculation, isUserPosting,
-                    financialYearBeginningMonth, includePostingAndWithHoldTax);
+                    financialYearBeginningMonth, includePostingAndWithHoldTax, this, mc);
 
             periodStartingBalance = postingPeriod.closingBalance();
             allPostingPeriods.add(postingPeriod);
@@ -5136,5 +5136,9 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     public void setUseFloatingInterestRate(Boolean useFloatingInterestRate) {
         this.useFloatingInterestRate = useFloatingInterestRate;
+    }
+
+    public Set<SavingsAccountFloatingInterestRate> getSavingsAccountFloatingInterestRates() {
+        return savingsAccountFloatingInterestRates;
     }
 }

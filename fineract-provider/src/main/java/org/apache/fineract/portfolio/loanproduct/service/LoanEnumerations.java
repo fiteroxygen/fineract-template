@@ -753,9 +753,10 @@ public final class LoanEnumerations {
                         LoanPreClosureInterestCalculationStrategy.TILL_REST_FREQUENCY_DATE.getCode(), "Till rest Frequency Date");
             break;
             case TILL_EXPECTED_MATURITY_DATE:
-                optionData = new EnumOptionData(LoanPreClosureInterestCalculationStrategy.TILL_EXPECTED_MATURITY_DATE.getValue().longValue(),
+                optionData = new EnumOptionData(
+                        LoanPreClosureInterestCalculationStrategy.TILL_EXPECTED_MATURITY_DATE.getValue().longValue(),
                         LoanPreClosureInterestCalculationStrategy.TILL_EXPECTED_MATURITY_DATE.getCode(), "Till expected maturity date");
-                break;
+            break;
             case NONE:
             break;
         }

@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -56,8 +57,10 @@ import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanAccountDomainService;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidPaidInAdvanceAmountException;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
@@ -94,6 +97,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private final ReadWriteNonCoreDataService readWriteNonCoreDataService;
 
     private final SavingsProductRepository savingsProductRepository;
+    private final LoanScheduleHistoryWritePlatformService loanScheduleHistoryWritePlatformService;
+    private final LoanTransactionRepository loanTransactionRepository;
 
     @Autowired
     public AccountTransfersWritePlatformServiceImpl(final AccountTransfersDataValidator accountTransfersDataValidator,
@@ -103,7 +108,9 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final AccountTransferDetailRepository accountTransferDetailRepository, final LoanReadPlatformService loanReadPlatformService,
             final GSIMRepositoy gsimRepository, ConfigurationDomainService configurationDomainService,
-            ReadWriteNonCoreDataService readWriteNonCoreDataService, SavingsProductRepository savingsProductRepository) {
+            final ReadWriteNonCoreDataService readWriteNonCoreDataService, final SavingsProductRepository savingsProductRepository,
+            final LoanScheduleHistoryWritePlatformService loanScheduleHistoryWritePlatformService,
+            final LoanTransactionRepository loanTransactionRepository) {
         this.accountTransfersDataValidator = accountTransfersDataValidator;
         this.accountTransferAssembler = accountTransferAssembler;
         this.accountTransferRepository = accountTransferRepository;
@@ -118,6 +125,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         this.configurationDomainService = configurationDomainService;
         this.readWriteNonCoreDataService = readWriteNonCoreDataService;
         this.savingsProductRepository = savingsProductRepository;
+        this.loanScheduleHistoryWritePlatformService = loanScheduleHistoryWritePlatformService;
+        this.loanTransactionRepository = loanTransactionRepository;
     }
 
     @Transactional
@@ -536,12 +545,19 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(), accountTransferDTO.getPaymentDetail(),
                 accountTransferDTO.getNoteText(), accountTransferDTO.getTxnExternalId(), true);
 
-        LoanTransaction repayTransaction = this.loanAccountDomainService.makeRepayment(LoanTransactionType.REPAYMENT, toLoanAccount,
-                new CommandProcessingResultBuilder(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
-                accountTransferDTO.getPaymentDetail(), null, null, false, isAccountTransfer, null, false, true);
+        this.loanScheduleHistoryWritePlatformService.createAndSaveLoanScheduleArchive(toLoanAccount.getRepaymentScheduleInstallments(),
+                toLoanAccount, null);
+        this.loanAccountDomainService.foreCloseLoan(toLoanAccount, accountTransferDTO.getTransactionDate(), null);
+
+        List<LoanTransaction> transactionList = this.loanTransactionRepository.findLastLoanTransaction(toLoanAccount.getId());
+        if (CollectionUtils.isEmpty(transactionList)) {
+            throw new GeneralPlatformDomainRuleException("Loan.topup-requires.repayment.transaction.but.non.is.non",
+                    "Loan TopUp requires Repayment Transaction but non is found");
+        }
+        LoanTransaction loanTransaction = transactionList.get(0);
 
         AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleLoanToLoanTransfer(accountTransferDTO,
-                fromLoanAccount, toLoanAccount, disburseTransaction, repayTransaction);
+                fromLoanAccount, toLoanAccount, disburseTransaction, loanTransaction);
         this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
 
         return accountTransferDetails;

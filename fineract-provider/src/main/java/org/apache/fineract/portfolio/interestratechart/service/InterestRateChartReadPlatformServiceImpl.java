@@ -490,8 +490,8 @@ public class InterestRateChartReadPlatformServiceImpl implements InterestRateCha
                 }
                 InterestRateChartSlabData chartSlabsData = chartSlabsMapper.extractData(rs);
                 if (chartSlabsData != null) {
-                    chartSlabsData =  InterestRateChartSlabData.instance(chartSlabsData.getId(), chartSlabsData.description(), null, chartSlabsData.fromPeriod(), chartSlabsData.toPeriod(), null, null,
-                            chartSlabsData.annualInterestRate(), null);
+                    chartSlabsData = InterestRateChartSlabData.instance(chartSlabsData.getId(), chartSlabsData.description(), null,
+                            chartSlabsData.fromPeriod(), chartSlabsData.toPeriod(), null, null, chartSlabsData.annualInterestRate(), null);
                     chartData.addChartSlab(chartSlabsData);
                 }
             }

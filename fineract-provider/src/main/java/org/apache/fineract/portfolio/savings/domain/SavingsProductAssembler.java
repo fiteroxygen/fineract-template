@@ -18,15 +18,6 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.fineract.infrastructure.core.data.ApiParameterError;
-import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
-import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
 import static org.apache.fineract.portfolio.interestratechart.InterestRateChartApiConstants.endDateParamName;
 import static org.apache.fineract.portfolio.interestratechart.InterestRateChartApiConstants.fromDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
@@ -73,11 +64,20 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.accounting.common.AccountingRuleType;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
@@ -306,10 +306,10 @@ public class SavingsProductAssembler {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource("SavingsProductFloatingInterestRates");
-        if(fromDate == null){
+        if (fromDate == null) {
             baseDataValidator.parameter("fromDate").failWithCode("fromDate.is.empty");
         }
-        if(floatingInterestRate == null){
+        if (floatingInterestRate == null) {
             baseDataValidator.parameter("floatingInterestRate").failWithCode("floatingInterestRate.is.empty");
         }
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
@@ -320,30 +320,37 @@ public class SavingsProductAssembler {
         return savingsProductFloatingInterestRate;
     }
 
-    public void validateSavingsProductFloatingInterestRate(SavingsProductFloatingInterestRate savingsProductFloatingInterestRateToValidate, Set<SavingsProductFloatingInterestRate> existingSavingProductFloatingInterestRates){
+    public void validateSavingsProductFloatingInterestRate(SavingsProductFloatingInterestRate savingsProductFloatingInterestRateToValidate,
+            Set<SavingsProductFloatingInterestRate> existingSavingProductFloatingInterestRates) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource("SavingsProductFloatingInterestRates");
 
-        if(CollectionUtils.isNotEmpty(existingSavingProductFloatingInterestRates)) {
+        if (CollectionUtils.isNotEmpty(existingSavingProductFloatingInterestRates)) {
 
-            //is floating Interest with same from date already exist , throw validation error
-            for (SavingsProductFloatingInterestRate existingSavingsProductFloatingInterestRate : existingSavingProductFloatingInterestRates){
-                if(DateUtils.isSameLocalDate(savingsProductFloatingInterestRateToValidate.getFromDate(),existingSavingsProductFloatingInterestRate.getFromDate())){
+            // is floating Interest with same from date already exist , throw validation error
+            for (SavingsProductFloatingInterestRate existingSavingsProductFloatingInterestRate : existingSavingProductFloatingInterestRates) {
+                if (DateUtils.isSameLocalDate(savingsProductFloatingInterestRateToValidate.getFromDate(),
+                        existingSavingsProductFloatingInterestRate.getFromDate())) {
                     baseDataValidator.parameter("fromDate").failWithCode("multiple.interest.rate.with.same.fromDate");
                 }
 
-                if(savingsProductFloatingInterestRateToValidate.getFromDate().isAfter(existingSavingsProductFloatingInterestRate.getFromDate()) &&
-                        (existingSavingsProductFloatingInterestRate.getEndDate() != null &&
-                                savingsProductFloatingInterestRateToValidate.getFromDate().isBefore(existingSavingsProductFloatingInterestRate.getEndDate())) ){
-                    baseDataValidator.parameter("fromDate").failWithCode("fromDate.is.overlapping.with.other.floating.interest.rate.period");
+                if (savingsProductFloatingInterestRateToValidate.getFromDate()
+                        .isAfter(existingSavingsProductFloatingInterestRate.getFromDate())
+                        && (existingSavingsProductFloatingInterestRate.getEndDate() != null && savingsProductFloatingInterestRateToValidate
+                                .getFromDate().isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
+                    baseDataValidator.parameter("fromDate")
+                            .failWithCode("fromDate.is.overlapping.with.other.floating.interest.rate.period");
                 }
 
-                if(savingsProductFloatingInterestRateToValidate.getEndDate() != null) {
-                    if (savingsProductFloatingInterestRateToValidate.getEndDate().isAfter(existingSavingsProductFloatingInterestRate.getFromDate()) &&
-                            (existingSavingsProductFloatingInterestRate.getEndDate() != null &&
-                                    savingsProductFloatingInterestRateToValidate.getEndDate().isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
-                        baseDataValidator.parameter("endDate").failWithCode("endDate.is.overlapping.with.other.floating.interest.rate.period");
+                if (savingsProductFloatingInterestRateToValidate.getEndDate() != null) {
+                    if (savingsProductFloatingInterestRateToValidate.getEndDate()
+                            .isAfter(existingSavingsProductFloatingInterestRate.getFromDate())
+                            && (existingSavingsProductFloatingInterestRate.getEndDate() != null
+                                    && savingsProductFloatingInterestRateToValidate.getEndDate()
+                                            .isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
+                        baseDataValidator.parameter("endDate")
+                                .failWithCode("endDate.is.overlapping.with.other.floating.interest.rate.period");
                     }
                 }
             }

@@ -34,6 +34,10 @@ public class ClientNonPersonData implements Serializable {
     private final CodeValueData mainBusinessLine;
     private final String remarks;
 
+    private final LocalDate inBusinessSince;
+    private final Boolean isRegistered;
+
+
     // import fields
     private Long mainBusinessLineId;
     private Long constitutionId;
@@ -41,13 +45,13 @@ public class ClientNonPersonData implements Serializable {
     private String dateFormat;
 
     public static ClientNonPersonData importInstance(String incorporationNo, LocalDate incorpValidityTillDate, String remarks,
-            Long mainBusinessLineId, Long constitutionId, String locale, String dateFormat) {
+            Long mainBusinessLineId, Long constitutionId, String locale, String dateFormat,LocalDate inBusinessSince,Boolean isRegistered) {
         return new ClientNonPersonData(incorporationNo, incorpValidityTillDate, remarks, mainBusinessLineId, constitutionId, locale,
-                dateFormat);
+                dateFormat,inBusinessSince,isRegistered);
     }
 
     private ClientNonPersonData(String incorpNumber, LocalDate incorpValidityTillDate, String remarks, Long mainBusinessLineId,
-            Long constitutionId, String locale, String dateFormat) {
+            Long constitutionId, String locale, String dateFormat,LocalDate inBusinessSince, Boolean isRegistered) {
 
         this.incorpNumber = incorpNumber;
         this.incorpValidityTillDate = incorpValidityTillDate;
@@ -58,16 +62,20 @@ public class ClientNonPersonData implements Serializable {
         this.locale = locale;
         this.constitution = null;
         this.mainBusinessLine = null;
+        this.isRegistered = isRegistered;
+        this.inBusinessSince = inBusinessSince;
     }
 
     public ClientNonPersonData(CodeValueData constitution, String incorpNo, LocalDate incorpValidityTillDate,
-            CodeValueData mainBusinessLine, String remarks) {
+            CodeValueData mainBusinessLine, String remarks,LocalDate inBusinessSince,Boolean isRegistered) {
 
         this.constitution = constitution;
         this.incorpNumber = incorpNo;
         this.incorpValidityTillDate = incorpValidityTillDate;
         this.mainBusinessLine = mainBusinessLine;
         this.remarks = remarks;
+        this.inBusinessSince = inBusinessSince;
+        this.isRegistered = isRegistered;
     }
 
 }

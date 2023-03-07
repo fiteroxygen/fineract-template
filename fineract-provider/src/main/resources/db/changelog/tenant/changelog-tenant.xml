@@ -78,4 +78,5 @@
     <include file="parts/oxy-46_create_update_validation_limits_and_client_level_code_values.xml" relativeToChangelogFile="true"/>
     <include file="parts/OXY-100_floating_interest_rate.xml" relativeToChangelogFile="true" />
     <include file="parts/OXY-106_savings_account_floating_interest_rate.xml" relativeToChangelogFile="true" />
+    <include file="parts/UC-62-additional-kyc-information.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

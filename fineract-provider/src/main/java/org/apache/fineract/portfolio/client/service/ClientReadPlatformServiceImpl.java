@@ -56,6 +56,7 @@ import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
 import org.apache.fineract.portfolio.address.data.AddressData;
 import org.apache.fineract.portfolio.address.service.AddressReadPlatformService;
 import org.apache.fineract.portfolio.client.api.ClientApiConstants;
+import org.apache.fineract.portfolio.client.data.ClientAdditionalInfoData;
 import org.apache.fineract.portfolio.client.data.ClientBusinessOwnerData;
 import org.apache.fineract.portfolio.client.data.ClientCollateralManagementData;
 import org.apache.fineract.portfolio.client.data.ClientData;
@@ -159,6 +160,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final List<CodeValueData> clientNonPersonMainBusinessLineOptions = new ArrayList<>(
                 this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.CLIENT_NON_PERSON_MAIN_BUSINESS_LINE));
 
+        final List<CodeValueData> titleOptions = new ArrayList<>(
+                this.codeValueReadPlatformService.retrieveCodeValuesByCode(ClientApiConstants.TITLE));
+
         final List<EnumOptionData> clientLegalFormOptions = ClientEnumerations.legalForm(LegalForm.values());
 
         final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
@@ -168,7 +172,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                 genderOptions, savingsProductDatas, clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions,
                 clientNonPersonMainBusinessLineOptions, clientLegalFormOptions, familyMemberOptions,
                 new ArrayList<AddressData>(Arrays.asList(address)), isAddressEnabled, datatableTemplates,
-                new ArrayList<ClientBusinessOwnerData>(Arrays.asList(ownerData)), isbusinessOwnersEnabled);
+                new ArrayList<ClientBusinessOwnerData>(Arrays.asList(ownerData)), isbusinessOwnersEnabled,titleOptions);
     }
 
     @Override
@@ -428,7 +432,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             sqlBuilder.append("cnp.incorp_validity_till as incorpValidityTill, ");
             sqlBuilder.append("cnp.main_business_line_cv_id as mainBusinessLineId, ");
             sqlBuilder.append("cvMainBusinessLine.code_value as mainBusinessLineValue, ");
-            sqlBuilder.append("cnp.remarks as remarks ");
+            sqlBuilder.append("cnp.remarks as remarks, ");
+            sqlBuilder.append("cnp.is_registered as isRegistered, ");
+            sqlBuilder.append("cnp.in_business_since as inBusinessSince ");
 
             sqlBuilder.append("from m_client c ");
             sqlBuilder.append("join m_office o on o.id = c.office_id ");
@@ -538,8 +544,11 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
 
+            final LocalDate inBusinessSince = JdbcSupport.getLocalDate(rs, "inBusinessSince");
+            final Boolean isRegistered = rs.getBoolean("isRegistered");
+
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
-                    mainBusinessLine, remarks);
+                    mainBusinessLine, remarks,inBusinessSince,isRegistered);
 
             final ClientTimelineData timeline = new ClientTimelineData(submittedOnDate, submittedByUsername, submittedByFirstname,
                     submittedByLastname, activationDate, activatedByUsername, activatedByFirstname, activatedByLastname, closedOnDate,
@@ -548,7 +557,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, emailAddress, dateOfBirth, gender,
                     activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId,
-                    clienttype, classification, legalForm, clientNonPerson, isStaff, null, null, null);
+                    clienttype, classification, legalForm, clientNonPerson, isStaff, null, null, null,null);
 
         }
     }
@@ -617,6 +626,17 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("cnp.main_business_line_cv_id as mainBusinessLineId, ");
             builder.append("cvMainBusinessLine.code_value as mainBusinessLineValue, ");
             builder.append("cnp.remarks as remarks, ");
+            builder.append("cnp.is_registered as isRegistered, ");
+            builder.append("cnp.in_business_since as inBusinessSince, ");
+
+            builder.append("cvMaritalStatus.code_value as maritalStatusValue, ");
+            builder.append("cvMaritalStatus.id as maritalStatusId, ");
+            builder.append("cvTitle.code_value as titleValue, ");
+            builder.append("cvTitle.id as titleId, ");
+            builder.append("cadinfo.mnemonics as mnemonics, ");
+            builder.append("cadinfo.alt_phone_no as altMobileNo, ");
+            builder.append("cadinfo.initials as initials, ");
+
 
             builder.append("c.activation_date as activationDate, c.image_id as imageId, ");
             builder.append("c.staff_id as staffId, s.display_name as staffName, ");
@@ -639,6 +659,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             builder.append("left join m_code_value cvSubStatus on cvSubStatus.id = c.sub_status ");
             builder.append("left join m_code_value cvConstitution on cvConstitution.id = cnp.constitution_cv_id ");
             builder.append("left join m_code_value cvMainBusinessLine on cvMainBusinessLine.id = cnp.main_business_line_cv_id ");
+            builder.append("left join m_client_additional_info cadinfo on cadinfo.client_id =  c.id ");
+            builder.append("left join m_code_value cvMaritalStatus on cvMaritalStatus.id = cadinfo.marital_status ");
+            builder.append("left join m_code_value cvTitle on cvTitle.id = cadinfo.title ");
 
             this.schema = builder.toString();
         }
@@ -734,8 +757,27 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             final CodeValueData mainBusinessLine = CodeValueData.instance(mainBusinessLineId, mainBusinessLineValue);
             final String remarks = rs.getString("remarks");
 
+
+            final Long maritalStatusId = JdbcSupport.getLong(rs, "maritalStatusId");
+            CodeValueData maritalStatus = CodeValueData.instance(maritalStatusId, rs.getString("maritalStatusValue"));
+
+            final Long titleId = JdbcSupport.getLong(rs, "titleId");
+            CodeValueData title = CodeValueData.instance(titleId, rs.getString("titleValue"));
+
+            final String mnemonics = rs.getString("mnemonics");
+            final String altMobileNo = rs.getString("altMobileNo");
+            final String initials = rs.getString("initials");
+
+            final LocalDate inBusinessSince = JdbcSupport.getLocalDate(rs, "inBusinessSince");
+            final Boolean isRegistered = rs.getBoolean("isRegistered");
+
+            final ClientAdditionalInfoData clientAdditionalInfo = ClientAdditionalInfoData
+                    .builder().maritalStatus(maritalStatus).title(title).mnemonics(mnemonics).altMobileNo(altMobileNo)
+                    .initials(initials).build();
+
+
             final ClientNonPersonData clientNonPerson = new ClientNonPersonData(constitution, incorpNo, incorpValidityTill,
-                    mainBusinessLine, remarks);
+                    mainBusinessLine, remarks,inBusinessSince,isRegistered);
 
             final ClientTimelineData timeline = new ClientTimelineData(submittedOnDate, submittedByUsername, submittedByFirstname,
                     submittedByLastname, activationDate, activatedByUsername, activatedByFirstname, activatedByLastname, closedOnDate,
@@ -744,7 +786,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
             return ClientData.instance(accountNo, status, subStatus, officeId, officeName, transferToOfficeId, transferToOfficeName, id,
                     firstname, middlename, lastname, fullname, displayName, externalId, mobileNo, emailAddress, dateOfBirth, gender,
                     activationDate, imageId, staffId, staffName, timeline, savingsProductId, savingsProductName, savingsAccountId,
-                    clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithDrawLimit, singleWithDrawLimit);
+                    clienttype, classification, legalForm, clientNonPerson, isStaff, clientLevel, dailyWithDrawLimit, singleWithDrawLimit,clientAdditionalInfo);
 
         }
     }
@@ -858,7 +900,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final List<EnumOptionData> clientLegalFormOptions = null;
         return ClientData.template(null, null, null, null, narrations, null, null, clientTypeOptions, clientClassificationOptions,
                 clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions, clientLegalFormOptions, null, null, null, null,
-                null, null);
+                null, null,null);
     }
 
     @Override

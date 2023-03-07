@@ -1285,7 +1285,8 @@ public class LoanProductData implements Serializable {
     }
 
     public Boolean isAdvancePaymentInterestForExactDaysInPeriod() {
-        return isInterestRecalculationEnabled() ? this.interestRecalculationData.isAdvancePaymentInterestForExactDaysInPeriod() : Boolean.FALSE;
+        return isInterestRecalculationEnabled() ? this.interestRecalculationData.isAdvancePaymentInterestForExactDaysInPeriod()
+                : Boolean.FALSE;
     }
 
     public boolean canDefineInstallmentAmount() {

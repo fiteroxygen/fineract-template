@@ -22,8 +22,11 @@ package org.apache.fineract.portfolio.savings.data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Objects;
+import javax.validation.constraints.NotNull;
+import org.apache.fineract.infrastructure.core.domain.LocalDateInterval;
 
-public class SavingsAccountFloatingInterestRateData implements Serializable {
+public class SavingsAccountFloatingInterestRateData implements Serializable, Comparable<SavingsAccountFloatingInterestRateData> {
 
     /**
      *
@@ -98,6 +101,35 @@ public class SavingsAccountFloatingInterestRateData implements Serializable {
         savingsAccountFloatingInterestRateData.dateFormat = "dd MMMM yyyy";
         savingsAccountFloatingInterestRateData.locale = "en";
         return savingsAccountFloatingInterestRateData;
+    }
+
+    @Override
+    public int compareTo(@NotNull SavingsAccountFloatingInterestRateData o) {
+        return this.fromDate.compareTo(o.fromDate);
+    }
+
+    public Boolean isApplicableFloatingInterestRateForDate(final LocalDateInterval targetDateInterval) {
+        final LocalDateInterval interval = LocalDateInterval.create(this.fromDate, this.endDate);
+        return interval.contains(targetDateInterval);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SavingsAccountFloatingInterestRateData)) {
+            return false;
+        }
+
+        SavingsAccountFloatingInterestRateData that = (SavingsAccountFloatingInterestRateData) o;
+        return Objects.equals(this.getId(), that.getId()) && Objects.equals(this.fromDate, that.fromDate)
+                && Objects.equals(this.floatingInterestRate, that.floatingInterestRate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId(), this.fromDate, this.floatingInterestRate);
     }
 
 }

@@ -139,9 +139,11 @@ public class ClientEntityImportHandler implements ImportHandler {
             }
         }
         String remarks = ImportHandlerUtils.readAsString(ClientEntityConstants.REMARKS_COL, row);
+        LocalDate inBusinessSince = ImportHandlerUtils.readAsDate(ClientEntityConstants.IN_BUSINESS_SINCE, row);
+        Boolean isRegistered = ImportHandlerUtils.readAsBoolean(ClientEntityConstants.IS_REGISTERED, row);
 
         ClientNonPersonData clientNonPersonData = ClientNonPersonData.importInstance(incorporationNo, incorporationTill, remarks,
-                mainBusinessId, constitutionId, locale, dateFormat);
+                mainBusinessId, constitutionId, locale, dateFormat,inBusinessSince,isRegistered);
 
         String externalId = ImportHandlerUtils.readAsString(ClientEntityConstants.EXTERNAL_ID_COL, row);
 
