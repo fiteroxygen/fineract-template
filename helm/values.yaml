@@ -39,6 +39,10 @@ fineract-rest:
     FINERACT_TENANT_DEFAULT_DB_NAME: fineract_tenants  
     FINERACT_DEFAULT_TENANTDB_PORT: 5432
 
+    spring.profiles.active: activeMqEnabled
+    FINERACT_MODE_READ_ENABLED: false
+    FINERACT_MODE_BATCH_ENABLED: false 
+
 
   awsSecrets:
     FINERACT_HIKARI_JDBC_URL: "arn:aws:secretsmanager:eu-west-1:795369207337:secret:FINERACT_HIKARI_JDBC_URL-gP7PhU"
@@ -47,6 +51,9 @@ fineract-rest:
     FINERACT_DEFAULT_TENANTDB_UID: "arn:aws:secretsmanager:eu-west-1:795369207337:secret:FINERACT_DEFAULT_TENANTDB_UID-GguwSS"
     FINERACT_DEFAULT_TENANTDB_PWD: "arn:aws:secretsmanager:eu-west-1:795369207337:secret:FINERACT_DEFAULT_TENANTDB_PWD-Hvuxqd"
     FINERACT_HIKARI_PASSWORD: "arn:aws:secretsmanager:eu-west-1:795369207337:secret:FINERACT_HIKARI_PASSWORD-egifvs"
+    ACTIVEMQ_BROKER_URL:  "arn:aws:secretsmanager:eu-west-1:795369207337:secret:ACTIVEMQ_BROKER_URL-0fMgZl"
+    ACTIVEMQ_BROKER_USERNAME: "arn:aws:secretsmanager:eu-west-1:795369207337:secret:ACTIVEMQ_BROKER_USERNAME-5QDuzq"
+    ACTIVEMQ_BROKER_PASSWORD: "arn:aws:secretsmanager:eu-west-1:795369207337:secret:ACTIVEMQ_BROKER_PASSWORD-oWotr3"
    
   
   imagePullSecrets:
