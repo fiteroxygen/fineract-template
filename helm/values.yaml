@@ -3,7 +3,7 @@ fineract-rest:
   configFiles:
     - mountPath: "/app/resources/logback.xml"
       mountFileName: "logback.xml"
-  repository: "916148231619.dkr.ecr.us-east-2.amazonaws.com/unitedcapitalbackend"
+  repository: "795369207337.dkr.ecr.eu-west-1.amazonaws.com/fiter-app"
   pullPolicy: IfNotPresent
   tag: "afea2e6"
   env:
