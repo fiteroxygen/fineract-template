@@ -35,7 +35,7 @@ public class PortfolioAccountData implements Serializable {
     private final String externalId;
     private final Long groupId;
     private final String groupName;
-    private final Long clientId;
+    private Long clientId;
     private final String clientName;
     private final Long productId;
     private final String productName;
@@ -125,5 +125,13 @@ public class PortfolioAccountData implements Serializable {
 
     public Long accountId() {
         return this.id;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 }

@@ -77,7 +77,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
     public List<GuarantorData> retrieveGuarantorsForLoan(final Long loanId) {
         final GuarantorMapper rm = new GuarantorMapper();
         String sql = "select " + rm.schema();
-        sql += " where loan_id = ?  group by g.id,gfd.id, gt.id, sa.id, oht.id, cv.id order by g.id";
+        sql += " where loan_id = ?  group by g.id,gfd.id, gt.id, sa.id, oht.id, cv2.id, cv.id order by g.id";
         String finalSql = sql;
         final List<GuarantorData> guarantorDatas = this.jdbcTemplate.query(con -> {
             PreparedStatement preparedStatement = con.prepareStatement(finalSql, ResultSet.TYPE_SCROLL_SENSITIVE,
@@ -99,7 +99,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
     public GuarantorData retrieveGuarantor(final Long loanId, final Long guarantorId) {
         final GuarantorMapper rm = new GuarantorMapper();
         String sql = "select " + rm.schema();
-        sql += " where g.loan_id = ? and g.id = ? group by g.id, gfd.id, gt.id, sa.id, oht.id, cv.id order by g.id";
+        sql += " where g.loan_id = ? and g.id = ? group by g.id, gfd.id, gt.id, sa.id, oht.id,cv2.id, cv.id order by g.id";
         String finalSql = sql;
         final GuarantorData guarantorData = this.jdbcTemplate.query(con -> {
             PreparedStatement preparedStatement = con.prepareStatement(finalSql, ResultSet.TYPE_SCROLL_SENSITIVE,
@@ -123,6 +123,11 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
                         .append(" g.is_active as guarantorStatus,")//
                         .append(" cv.code_value as typeName, ")//
                         .append("gfd.amount,")//
+                        .append("g.is_pep as pep,")//
+                        .append("g.middlename as middlename,")//
+                        .append("g.bvn as bvn,")//
+                        .append("g.email as email,")//
+                        .append("cv2.id as genderCvId,").append("cv2.code_value as genderValue,")
                         .append(this.guarantorFundingMapper.schema())//
                         .append(",")//
                         .append(this.guarantorTransactionMapper.schema())//
@@ -132,7 +137,8 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
                         .append(" left JOIN m_portfolio_account_associations aa on gfd.account_associations_id = aa.id and aa.is_active = true and aa.association_type_enum = ?")//
                         .append(" left JOIN m_savings_account sa on sa.id = aa.linked_savings_account_id ")//
                         .append(" left join m_guarantor_transaction gt on gt.guarantor_fund_detail_id = gfd.id") //
-                        .append(" left join m_deposit_account_on_hold_transaction oht on oht.id = gt.deposit_on_hold_transaction_id");
+                        .append(" left join m_deposit_account_on_hold_transaction oht on oht.id = gt.deposit_on_hold_transaction_id")
+                        .append(" left JOIN m_code_value cv2 on g.gender_id_cv = cv2.id ");//
 
         public String schema() {
             return this.sqlBuilder.toString();
@@ -185,9 +191,22 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
                 }
             }
 
+            final Long genderCvId = JdbcSupport.getLong(rs, "genderCvId");
+            CodeValueData gender = null;
+
+            if (genderCvId != null) {
+                final String typeName = rs.getString("genderValue");
+                gender = CodeValueData.instance(genderCvId, typeName);
+            }
+
+            final boolean pep = rs.getBoolean("pep");
+            final String middlename = rs.getString("middlename");
+            final String bvn = rs.getString("bvn");
+            final String email = rs.getString("email");
+
             return new GuarantorData(id, loanId, clientRelationshipType, entityId, guarantorType, firstname, lastname, dob, addressLine1,
                     addressLine2, city, state, zip, country, mobileNumber, housePhoneNumber, comment, null, null, null, status,
-                    guarantorFundingDetails, null, null, accountLinkingOptions);
+                    guarantorFundingDetails, null, null, accountLinkingOptions, null, pep, bvn, email, middlename, gender);
         }
     }
 

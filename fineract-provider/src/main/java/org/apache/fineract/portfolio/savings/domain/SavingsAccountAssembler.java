@@ -23,6 +23,8 @@ import static org.apache.fineract.portfolio.interestratechart.InterestRateChartA
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.VAULT_TARGET_AMOUNT;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.VAULT_TARGET_DATE;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.WITHDRAWAL_FREQUENCY;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.accountNoParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.clientIdParamName;
@@ -344,6 +346,8 @@ public class SavingsAccountAssembler {
         if (command.parameterExists(VAULT_TARGET_DATE)) {
             vaultTargetDate = this.fromApiJsonHelper.extractLocalDateNamed(VAULT_TARGET_DATE, element);
         }
+        final Integer withdrawalFrequency = command.integerValueOfParameterNamed(WITHDRAWAL_FREQUENCY);
+        final Integer withdrawalFrequencyEnum = command.integerValueOfParameterNamed(WITHDRAWAL_FREQUENCY_ENUM);
 
         final SavingsAccount account = SavingsAccount.createNewApplicationForSubmittal(client, group, product, fieldOfficer, accountNo,
                 externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType,
@@ -355,6 +359,8 @@ public class SavingsAccountAssembler {
         account.setVaultTribeDetails(vaultTargetAmount, vaultTargetDate);
         account.setUseFloatingInterestRate(useFloatingInterestRate);
         account.validateNewApplicationState(DateUtils.getBusinessLocalDate(), SAVINGS_ACCOUNT_RESOURCE_NAME);
+        account.setWithdrawalFrequency(withdrawalFrequency);
+        account.setWithdrawalFrequencyEnum(withdrawalFrequencyEnum);
 
         account.validateAccountValuesWithProduct();
 

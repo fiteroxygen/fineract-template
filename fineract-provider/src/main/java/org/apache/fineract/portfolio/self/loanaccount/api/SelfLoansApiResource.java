@@ -195,7 +195,8 @@ public class SelfLoansApiResource {
         final Long groupId = null;
         final boolean staffInSelectedOfficeOnly = false;
         final boolean onlyActive = true;
-        return this.loansApiResource.template(clientId, groupId, productId, templateType, staffInSelectedOfficeOnly, onlyActive, uriInfo);
+        return this.loansApiResource.template(clientId, groupId, productId, templateType, staffInSelectedOfficeOnly, onlyActive, null,
+                uriInfo);
 
     }
 

@@ -69,6 +69,10 @@ public class ClientApiConstants {
 
     public static final String TITLE = "TITLE";
 
+    public static final String PRODUCT_CATEGORY = "ProductCategory";
+
+    public static final String PRODUCT_TYPE = "ProductType";
+
     // general
     public static final String localeParamName = "locale";
     public static final String dateFormatParamName = "dateFormat";
@@ -214,8 +218,8 @@ public class ClientApiConstants {
                     transferToOfficeNameParamName, hierarchyParamName, imageIdParamName, imagePresentParamName, staffIdParamName,
                     staffNameParamName, timelineParamName, groupsParamName, officeOptionsParamName, staffOptionsParamName,
                     dateOfBirthParamName, genderParamName, clientTypeParamName, clientClassificationParamName, legalFormParamName,
-                    clientNonPersonDetailsParamName, isStaffParamName, clientLevelIdParamName, dailyWithdrawLimit, singleWithdrawLimit,initialsParam,
-                    maritalStatusIdParamName,mnemonicsParamNameParam,altMobileNoParam,"clientAdditionalInfoData"));
+                    clientNonPersonDetailsParamName, isStaffParamName, clientLevelIdParamName, dailyWithdrawLimit, singleWithdrawLimit,
+                    initialsParam, maritalStatusIdParamName, mnemonicsParamNameParam, altMobileNoParam, "clientAdditionalInfoData"));
 
     protected static final Set<String> CLIENT_CHARGES_RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList(chargeIdParamName,
             clientIdParamName, chargeNameParamName, penaltyParamName, chargeTimeTypeParamName, dueAsOfDateParamName,

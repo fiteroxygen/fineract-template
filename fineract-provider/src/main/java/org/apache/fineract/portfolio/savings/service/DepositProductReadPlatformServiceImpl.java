@@ -135,6 +135,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
         protected DepositProductMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
             sqlBuilder.append("sp.id as id, sp.name as name, sp.short_name as shortName, sp.description as description, ");
+            sqlBuilder.append("sp.product_type_id productTypeId, sp.product_category_id productCategoryId, ");
             sqlBuilder.append(
                     "sp.currency_code as currencyCode, sp.currency_digits as currencyDigits, sp.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
@@ -165,6 +166,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final String name = rs.getString("name");
             final String shortName = rs.getString("shortName");
             final String description = rs.getString("description");
+            final Long productCategoryId = rs.getLong("productCategoryId");
+            final Long productTypeId = rs.getLong("productTypeId");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -218,7 +221,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             return DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation, withHoldTax,
-                    taxGroupData, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings);
+                    taxGroupData, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings
+                    ,productCategoryId,productTypeId);
         }
     }
 
@@ -265,7 +269,6 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final Integer preClosurePenalInterestOnTypeId = JdbcSupport.getInteger(rs, "preClosurePenalInterestOnId");
             final EnumOptionData preClosurePenalInterestOnType = (preClosurePenalInterestOnTypeId == null) ? null
                     : SavingsEnumerations.preClosurePenaltyInterestOnType(preClosurePenalInterestOnTypeId);
-
             final Integer minDepositTerm = JdbcSupport.getInteger(rs, "minDepositTerm");
             final Integer maxDepositTerm = JdbcSupport.getInteger(rs, "maxDepositTerm");
             final Integer minDepositTermTypeId = JdbcSupport.getInteger(rs, "minDepositTermTypeId");

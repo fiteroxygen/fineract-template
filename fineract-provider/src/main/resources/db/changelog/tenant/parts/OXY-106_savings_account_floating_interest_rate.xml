@@ -62,4 +62,11 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="remove-not-null-constraint-from-floating_interest_rate-savings-account" author="bosco@fiter.io">
+        <dropNotNullConstraint tableName="m_savings_account" columnName="use_floating_interest_rate" columnDataType="boolean"/>
+    </changeSet>
+    <changeSet id="remove-not-null-constraint-from-floating_interest_rate-m_savings_product" author="bosco@fiter.io">
+        <dropNotNullConstraint tableName="m_savings_product" columnName="use_floating_interest_rate" columnDataType="boolean"/>
+    </changeSet>
+
 </databaseChangeLog>

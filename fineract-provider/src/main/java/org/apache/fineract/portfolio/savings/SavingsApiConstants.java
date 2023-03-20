@@ -226,4 +226,15 @@ public class SavingsApiConstants {
     public static final String floatingInterestRatesParamName = "floatingInterestRates";
     public static final String floatingInterestRateValueParamName = "floatingInterestRateValue";
     public static final String ADD_PENALTY_ON_MISSED_TARGET_SAVINGS = "addPenaltyOnMissedTargetSavings";
+    public static final String WITHDRAWAL_FREQUENCY = "withdrawalFrequency";
+    public static final String WITHDRAWAL_FREQUENCY_ENUM = "withdrawalFrequencyEnum";
+    public static final String WITHDRAWAL_FREQUENCY_OPTIONS = "withdrawalFrequencyOptions";
+
+    public static String savingsProductCategoryIdParamName = "productCategoryId";
+
+    public static String savingsProductTypeIdParamName = "productTypeId";
+
+    public static String SAVINGS_PRODUCT_CATEGORY = "SavingsProductCategory";
+
+    public static String SAVINGS_PRODUCT_TYPE = "SavingsProductType";
 }

@@ -33,54 +33,6 @@
             <where>code_name='TITLE'</where>
         </update>
     </changeSet>
-    <changeSet author="naphlin@fiter.io" id="UC-62_add_title_presets">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="1">
-                select count(1) from m_code where code_name = 'TITLE';
-            </sqlCheck>
-        </preConditions>
-            <insert tableName="m_code_value">
-                <column  name="code_id"  valueComputed="(SELECT id FROM m_code WHERE code_name = 'TITLE')"/>
-                <column  name="code_value"  value="Mr"/>
-                <column name="code_description" value="Mr"/>
-                <column name="order_position" value="1"/>
-                <column name="is_active" valueBoolean="true"/>
-                <column name="is_mandatory" valueBoolean="false"/>
-            </insert>
-        <insert tableName="m_code_value">
-            <column  name="code_id"  valueComputed="(SELECT id FROM m_code WHERE code_name = 'TITLE')"/>
-            <column  name="code_value"  value="Mrs"/>
-            <column name="code_description" value="Mrs"/>
-            <column name="order_position" value="2"/>
-            <column name="is_active" valueBoolean="true"/>
-            <column name="is_mandatory" valueBoolean="false"/>
-        </insert>
-        <insert tableName="m_code_value">
-            <column  name="code_id"  valueComputed="(SELECT id FROM m_code WHERE code_name = 'TITLE')"/>
-            <column  name="code_value"  value="Miss"/>
-            <column name="code_description" value="Miss"/>
-            <column name="order_position" value="3"/>
-            <column name="is_active" valueBoolean="true"/>
-            <column name="is_mandatory" valueBoolean="false"/>
-        </insert>
-        <insert tableName="m_code_value">
-            <column  name="code_id"  valueComputed="(SELECT id FROM m_code WHERE code_name = 'TITLE')"/>
-            <column  name="code_value"  value="Dr"/>
-            <column name="code_description" value="Doctor"/>
-            <column name="order_position" value="4"/>
-            <column name="is_active" valueBoolean="true"/>
-            <column name="is_mandatory" valueBoolean="false"/>
-        </insert>
-        <insert tableName="m_code_value">
-            <column  name="code_id"  valueComputed="(SELECT id FROM m_code WHERE code_name = 'TITLE')"/>
-            <column  name="code_value"  value="Prof"/>
-            <column name="code_description" value="Professor"/>
-            <column name="order_position" value="5"/>
-            <column name="is_active" valueBoolean="true"/>
-            <column name="is_mandatory" valueBoolean="false"/>
-        </insert>
-
-    </changeSet>
 
     <changeSet author="naphlin@fiter.io" id="UC-62_add_additional_address_details">
 
@@ -113,8 +65,8 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="naphlin@fiter.io" id="UC-62_m_client_additional_info_table">
-        <preConditions>
+    <changeSet author="naphlin@fiter.io" id="UC-62_m_client_additional_info_table_13">
+        <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="m_client_additional_info"/>
             </not>
@@ -126,15 +78,15 @@
             <column name="client_id" type="bigint" >
                 <constraints nullable="true" foreignKeyName="m_client_client_additional_info" references="m_client(id)"/>
             </column>
-            <column name="alt_phone_no" type="varchar" />
-            <column name="title" type="bigint" >
+            <column name="alt_phone_no" type="varchar(50)" />
+            <column name="title" type="int" >
                 <constraints nullable="true" foreignKeyName="m_client_code_value_title" references="m_code_value(id)"/>
             </column>
-            <column name="mnemonics" type="varchar" />
-            <column name="marital_status"  type="bigint">
+            <column name="mnemonics" type="varchar(255)" />
+            <column name="marital_status"  type="int">
                 <constraints nullable="true" foreignKeyName="m_client_code_value_marital_status" references="m_code_value(id)"/>
             </column>
-            <column name="initials" type="varchar" />
+            <column name="initials" type="varchar(255)" />
             <column defaultValueComputed="NULL" name="createdby_id" type="BIGINT"/>
             <column defaultValueComputed="NULL" name="lastmodifiedby_id" type="BIGINT"/>
             <column defaultValueComputed="NULL" name="created_date" type="datetime"/>
@@ -142,7 +94,12 @@
         </createTable>
     </changeSet>
 
-    <changeSet author="naphlin@fiter.io" id="UC-62_add_family_member_identifier">
+    <changeSet author="naphlin@fiter.io" id="UC-62_add_family_member_identifier_1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_family_member_identifier"/>
+            </not>
+        </preConditions>
         <createTable tableName="m_family_member_identifier">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>

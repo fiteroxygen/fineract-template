@@ -392,11 +392,20 @@ public class SavingsAccount extends AbstractPersistableCustom {
     @Column(name = "is_unlocked")
     private boolean unlocked;
 
-    @Column(name = "use_floating_interest_rate")
+    @Column(name = "use_floating_interest_rate", nullable = true)
     private Boolean useFloatingInterestRate;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<SavingsAccountFloatingInterestRate> savingsAccountFloatingInterestRates = new HashSet<>();
+
+    @Column(name = "withdrawal_frequency")
+    private Integer withdrawalFrequency;
+    @Column(name = "withdrawal_frequency_enum")
+    private Integer withdrawalFrequencyEnum;
+    @Column(name = "previous_flex_withdrawal_date")
+    private LocalDate previousFlexWithdrawalDate;
+    @Column(name = "next_flex_withdrawal_date")
+    private LocalDate nextFlexWithdrawalDate;
 
     protected SavingsAccount() {
         //
@@ -2962,6 +2971,26 @@ public class SavingsAccount extends AbstractPersistableCustom {
         return nextDueDate;
     }
 
+    public void validateAccountBalanceForBnplLoanWithEquityContribution(final BigDecimal bnplEquityAmount, final boolean isException) {
+        Money runningBalance = this.summary.getAccountBalance(getCurrency());
+        Money minRequiredBalance = minRequiredBalanceDerived(getCurrency()).add(bnplEquityAmount);
+        final BigDecimal withdrawalFee = null;
+
+        // In overdraft cases, minRequiredBalance can be in violation after interest posting
+        // and should be checked after processing all transactions
+        if (!isOverdraft()) {
+            if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
+                throw new InsufficientAccountBalanceException("bnplEquityAmount", getAccountBalance(), withdrawalFee, bnplEquityAmount);
+            }
+        }
+
+        if (this.getSavingsHoldAmount().compareTo(BigDecimal.ZERO) > 0) {
+            if (runningBalance.minus(this.getSavingsHoldAmount()).minus(minRequiredBalance).isLessThanZero()) {
+                throw new InsufficientAccountBalanceException("bnplEquityAmount", getAccountBalance(), withdrawalFee, bnplEquityAmount);
+            }
+        }
+    }
+
     public void validateAccountBalanceDoesNotBecomeNegativeMinimal(final BigDecimal transactionAmount, final boolean isException) {
         // final List<SavingsAccountTransaction> transactionsSortedByDate = retreiveListOfTransactions();
         Money runningBalance = this.summary.getAccountBalance(getCurrency());
@@ -5140,5 +5169,25 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     public Set<SavingsAccountFloatingInterestRate> getSavingsAccountFloatingInterestRates() {
         return savingsAccountFloatingInterestRates;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public void setWithdrawalFrequency(Integer withdrawalFrequency) {
+        this.withdrawalFrequency = withdrawalFrequency;
+    }
+
+    public void setWithdrawalFrequencyEnum(Integer withdrawalFrequencyEnum) {
+        this.withdrawalFrequencyEnum = withdrawalFrequencyEnum;
+    }
+
+    public void setPreviousFlexWithdrawalDate(LocalDate previousFlexWithdrawalDate) {
+        this.previousFlexWithdrawalDate = previousFlexWithdrawalDate;
+    }
+
+    public void setNextFlexWithdrawalDate(LocalDate nextFlexWithdrawalDate) {
+        this.nextFlexWithdrawalDate = nextFlexWithdrawalDate;
     }
 }

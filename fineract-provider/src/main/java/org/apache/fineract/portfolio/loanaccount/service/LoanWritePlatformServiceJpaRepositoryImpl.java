@@ -22,6 +22,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -67,6 +69,7 @@ import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
+import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.organisation.teller.data.CashierTransactionDataValidator;
@@ -2067,6 +2070,56 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 isRegularTransaction, isExceptionForBalanceCheck);
         this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
 
+        // for BNPL loan - transfer to vendor savings account as per bnpl configuration if there are any
+        if (loan.getBnplLoan()) {
+            // get the vendor savings account
+            final PortfolioAccountData vendorPortfolioAccountData = this.accountAssociationsReadPlatformService
+                    .retriveLoanLinkedVendorAssociation(loan.getId());
+            if (vendorPortfolioAccountData == null) {
+                final String errorMessage = "Disburse BNPL Loan with id:" + loan.getId()
+                        + " requires linked vendor savings account for payment";
+                throw new LinkedAccountRequiredException("loan.disburse.to.vendorSavings", errorMessage, loan.getId());
+            }
+
+            // get amount to transfer as per bnpl config
+            Money bnplVendorAmount = Money.zero(amount.getCurrency());
+            final RoundingMode roundingMode = MoneyHelper.getRoundingMode();
+            final MathContext mc = new MathContext(8, roundingMode);
+            if (Boolean.TRUE.equals(loan.getRequiresEquityContribution())) {
+                BigDecimal equityContributionLoanPercentage = loan.getEquityContributionLoanPercentage();
+                if (equityContributionLoanPercentage.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal hundredPercentage = new BigDecimal(100);
+                    BigDecimal disbursedPercentage = hundredPercentage.subtract(equityContributionLoanPercentage);
+                    BigDecimal originalDisbursedAmount = amount.getAmount().multiply(hundredPercentage, mc).divide(disbursedPercentage, mc);
+                    bnplVendorAmount = Money.of(loan.getCurrency(), originalDisbursedAmount);
+                } else {
+                    final String errorMessage = "Disburse BNPL Loan with id:" + loan.getId()
+                            + " requires percentage of loan which needs to be transfer to vendor if the loan RequiresEquityContribution has true";
+                    throw new LinkedAccountRequiredException("loan.disburse.to.vendorSavings", errorMessage, loan.getId());
+                }
+            } else {
+                // if equity contribution is false, it means full disbursal amount transfer to vendor
+                bnplVendorAmount = amount;
+            }
+
+            // deduct charge from vendor amount
+            BigDecimal pendingDisbursalCharges = BigDecimal.ZERO;
+            final Set<LoanCharge> loanCharges = loan.charges();
+            for (final LoanCharge loanCharge : loanCharges) {
+                if ((loanCharge.isDueAtDisbursement() || loanCharge.isDisburseToSavings()) && loanCharge.isChargePending()) {
+                    pendingDisbursalCharges = pendingDisbursalCharges.add(loanCharge.amountOutstanding(), mc);
+                }
+            }
+            Money pendingDisbursalChargeMoney = Money.of(loan.getCurrency(), pendingDisbursalCharges);
+            bnplVendorAmount = bnplVendorAmount.minus(pendingDisbursalChargeMoney);
+
+            final AccountTransferDTO vendorAccountTransferDTO = new AccountTransferDTO(transactionDate, bnplVendorAmount.getAmount(),
+                    PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, portfolioAccountData.accountId(),
+                    vendorPortfolioAccountData.accountId(), "BNPL Loan amount transfer to vendor", locale, fmt, paymentDetail,
+                    LoanTransactionType.BNPL_VENDOR_TRANSFER.getValue(), null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(),
+                    null, null, txnExternalId, loan, null, null, isRegularTransaction, isExceptionForBalanceCheck);
+            this.accountTransfersWritePlatformService.transferFunds(vendorAccountTransferDTO);
+        }
     }
 
     @Override

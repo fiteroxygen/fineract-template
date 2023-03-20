@@ -34,9 +34,8 @@ public class ContentS3Config {
     @ConditionalOnProperty("fineract.content.s3.enabled")
     public AmazonS3 contentS3Client(FineractProperties fineractProperties) {
         return AmazonS3ClientBuilder.standard()
-                .withCredentials(
-                        new AWSStaticCredentialsProvider(new BasicAWSCredentials(fineractProperties.getContent().getS3().getAccessKey(),
-                                fineractProperties.getContent().getS3().getSecretKey())))
-                .build();
+                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(
+                        fineractProperties.getContent().getS3().getAccessKey(), fineractProperties.getContent().getS3().getSecretKey())))
+                .withRegion(fineractProperties.getContent().getS3().getRegion()).build();
     }
 }

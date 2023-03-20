@@ -100,6 +100,9 @@ public interface LoanProductConstants {
     String isCompoundingToBePostedAsTransactionParamName = "isCompoundingToBePostedAsTransaction";
 
     String advancePaymentInterestForExactDaysInPeriodParamName = "advancePaymentInterestForExactDaysInPeriod";
+    String isBnplLoanProductParamName = "isBnplLoanProduct";
+    String requiresEquityContributionParamName = "requiresEquityContribution";
+    String equityContributionLoanPercentageParamName = "equityContributionLoanPercentage";
 
     // Guarantee related
     String holdGuaranteeFundsParamName = "holdGuaranteeFunds";
@@ -149,4 +152,7 @@ public interface LoanProductConstants {
 
     String IS_ACCOUNT_LEVEL_ARREARS_TOLERANCE_ENABLE = "isAccountLevelArrearsToleranceEnable";
 
+    String LOAN_PRODUCT_CATEGORY = "productCategoryId";
+
+    String LOAN_PRODUCT_TYPE = "productTypeId";
 }

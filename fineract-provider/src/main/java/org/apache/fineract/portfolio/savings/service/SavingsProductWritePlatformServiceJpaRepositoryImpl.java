@@ -28,20 +28,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.persistence.PersistenceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.entityaccess.domain.FineractEntityAccessType;
 import org.apache.fineract.infrastructure.entityaccess.service.FineractEntityAccessUtil;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.SavingsProductDataValidator;
 import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductAssembler;
@@ -54,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,13 +76,15 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
     private final FineractEntityAccessUtil fineractEntityAccessUtil;
     private final SavingsProductFloatingInterestRateRepository savingsProductFloatingInterestRateRepository;
 
+    private final CodeValueRepositoryWrapper codeValueRepository;
+
     @Autowired
     public SavingsProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final SavingsProductRepository savingProductRepository, final SavingsProductDataValidator fromApiJsonDataValidator,
             final SavingsProductAssembler savingsProductAssembler,
             final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
             final SavingsProductFloatingInterestRateRepository savingsProductFloatingInterestRateRepository,
-            final FineractEntityAccessUtil fineractEntityAccessUtil) {
+            final FineractEntityAccessUtil fineractEntityAccessUtil, CodeValueRepositoryWrapper codeValueRepository) {
         this.context = context;
         this.savingProductRepository = savingProductRepository;
         this.fromApiJsonDataValidator = fromApiJsonDataValidator;
@@ -83,6 +92,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
         this.fineractEntityAccessUtil = fineractEntityAccessUtil;
         this.savingsProductFloatingInterestRateRepository = savingsProductFloatingInterestRateRepository;
+        this.codeValueRepository = codeValueRepository;
     }
 
     /*
@@ -119,6 +129,14 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             this.fromApiJsonDataValidator.validateForCreate(command.json());
 
             final SavingsProduct product = this.savingsProductAssembler.assemble(command);
+            CodeValue productCategory = getLoanProductCategory(command);
+            if (productCategory != null) {
+                product.setProductCategory(productCategory);
+            }
+            CodeValue productType = getLoanProductType(command);
+            if (productType != null) {
+                product.setProductType(productType);
+            }
 
             this.savingProductRepository.saveAndFlush(product);
 
@@ -160,6 +178,20 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             final SavingsProduct product = this.savingProductRepository.findById(productId)
                     .orElseThrow(() -> new SavingsProductNotFoundException(productId));
 
+            CodeValue productCategory = getLoanProductCategory(command);
+            if (productCategory != null) {
+                product.setProductCategory(productCategory);
+            }
+
+            CodeValue productType = getLoanProductType(command);
+            if (productType != null) {
+                product.setProductType(productType);
+            }
+
+            if(productCategory != null|| productType != null){
+                this.savingProductRepository.saveAndFlush(product);
+            }
+
             this.fromApiJsonDataValidator.validateForUpdate(command.json(), product);
 
             final Map<String, Object> changes = product.update(command);
@@ -167,6 +199,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             if (changes.containsKey(chargesParamName)) {
                 final Set<Charge> savingsProductCharges = this.savingsProductAssembler.assembleListOfSavingsProductCharges(command,
                         product.currency().getCode());
+                validateSavingsProductHasWithdrawalFeeSetWhenWithdrawFrequencyIsApplied(command, savingsProductCharges);
                 final boolean updated = product.update(savingsProductCharges);
                 if (!updated) {
                     changes.remove(chargesParamName);
@@ -210,6 +243,44 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         }
     }
 
+    private static void validateSavingsProductHasWithdrawalFeeSetWhenWithdrawFrequencyIsApplied(JsonCommand command,
+            Set<Charge> savingsProductCharges) {
+        final Integer withdrawalFrequency = command.integerValueOfParameterNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY);
+        final Integer withdrawalFrequencyEnum = command.integerValueOfParameterNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM);
+
+        if (withdrawalFrequency != null) {
+            if (withdrawalFrequencyEnum == null) {
+                throw new GeneralPlatformDomainRuleException(
+                        "Please provide withdrawalFrequencyEnum since you provided withdrawalFrequency",
+                        "Please provide withdrawalFrequencyEnum since you provided withdrawalFrequency");
+            }
+
+            if (CollectionUtils.isEmpty(savingsProductCharges)) {
+                throw new GeneralPlatformDomainRuleException("withdrawalFrequency.requires.a.withdrawal.fee.charge.on.this.product",
+                        "withdrawalFrequency requires a charge of ChargeTimeType [withdrawalFee ] on this product");
+            }
+            List<Charge> chargeList = new ArrayList<>();
+
+            for (Charge charge : savingsProductCharges) {
+                if (ChargeTimeType.fromInt(charge.getChargeTimeType()).equals(ChargeTimeType.WITHDRAWAL_FEE)) {
+                    chargeList.add(charge);
+                }
+            }
+            if (chargeList.size() == 0) {
+                throw new GeneralPlatformDomainRuleException(
+                        "ithdrawalFrequency.requires.a.withdrawal.fee.charge.on.this.product.but.it's not.supplied",
+                        "withdrawalFrequency requires a charge of ChargeTimeType [withdrawalFee ] on this product but it's not supplied");
+
+            }
+        } else {
+            if (withdrawalFrequencyEnum != null) {
+                throw new GeneralPlatformDomainRuleException(
+                        "Please provide withdrawalFrequency since you provided withdrawalFrequencyEnum",
+                        "Please provide withdrawalFrequency since you provided withdrawalFrequencyEnum");
+            }
+        }
+    }
+
     @Transactional
     @Override
     public CommandProcessingResult delete(final Long productId) {
@@ -223,6 +294,28 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         return new CommandProcessingResultBuilder() //
                 .withEntityId(product.getId()) //
                 .build();
+    }
+
+    @Nullable
+    private CodeValue getLoanProductType(JsonCommand command) {
+        CodeValue productType = null;
+        final Long productTypeId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductTypeIdParamName);
+        if (productTypeId != null) {
+            productType = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_TYPE,
+                    productTypeId);
+        }
+        return productType;
+    }
+
+    @Nullable
+    private CodeValue getLoanProductCategory(JsonCommand command) {
+        CodeValue productCategory = null;
+        final Long productCategoryId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductCategoryIdParamName);
+        if (productCategoryId != null) {
+            productCategory = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY,
+                    productCategoryId);
+        }
+        return productCategory;
     }
 
 }

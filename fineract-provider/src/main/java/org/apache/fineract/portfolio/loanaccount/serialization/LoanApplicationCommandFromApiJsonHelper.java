@@ -96,7 +96,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             LoanApiConstants.lastApplication, // glim specific
             LoanApiConstants.daysInYearTypeParameterName, LoanApiConstants.fixedPrincipalPercentagePerInstallmentParamName,
             LoanApiConstants.LOAN_TERM_INCLUDES_TOPPED_UP_LOAN_TERM, LoanApiConstants.NUMBER_OF_REPAYMENT_TO_CARRY_FORWARD,
-            LoanApiConstants.LOAN_TERM_TO_TOP_UP));
+            LoanApiConstants.linkVendorAccountIdParamName, LoanApiConstants.LOAN_TERM_TO_TOP_UP, LoanApiConstants.isBnplLoanParamName,
+            LoanApiConstants.requiresEquityContributionParamName, LoanApiConstants.equityContributionLoanPercentageParamName));
 
     private final FromJsonHelper fromApiJsonHelper;
     private final CalculateLoanScheduleQueryFromApiJsonHelper apiJsonHelper;
@@ -547,6 +548,48 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         validatePartialPeriodSupport(interestCalculationPeriodType, baseDataValidator, element, loanProduct);
         if (!dataValidationErrors.isEmpty()) {
             throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
+
+        // BNPL related validations
+        Boolean isBnplLoan = false;
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.isBnplLoanParamName, element)) {
+            isBnplLoan = this.fromApiJsonHelper.extractBooleanNamed(LoanApiConstants.isBnplLoanParamName, element);
+            baseDataValidator.reset().parameter(LoanApiConstants.isBnplLoanParamName).value(isBnplLoan).ignoreIfNull()
+                    .validateForBooleanValue();
+        }
+
+        Boolean requiresEquityContribution = false;
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.requiresEquityContributionParamName, element)) {
+            requiresEquityContribution = this.fromApiJsonHelper.extractBooleanNamed(LoanApiConstants.requiresEquityContributionParamName,
+                    element);
+            baseDataValidator.reset().parameter(LoanApiConstants.requiresEquityContributionParamName).value(requiresEquityContribution)
+                    .ignoreIfNull().validateForBooleanValue();
+        }
+
+        BigDecimal equityContributionLoanPercentage = null;
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.equityContributionLoanPercentageParamName, element)) {
+            equityContributionLoanPercentage = this.fromApiJsonHelper
+                    .extractBigDecimalWithLocaleNamed(LoanApiConstants.equityContributionLoanPercentageParamName, element);
+            baseDataValidator.reset().parameter(LoanApiConstants.equityContributionLoanPercentageParamName)
+                    .value(equityContributionLoanPercentage).ignoreIfNull().zeroOrPositiveAmount();
+        }
+
+        validateBnplValues(baseDataValidator, isBnplLoan, requiresEquityContribution, equityContributionLoanPercentage);
+    }
+
+    private void validateBnplValues(final DataValidatorBuilder baseDataValidator, Boolean isBnplLoan, Boolean requiresEquityContribution,
+            BigDecimal equityContributionLoanPercentage) {
+        if (!isBnplLoan && requiresEquityContribution) {
+            baseDataValidator.reset().parameter(LoanProductConstants.requiresEquityContributionParamName).failWithCode(
+                    "isBnplLoanProduct.must.be.true.when.requiresEquityContribution.is.true",
+                    "isBnplLoanProduct must be true when requiresEquityContribution is true");
+        }
+
+        if (requiresEquityContribution
+                && (equityContributionLoanPercentage == null || !(equityContributionLoanPercentage.compareTo(BigDecimal.ZERO) > 0))) {
+            baseDataValidator.reset().parameter(LoanProductConstants.equityContributionLoanPercentageParamName).failWithCode(
+                    "ContributionLoanPercentage.cannot.be.null.when.requiresEquityContribution.is.true",
+                    "ContributionLoanPercentage cannot be null or zero when requiresEquityContribution is true");
         }
     }
 
@@ -1037,6 +1080,39 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         validateLoanMultiDisbursementDate(element, baseDataValidator, expectedDisbursementDate, principal);
         validatePartialPeriodSupport(interestCalculationPeriodType, baseDataValidator, element, loanProduct);
 
+        // bnpl
+        Boolean isBnplLoan = null;
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.isBnplLoanParamName, element)) {
+            isBnplLoan = this.fromApiJsonHelper.extractBooleanNamed(LoanApiConstants.isBnplLoanParamName, element);
+            baseDataValidator.reset().parameter(LoanApiConstants.isBnplLoanParamName).value(isBnplLoan).ignoreIfNull()
+                    .validateForBooleanValue();
+        }
+
+        Boolean requiresEquityContribution = null;
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.requiresEquityContributionParamName, element)) {
+            requiresEquityContribution = this.fromApiJsonHelper.extractBooleanNamed(LoanApiConstants.requiresEquityContributionParamName,
+                    element);
+            baseDataValidator.reset().parameter(LoanApiConstants.requiresEquityContributionParamName).value(requiresEquityContribution)
+                    .ignoreIfNull().validateForBooleanValue();
+        }
+
+        BigDecimal equityContributionLoanPercentage = null;
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.equityContributionLoanPercentageParamName, element)) {
+            equityContributionLoanPercentage = this.fromApiJsonHelper
+                    .extractBigDecimalWithLocaleNamed(LoanApiConstants.equityContributionLoanPercentageParamName, element);
+            baseDataValidator.reset().parameter(LoanApiConstants.equityContributionLoanPercentageParamName)
+                    .value(equityContributionLoanPercentage).ignoreIfNull().zeroOrPositiveAmount();
+        }
+        // set with persisted value if not coming from API call
+        isBnplLoan = isBnplLoan == null ? existingLoanApplication.getBnplLoan() : isBnplLoan;
+        requiresEquityContribution = requiresEquityContribution == null ? existingLoanApplication.getRequiresEquityContribution()
+                : requiresEquityContribution;
+        equityContributionLoanPercentage = equityContributionLoanPercentage == null
+                ? existingLoanApplication.getEquityContributionLoanPercentage()
+                : equityContributionLoanPercentage;
+
+        validateBnplValues(baseDataValidator, isBnplLoan, requiresEquityContribution, equityContributionLoanPercentage);
+
         if (!dataValidationErrors.isEmpty()) {
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                     dataValidationErrors);
@@ -1125,6 +1201,33 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                 dataValidationErrors.add(error);
             }
 
+        }
+        if (!dataValidationErrors.isEmpty()) {
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                    dataValidationErrors);
+        }
+    }
+
+    public void validateLinkedVendorSavingsAccountForBnplLoan(final SavingsAccount vendorSavingsAccount,
+            final SavingsAccount clientSavingsAccount) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        if (vendorSavingsAccount == null || clientSavingsAccount == null) {
+            final ApiParameterError error = ApiParameterError.parameterError(
+                    "validation.msg.loan.linked.savings.account.or.vendor.link.savings.account.is.null",
+                    "Either of Linked Savings account or Vendor Linked Savings account is null", "linkVendorAccountId");
+            dataValidationErrors.add(error);
+        }
+        if (vendorSavingsAccount.isNotActive()) {
+            final ApiParameterError error = ApiParameterError.parameterError("validation.msg.loan.linked.savings.account.is.not.active",
+                    "Linked Vendor Savings account with id:" + vendorSavingsAccount.getId() + " is not in active state",
+                    "linkVendorAccountId", vendorSavingsAccount.getId());
+            dataValidationErrors.add(error);
+        } else if (vendorSavingsAccount.getId().equals(clientSavingsAccount.getId())) {
+            final ApiParameterError error = ApiParameterError.parameterError(
+                    "validation.msg.linked.client.savings.account.and.vendor.savings.account.are.same", "Client Savings account with id:"
+                            + clientSavingsAccount.getId() + " is the same as vendor savings account id" + vendorSavingsAccount.getId(),
+                    "linkVendorAccountId", vendorSavingsAccount.getId());
+            dataValidationErrors.add(error);
         }
         if (!dataValidationErrors.isEmpty()) {
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",

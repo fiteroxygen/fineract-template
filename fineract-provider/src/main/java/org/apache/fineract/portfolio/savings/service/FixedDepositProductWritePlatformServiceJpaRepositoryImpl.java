@@ -32,6 +32,8 @@ import java.util.Set;
 import javax.persistence.PersistenceException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -43,6 +45,7 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.DepositProductDataValidator;
 import org.apache.fineract.portfolio.savings.domain.DepositProductAssembler;
 import org.apache.fineract.portfolio.savings.domain.FixedDepositProduct;
@@ -53,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,12 +71,14 @@ public class FixedDepositProductWritePlatformServiceJpaRepositoryImpl implements
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
     private final InterestRateChartAssembler chartAssembler;
 
+    private final CodeValueRepositoryWrapper codeValueRepository;
+
     @Autowired
     public FixedDepositProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final FixedDepositProductRepository fixedDepositProductRepository, final DepositProductDataValidator fromApiJsonDataValidator,
             final DepositProductAssembler depositProductAssembler,
             final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
-            final InterestRateChartAssembler chartAssembler) {
+            final InterestRateChartAssembler chartAssembler, CodeValueRepositoryWrapper codeValueRepository) {
         this.context = context;
         this.fixedDepositProductRepository = fixedDepositProductRepository;
         this.fromApiJsonDataValidator = fromApiJsonDataValidator;
@@ -80,6 +86,7 @@ public class FixedDepositProductWritePlatformServiceJpaRepositoryImpl implements
 
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
         this.chartAssembler = chartAssembler;
+        this.codeValueRepository = codeValueRepository;
     }
 
     @Transactional
@@ -90,6 +97,15 @@ public class FixedDepositProductWritePlatformServiceJpaRepositoryImpl implements
             this.fromApiJsonDataValidator.validateForFixedDepositCreate(command.json());
 
             final FixedDepositProduct product = this.depositProductAssembler.assembleFixedDepositProduct(command);
+            CodeValue productCategory = getLoanProductCategory(command);
+            if (productCategory != null) {
+                product.setProductCategory(productCategory);
+            }
+
+            CodeValue productType = getLoanProductType(command);
+            if (productType != null) {
+                product.setProductType(productType);
+            }
 
             this.fixedDepositProductRepository.saveAndFlush(product);
 
@@ -120,6 +136,19 @@ public class FixedDepositProductWritePlatformServiceJpaRepositoryImpl implements
 
             final FixedDepositProduct product = this.fixedDepositProductRepository.findById(productId)
                     .orElseThrow(() -> new FixedDepositProductNotFoundException(productId));
+            CodeValue productCategory = getLoanProductCategory(command);
+            if (productCategory != null) {
+                product.setProductCategory(productCategory);
+            }
+
+            CodeValue productType = getLoanProductType(command);
+            if (productType != null) {
+                product.setProductType(productType);
+            }
+
+            if(productCategory != null|| productType != null){
+                this.fixedDepositProductRepository.saveAndFlush(product);
+            }
             product.setHelpers(this.chartAssembler);
 
             final Map<String, Object> changes = product.update(command);
@@ -216,5 +245,27 @@ public class FixedDepositProductWritePlatformServiceJpaRepositoryImpl implements
 
     private void logAsErrorUnexpectedDataIntegrityException(final Exception dae) {
         LOG.error("Error occured.", dae);
+    }
+
+    @Nullable
+    private CodeValue getLoanProductType(JsonCommand command) {
+        CodeValue productType = null;
+        final Long productTypeId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductTypeIdParamName);
+        if (productTypeId != null) {
+            productType = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_TYPE,
+                    productTypeId);
+        }
+        return productType;
+    }
+
+    @Nullable
+    private CodeValue getLoanProductCategory(JsonCommand command) {
+        CodeValue productCategory = null;
+        final Long productCategoryId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductCategoryIdParamName);
+        if (productCategoryId != null) {
+            productCategory = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY,
+                    productCategoryId);
+        }
+        return productCategory;
     }
 }

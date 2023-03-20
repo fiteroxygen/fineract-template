@@ -16,24 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.savings.service;
+package org.apache.fineract.portfolio.savings;
 
-import java.util.Collection;
-import org.apache.fineract.infrastructure.core.data.EnumOptionData;
+public enum WithdrawalFrequency {
 
-public interface SavingsDropdownReadPlatformService {
+    MONTH(0, "withdrawal.frequency.month/s"), INVALID(404, "withdrawal.frequency.invalid");
 
-    Collection<EnumOptionData> retrieveLockinPeriodFrequencyTypeOptions();
+    private final Integer value;
+    private final String code;
 
-    Collection<EnumOptionData> retrieveCompoundingInterestPeriodTypeOptions();
+    WithdrawalFrequency(Integer value, String code) {
+        this.value = value;
+        this.code = code;
+    }
 
-    Collection<EnumOptionData> retrieveInterestPostingPeriodTypeOptions();
+    public static WithdrawalFrequency fromInt(int value) {
+        switch (value) {
+            case 0:
+                return MONTH;
+            default:
+                throw new IllegalArgumentException("Invalid integer value for WithdrawalFrequency: " + value);
+        }
+    }
 
-    Collection<EnumOptionData> retrieveInterestCalculationTypeOptions();
+    public Integer getValue() {
+        return value;
+    }
 
-    Collection<EnumOptionData> retrieveInterestCalculationDaysInYearTypeOptions();
-
-    Collection<EnumOptionData> retrievewithdrawalFeeTypeOptions();
-
-    Collection<EnumOptionData> retrieveWithdrawalFrequencyOptions();
+    public String getCode() {
+        return code;
+    }
 }

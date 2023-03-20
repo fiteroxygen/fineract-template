@@ -34,6 +34,7 @@ import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsWithdrawalFeesType;
+import org.apache.fineract.portfolio.savings.WithdrawalFrequency;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionEnumData;
@@ -872,6 +873,22 @@ public final class SavingsEnumerations {
             case RELEASE:
                 optionData = new EnumOptionData(DepositAccountOnHoldTransactionType.RELEASE.getValue().longValue(),
                         DepositAccountOnHoldTransactionType.RELEASE.getCode(), "release");
+            break;
+
+        }
+        return optionData;
+    }
+
+    public static EnumOptionData withdrawalFrequency(final WithdrawalFrequency withdrawalFrequency) {
+        EnumOptionData optionData;
+        switch (withdrawalFrequency) {
+            case MONTH:
+                optionData = new EnumOptionData(WithdrawalFrequency.MONTH.getValue().longValue(), WithdrawalFrequency.MONTH.getCode(),
+                        "Month/s");
+            break;
+            default:
+                optionData = new EnumOptionData(WithdrawalFrequency.INVALID.getValue().longValue(), WithdrawalFrequency.INVALID.getCode(),
+                        "Invalid");
             break;
 
         }

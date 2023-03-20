@@ -34,13 +34,13 @@ public class SavingsAccountConstant extends SavingsApiConstants {
             externalIdParamName, clientIdParamName, groupIdParamName, productIdParamName, fieldOfficerIdParamName, submittedOnDateParamName,
             nominalAnnualInterestRateParamName, interestCompoundingPeriodTypeParamName, interestPostingPeriodTypeParamName,
             interestCalculationTypeParamName, interestCalculationDaysInYearTypeParamName, minRequiredOpeningBalanceParamName,
-            lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName,
-            // withdrawalFeeAmountParamName, withdrawalFeeTypeParamName,
-            withdrawalFeeForTransfersParamName, feeAmountParamName, feeOnMonthDayParamName, chargesParamName, allowOverdraftParamName,
-            overdraftLimitParamName, minRequiredBalanceParamName, enforceMinRequiredBalanceParamName, lienAllowedParamName,
-            maxAllowedLienLimitParamName, nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName,
-            withHoldTaxParamName, datatables, gsimApplicationId, gsimLastApplication, VAULT_TARGET_AMOUNT, VAULT_TARGET_DATE,
-            useFloatingInterestRateParamName, floatingInterestRatesParamName));
+            lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName, withdrawalFeeForTransfersParamName, feeAmountParamName,
+            feeOnMonthDayParamName, chargesParamName, allowOverdraftParamName, overdraftLimitParamName, minRequiredBalanceParamName,
+            enforceMinRequiredBalanceParamName, lienAllowedParamName, maxAllowedLienLimitParamName,
+            nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName, withHoldTaxParamName, datatables,
+            gsimApplicationId, gsimLastApplication, VAULT_TARGET_AMOUNT, VAULT_TARGET_DATE, useFloatingInterestRateParamName,
+            floatingInterestRatesParamName, SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, SavingsApiConstants.WITHDRAWAL_FREQUENCY,
+            SavingsApiConstants.WITHDRAWAL_FREQUENCY_OPTIONS));
 
     protected static final Set<String> ADD_MORE_MEMBERS_TO_VAULT_TRIBE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             localeParamName, isGSIM, clientIdParamName, groupIdParamName, productIdParamName, nominalAnnualInterestRateParamName,
