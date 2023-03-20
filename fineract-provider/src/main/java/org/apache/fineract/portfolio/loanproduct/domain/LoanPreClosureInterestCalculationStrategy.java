@@ -25,7 +25,9 @@ public enum LoanPreClosureInterestCalculationStrategy {
 
     NONE(0, "loanPreClosureInterestCalculationStrategy.none"), //
     TILL_PRE_CLOSURE_DATE(1, "loanPreClosureInterestCalculationStrategy.tillPreClosureDate"), //
-    TILL_REST_FREQUENCY_DATE(2, "loanPreClosureInterestCalculationStrategy.tillRestFrequencyDate");
+    TILL_REST_FREQUENCY_DATE(2, "loanPreClosureInterestCalculationStrategy.tillRestFrequencyDate"),
+
+    TILL_EXPECTED_MATURITY_DATE(3, "loanPreClosureInterestCalculationStrategy.tillExpectedMaturityDate");
 
     // REPAYMENT_PERIOD_DATE(3,
     // "loanPreClosureInterestCalculationStrategy.repaymentPeriodDate")
@@ -86,5 +88,9 @@ public enum LoanPreClosureInterestCalculationStrategy {
 
     public boolean calculateTillPreClosureDateEnabled() {
         return this.getValue().equals(LoanPreClosureInterestCalculationStrategy.TILL_PRE_CLOSURE_DATE.getValue());
+    }
+
+    public boolean calculateTillExpectedMaturityDateEnabled() {
+        return this.getValue().equals(LoanPreClosureInterestCalculationStrategy.TILL_EXPECTED_MATURITY_DATE.getValue());
     }
 }

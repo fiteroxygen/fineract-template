@@ -418,4 +418,12 @@ public final class ChargeData implements Comparable<ChargeData>, Serializable {
     public void setCharges(List<ChargeSlabData> charges) {
         this.charges = charges;
     }
+
+    public EnumOptionData getChargeAppliesTo() {
+        return chargeAppliesTo;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
 }

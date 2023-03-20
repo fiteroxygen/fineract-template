@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -120,4 +121,11 @@ public final class DateUtils {
         return DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT);
     }
 
+    public static Date asDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    public static boolean isSameLocalDate(LocalDate firstDate, LocalDate secondDate) {
+        return org.apache.commons.lang3.time.DateUtils.isSameDay(asDate(firstDate), asDate(secondDate));
+    }
 }

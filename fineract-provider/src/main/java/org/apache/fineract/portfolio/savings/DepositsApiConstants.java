@@ -238,7 +238,7 @@ public final class DepositsApiConstants {
             SavingProductAccountingParams.OVERDRAFT_PORTFOLIO_CONTROL.getValue(), SavingProductAccountingParams.FEES_RECEIVABLE.getValue(),
             SavingProductAccountingParams.INTEREST_PAYABLE.getValue(), SavingProductAccountingParams.LOSSES_WRITTEN_OFF.getValue(),
             SavingProductAccountingParams.INCOME_FROM_INTEREST.getValue(), SavingsApiConstants.isUSDProductParamName,
-            SavingsApiConstants.allowManuallyEnterInterestRateParamName));
+            SavingsApiConstants.allowManuallyEnterInterestRateParamName, SavingsApiConstants.ADD_PENALTY_ON_MISSED_TARGET_SAVINGS));
 
     private static final Set<String> PRECLOSURE_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(preClosurePenalApplicableParamName, preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName));

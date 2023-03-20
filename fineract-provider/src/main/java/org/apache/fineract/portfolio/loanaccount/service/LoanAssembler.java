@@ -350,6 +350,15 @@ public class LoanAssembler {
         loanApplication.loanApplicationSubmittal(loanScheduleModel, loanApplicationTerms, defaultLoanLifecycleStateMachine(),
                 submittedOnDate, externalId, allowTransactionsOnHoliday, holidays, workingDays, allowTransactionsOnNonWorkingDay);
 
+        //
+        final Boolean isBnplLoan = this.fromApiJsonHelper.extractBooleanNamed(LoanApiConstants.isBnplLoanParamName, element);
+        final Boolean requiresEquityContribution = this.fromApiJsonHelper
+                .extractBooleanNamed(LoanApiConstants.requiresEquityContributionParamName, element);
+        final BigDecimal equityContributionLoanPercentage = this.fromApiJsonHelper
+                .extractBigDecimalWithLocaleNamed(LoanApiConstants.equityContributionLoanPercentageParamName, element);
+        loanApplication.setBnplLoan(isBnplLoan);
+        loanApplication.setRequiresEquityContribution(requiresEquityContribution);
+        loanApplication.setEquityContributionLoanPercentage(equityContributionLoanPercentage);
         return loanApplication;
     }
 

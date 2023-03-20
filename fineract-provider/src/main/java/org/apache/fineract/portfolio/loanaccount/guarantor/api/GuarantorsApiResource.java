@@ -62,6 +62,7 @@ import org.apache.fineract.portfolio.account.api.AccountTransfersApiConstants;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountDTO;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
 import org.apache.fineract.portfolio.account.service.PortfolioAccountReadPlatformService;
+import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.loanaccount.guarantor.GuarantorConstants;
 import org.apache.fineract.portfolio.loanaccount.guarantor.data.GuarantorData;
 import org.apache.fineract.portfolio.loanaccount.guarantor.domain.GuarantorType;
@@ -133,8 +134,10 @@ public class GuarantorsApiResource {
         final Collection<CodeValueData> allowedClientRelationshipTypes = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode(GuarantorConstants.GUARANTOR_RELATIONSHIP_CODE_NAME);
         final Collection<PortfolioAccountData> accountLinkingOptions = null;
+        final Collection<CodeValueData> genderOptions = this.codeValueReadPlatformService
+                .retrieveCodeValuesByCode(ClientApiConstants.GENDER);
         final GuarantorData guarantorData = GuarantorData.template(guarantorTypeOptions, allowedClientRelationshipTypes,
-                accountLinkingOptions);
+                accountLinkingOptions, genderOptions);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.apiJsonSerializerService.serialize(settings, guarantorData, RESPONSE_DATA_PARAMETERS);
@@ -169,8 +172,10 @@ public class GuarantorsApiResource {
                     .retrieveCodeValuesByCode(GuarantorConstants.GUARANTOR_RELATIONSHIP_CODE_NAME);
             final List<EnumOptionData> guarantorTypeOptions = GuarantorEnumerations.guarantorType(GuarantorType.values());
             final Collection<PortfolioAccountData> accountLinkingOptions = null;
+            final Collection<CodeValueData> genderOptions = this.codeValueReadPlatformService
+                    .retrieveCodeValuesByCode(ClientApiConstants.GENDER);
             guarantorData = GuarantorData.templateOnTop(guarantorData, guarantorTypeOptions, allowedClientRelationshipTypes,
-                    accountLinkingOptions);
+                    accountLinkingOptions, genderOptions);
         }
 
         return this.apiJsonSerializerService.serialize(settings, guarantorData, RESPONSE_DATA_PARAMETERS);
@@ -229,7 +234,7 @@ public class GuarantorsApiResource {
         if (this.loanReadPlatformService.isGuaranteeRequired(loanId)) {
             accountLinkingOptions = this.portfolioAccountReadPlatformService.retrieveAllForLookup(portfolioAccountDTO);
         }
-        final GuarantorData guarantorData = GuarantorData.template(null, null, accountLinkingOptions);
+        final GuarantorData guarantorData = GuarantorData.template(null, null, accountLinkingOptions, null);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.apiJsonSerializerService.serialize(settings, guarantorData, ACCOUNT_TRANSFER_API_RESPONSE_DATA_PARAMETERS);
     }

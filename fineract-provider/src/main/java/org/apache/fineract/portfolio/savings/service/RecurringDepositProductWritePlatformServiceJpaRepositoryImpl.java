@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.persistence.PersistenceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
@@ -35,12 +36,16 @@ import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeCalculationType;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.interestratechart.service.InterestRateChartAssembler;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.data.DepositProductDataValidator;
 import org.apache.fineract.portfolio.savings.domain.DepositProductAssembler;
 import org.apache.fineract.portfolio.savings.domain.RecurringDepositProduct;
@@ -125,6 +130,9 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
             if (changes.containsKey(chargesParamName)) {
                 final Set<Charge> savingsProductCharges = this.depositProductAssembler.assembleListOfSavingsProductCharges(command,
                         product.currency().getCode());
+
+                validateSpecifiedDueDateChargeIsAppliedWhenaddPenaltyOnMissedTargetSavingsIsTrue(command, savingsProductCharges);
+
                 final boolean updated = product.update(savingsProductCharges);
                 if (!updated) {
                     changes.remove(chargesParamName);
@@ -165,6 +173,33 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
             Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             handleDataIntegrityIssues(command, throwable, dve);
             return CommandProcessingResult.empty();
+        }
+    }
+
+    private static void validateSpecifiedDueDateChargeIsAppliedWhenaddPenaltyOnMissedTargetSavingsIsTrue(JsonCommand command,
+            Set<Charge> savingsProductCharges) {
+        final Boolean addPenaltyOnMissedTargetSavings = command
+                .booleanPrimitiveValueOfParameterNamed(SavingsApiConstants.ADD_PENALTY_ON_MISSED_TARGET_SAVINGS);
+        if (addPenaltyOnMissedTargetSavings) {
+            if (CollectionUtils.isEmpty(savingsProductCharges)) {
+                throw new GeneralPlatformDomainRuleException(
+                        "addPenaltyOnMissedTargetSavings.requires.a.specified.due.charge.of.type.flat.on.this.product",
+                        "addPenaltyOnMissedTargetSavings requires a charge of ChargeTimeType [specified due date ] and ChargeCalculationType [ flat ] on this product");
+            }
+            List<Charge> chargeList = new ArrayList<>();
+
+            for (Charge charge : savingsProductCharges) {
+                if (ChargeCalculationType.fromInt(charge.getChargeCalculation()).equals(ChargeCalculationType.FLAT)
+                        && ChargeTimeType.fromInt(charge.getChargeTimeType()).equals(ChargeTimeType.SPECIFIED_DUE_DATE)) {
+                    chargeList.add(charge);
+                }
+            }
+            if (chargeList.size() == 0) {
+                throw new GeneralPlatformDomainRuleException(
+                        "addPenaltyOnMissedTargetSavings.requires.a.specified.due.charge.of.type.flat.on.this.product.but.it's not.supplied",
+                        "addPenaltyOnMissedTargetSavings requires a charge of ChargeTimeType [specified due date ] and ChargeCalculationType [ flat ]  on this product but it's not supplied");
+
+            }
         }
     }
 

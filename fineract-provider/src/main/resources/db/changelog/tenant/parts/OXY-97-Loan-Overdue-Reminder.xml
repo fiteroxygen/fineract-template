@@ -297,4 +297,17 @@
 
         </insert>
     </changeSet>
+    <changeSet author="bosco@fiter.io" id="add_add_penalty_on_missed_target_savings_in_m_savings_product">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_savings_product" columnName="add_penalty_on_missed_target_savings"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="m_savings_product">
+            <column name="add_penalty_on_missed_target_savings" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

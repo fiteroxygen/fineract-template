@@ -25,6 +25,7 @@ import java.util.List;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.organisation.staff.data.StaffData;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
 import org.apache.fineract.portfolio.calendar.data.CalendarData;
 import org.apache.fineract.portfolio.floatingrates.data.InterestRatePeriodData;
 import org.apache.fineract.portfolio.loanaccount.data.CollectionData;
@@ -165,4 +166,6 @@ public interface LoanReadPlatformService {
     List<LoanRepaymentScheduleData> getLoanRepaymentScheduleData(Long loanId);
 
     List<LoanOverdueReminderData> findLoanOverdueReminderData(Integer numberOfDaysToDueDate);
+
+    Collection<PortfolioAccountData> retrieveVendorSavingAccountsForBnplLoans(Long vendorClientId);
 }

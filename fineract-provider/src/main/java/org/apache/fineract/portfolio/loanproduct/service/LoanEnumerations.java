@@ -427,6 +427,14 @@ public final class LoanEnumerations {
                 optionData = new LoanTransactionEnumData(LoanTransactionType.GOODWILL_CREDIT.getValue().longValue(),
                         LoanTransactionType.GOODWILL_CREDIT.getCode(), "Goodwill Credit");
             break;
+            case BNPL_VENDOR_TRANSFER:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.BNPL_VENDOR_TRANSFER.getValue().longValue(),
+                        LoanTransactionType.BNPL_VENDOR_TRANSFER.getCode(), "BNPL Vendor Transfer");
+            break;
+            case TOP_UP:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.TOP_UP.getValue().longValue(),
+                        LoanTransactionType.TOP_UP.getCode(), "Top Up");
+            break;
         }
         return optionData;
     }
@@ -751,6 +759,11 @@ public final class LoanEnumerations {
             case TILL_REST_FREQUENCY_DATE:
                 optionData = new EnumOptionData(LoanPreClosureInterestCalculationStrategy.TILL_REST_FREQUENCY_DATE.getValue().longValue(),
                         LoanPreClosureInterestCalculationStrategy.TILL_REST_FREQUENCY_DATE.getCode(), "Till rest Frequency Date");
+            break;
+            case TILL_EXPECTED_MATURITY_DATE:
+                optionData = new EnumOptionData(
+                        LoanPreClosureInterestCalculationStrategy.TILL_EXPECTED_MATURITY_DATE.getValue().longValue(),
+                        LoanPreClosureInterestCalculationStrategy.TILL_EXPECTED_MATURITY_DATE.getCode(), "Till expected maturity date");
             break;
             case NONE:
             break;

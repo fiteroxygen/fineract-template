@@ -25,7 +25,8 @@ public enum AccountAssociationType {
 
     INVALID(0, "accountAssociationType.invalid"), //
     LINKED_ACCOUNT_ASSOCIATION(1, "accountAssociationType.loan.account.association"), //
-    GUARANTOR_ACCOUNT_ASSOCIATION(2, "accountAssociationType.guarantor.account.association"); //
+    GUARANTOR_ACCOUNT_ASSOCIATION(2, "accountAssociationType.guarantor.account.association"), //
+    BNPL_LINKED_ACCOUNT_ASSOCIATION(3, "accountAssociationType.bnpl.loan.account.association"); //
 
     private final Integer value;
     private final String code;
@@ -40,7 +41,9 @@ public enum AccountAssociationType {
             case 2:
                 enumeration = AccountAssociationType.GUARANTOR_ACCOUNT_ASSOCIATION;
             break;
-
+            case 3:
+                enumeration = AccountAssociationType.BNPL_LINKED_ACCOUNT_ASSOCIATION;
+            break;
         }
         return enumeration;
     }
@@ -70,4 +73,7 @@ public enum AccountAssociationType {
         return this.value.equals(AccountAssociationType.GUARANTOR_ACCOUNT_ASSOCIATION.getValue());
     }
 
+    public boolean isBnplLinkedAccountAssociation() {
+        return this.value.equals(AccountAssociationType.BNPL_LINKED_ACCOUNT_ASSOCIATION.getValue());
+    }
 }

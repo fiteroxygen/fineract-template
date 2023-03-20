@@ -83,6 +83,8 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargeAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountFloatingInterestRate;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountFloatingInterestRateRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
@@ -120,6 +122,7 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     private final GroupRepositoryWrapper groupRepositoryWrapper;
     private final GroupSavingsIndividualMonitoringWritePlatformService gsimWritePlatformService;
     private final NubanAccountService nubanAccountService;
+    private final SavingsAccountFloatingInterestRateRepository savingsAccountFloatingInterestRateRepository;
 
     /*
      * Guaranteed to throw an exception no matter what the data integrity issue is.
@@ -175,6 +178,13 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
 
             final SavingsAccount account = this.savingAccountAssembler.assembleFrom(command, submittedBy);
             this.savingAccountRepository.save(account);
+
+            // assemle floatingInterestRates
+            final Set<SavingsAccountFloatingInterestRate> floatingInterestRates = this.savingAccountAssembler
+                    .assembleListOfFloatingInterestRates(command, account);
+            // persist floatingInterestRates
+            this.savingsAccountFloatingInterestRateRepository.saveAll(floatingInterestRates);
+
             String accountNumber = "";
             GroupSavingsIndividualMonitoring gsimAccount = null;
             BigDecimal applicationId = BigDecimal.ZERO;

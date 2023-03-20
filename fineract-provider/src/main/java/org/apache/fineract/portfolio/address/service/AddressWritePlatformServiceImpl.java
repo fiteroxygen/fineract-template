@@ -252,6 +252,14 @@ public class AddressWritePlatformServiceImpl implements AddressWritePlatformServ
 
         }
 
+        if (command.isChangeInLocalDateParameterNamed("atAddressSince", addobj.getAtAddressSince())) {
+
+            is_address_update = true;
+            final LocalDate addressLine1 = command.localDateValueOfParameterNamed("atAddressSince");
+            addobj.setAtAddressSince(addressLine1);
+
+        }
+
         if (is_address_update) {
             addobj.setUpdatedOn(LocalDate.now(DateUtils.getDateTimeZoneOfTenant()));
             this.addressRepository.save(addobj);

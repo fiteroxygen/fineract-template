@@ -105,6 +105,7 @@ public final class RecurringDepositProductData extends DepositProductData {
         final BigDecimal depositAmount = null;
         final BigDecimal maxDepositAmount = null;
         final boolean withHoldTax = false;
+        final boolean addPenaltyOnMissedTargetSavings = false;
         final TaxGroupData taxGroup = null;
 
         return new RecurringDepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate,
@@ -118,7 +119,7 @@ public final class RecurringDepositProductData extends DepositProductData {
                 minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType, inMultiplesOfDepositTerm,
                 inMultiplesOfDepositTermType, isMandatoryDeposit, allowWithdrawal, adjustAdvanceTowardsFuturePayments,
                 periodFrequencyTypeOptions, minDepositAmount, depositAmount, maxDepositAmount, withHoldTax, taxGroup, taxGroupOptions,
-                allowFreeWithdrawal);
+                allowFreeWithdrawal, addPenaltyOnMissedTargetSavings);
     }
 
     public static RecurringDepositProductData withCharges(final RecurringDepositProductData existingProduct,
@@ -143,7 +144,7 @@ public final class RecurringDepositProductData extends DepositProductData {
                 existingProduct.isMandatoryDeposit, existingProduct.allowWithdrawal, existingProduct.adjustAdvanceTowardsFuturePayments,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.minDepositAmount, existingProduct.depositAmount,
                 existingProduct.maxDepositAmount, existingProduct.withHoldTax, existingProduct.taxGroup, existingProduct.taxGroupOptions,
-                existingProduct.allowFreeWithdrawal);
+                existingProduct.allowFreeWithdrawal, existingProduct.addPenaltyOnMissedTargetSavings);
     }
 
     /**
@@ -183,7 +184,7 @@ public final class RecurringDepositProductData extends DepositProductData {
                 existingProduct.inMultiplesOfDepositTermType, existingProduct.isMandatoryDeposit, existingProduct.allowWithdrawal,
                 existingProduct.adjustAdvanceTowardsFuturePayments, periodFrequencyTypeOptions, existingProduct.minDepositAmount,
                 existingProduct.depositAmount, existingProduct.maxDepositAmount, existingProduct.withHoldTax, existingProduct.taxGroup,
-                taxGroupOptions, existingProduct.allowFreeWithdrawal);
+                taxGroupOptions, existingProduct.allowFreeWithdrawal, existingProduct.addPenaltyOnMissedTargetSavings);
 
     }
 
@@ -222,8 +223,8 @@ public final class RecurringDepositProductData extends DepositProductData {
                 existingProduct.inMultiplesOfDepositTermType, existingProduct.isMandatoryDeposit, existingProduct.allowWithdrawal,
                 existingProduct.adjustAdvanceTowardsFuturePayments, existingProduct.periodFrequencyTypeOptions,
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
-                existingProduct.withHoldTax, existingProduct.taxGroup, existingProduct.taxGroupOptions,
-                existingProduct.allowFreeWithdrawal);
+                existingProduct.withHoldTax, existingProduct.taxGroup, existingProduct.taxGroupOptions, existingProduct.allowFreeWithdrawal,
+                existingProduct.addPenaltyOnMissedTargetSavings);
     }
 
     public static RecurringDepositProductData instance(final DepositProductData depositProductData, final boolean preClosurePenalApplicable,
@@ -271,7 +272,7 @@ public final class RecurringDepositProductData extends DepositProductData {
                 minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType, inMultiplesOfDepositTerm,
                 inMultiplesOfDepositTermType, isMandatoryDeposit, allowWithdrawal, adjustAdvanceTowardsFuturePayments,
                 periodFrequencyTypeOptions, minDepositAmount, depositAmount, maxDepositAmount, depositProductData.withHoldTax,
-                depositProductData.taxGroup, taxGroupOptions, allowFreeWithdrawal);
+                depositProductData.taxGroup, taxGroupOptions, allowFreeWithdrawal, depositProductData.addPenaltyOnMissedTargetSavings);
     }
 
     public static RecurringDepositProductData lookup(final Long id, final String name) {
@@ -329,6 +330,7 @@ public final class RecurringDepositProductData extends DepositProductData {
         final BigDecimal depositAmount = null;
         final BigDecimal maxDepositAmount = null;
         final boolean withHoldTax = false;
+        final boolean addPenaltyOnMissedTargetSavings = false;
         final TaxGroupData taxGroup = null;
         final Collection<TaxGroupData> taxGroupOptions = null;
 
@@ -343,7 +345,7 @@ public final class RecurringDepositProductData extends DepositProductData {
                 minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType, inMultiplesOfDepositTerm,
                 inMultiplesOfDepositTermType, isMandatoryDeposit, allowWithdrawal, adjustAdvanceTowardsFuturePayments,
                 periodFrequencyTypeOptions, minDepositAmount, depositAmount, maxDepositAmount, withHoldTax, taxGroup, taxGroupOptions,
-                allowFreeWithdrawal);
+                allowFreeWithdrawal, addPenaltyOnMissedTargetSavings);
     }
 
     public static RecurringDepositProductData withInterestChart(final RecurringDepositProductData product,
@@ -364,7 +366,7 @@ public final class RecurringDepositProductData extends DepositProductData {
                 product.inMultiplesOfDepositTermType, product.isMandatoryDeposit, product.allowWithdrawal,
                 product.adjustAdvanceTowardsFuturePayments, product.periodFrequencyTypeOptions, product.minDepositAmount,
                 product.depositAmount, product.maxDepositAmount, product.withHoldTax, product.taxGroup, product.taxGroupOptions,
-                product.allowFreeWithdrawal);
+                product.allowFreeWithdrawal, product.addPenaltyOnMissedTargetSavings);
 
     }
 
@@ -393,7 +395,8 @@ public final class RecurringDepositProductData extends DepositProductData {
             final EnumOptionData inMultiplesOfDepositTermType, final boolean isMandatoryDeposit, boolean allowWithdrawal,
             boolean adjustAdvanceTowardsFuturePayments, final Collection<EnumOptionData> periodFrequencyTypeOptions,
             final BigDecimal minDepositAmount, final BigDecimal depositAmount, final BigDecimal maxDepositAmount, final boolean withHoldTax,
-            final TaxGroupData taxGroup, final Collection<TaxGroupData> taxGroupOptions, boolean allowFreeWithdrawal) {
+            final TaxGroupData taxGroup, final Collection<TaxGroupData> taxGroupOptions, boolean allowFreeWithdrawal,
+            final boolean addPenaltyOnMissedTargetSavings) {
 
         super(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, lockinPeriodFrequency,
@@ -402,7 +405,7 @@ public final class RecurringDepositProductData extends DepositProductData {
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions,
                 accountingRuleOptions, accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, minBalanceForInterestCalculation, withHoldTax, taxGroup,
-                taxGroupOptions, false, false);
+                taxGroupOptions, false, false, addPenaltyOnMissedTargetSavings);
 
         this.preClosurePenalApplicable = preClosurePenalApplicable;
         this.preClosurePenalInterest = preClosurePenalInterest;

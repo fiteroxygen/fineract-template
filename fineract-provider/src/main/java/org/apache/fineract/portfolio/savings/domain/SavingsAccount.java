@@ -348,7 +348,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     public transient ConfigurationDomainService configurationDomainService;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<SavingsAccountBlockNarrationHistory> savingsAccountBlockNarrationHistory = new HashSet<>();
 
     @ManyToOne
@@ -391,6 +391,21 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     @Column(name = "is_unlocked")
     private boolean unlocked;
+
+    @Column(name = "use_floating_interest_rate", nullable = true)
+    private Boolean useFloatingInterestRate;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<SavingsAccountFloatingInterestRate> savingsAccountFloatingInterestRates = new HashSet<>();
+
+    @Column(name = "withdrawal_frequency")
+    private Integer withdrawalFrequency;
+    @Column(name = "withdrawal_frequency_enum")
+    private Integer withdrawalFrequencyEnum;
+    @Column(name = "previous_flex_withdrawal_date")
+    private LocalDate previousFlexWithdrawalDate;
+    @Column(name = "next_flex_withdrawal_date")
+    private LocalDate nextFlexWithdrawalDate;
 
     protected SavingsAccount() {
         //
@@ -1143,7 +1158,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
                     this.currency, compoundingPeriodType, interestCalculationType, interestRateAsFraction, daysInYearType.getValue(),
                     upToInterestCalculationDate, interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, overdraftInterestRateAsFraction, minOverdraftForInterestCalculation,
-                    isUserPosting, financialYearBeginningMonth);
+                    isUserPosting, financialYearBeginningMonth, this, mc);
 
             periodStartingBalance = postingPeriod.closingBalance();
 
@@ -1256,7 +1271,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
                     interestCalculationType, interestRateAsFraction, daysInYearType.getValue(), upToInterestCalculationDate,
                     interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, overdraftInterestRateAsFraction, minOverdraftForInterestCalculation,
-                    isUserPosting, financialYearBeginningMonth, includePostingAndWithHoldTax);
+                    isUserPosting, financialYearBeginningMonth, includePostingAndWithHoldTax, this, mc);
 
             periodStartingBalance = postingPeriod.closingBalance();
             allPostingPeriods.add(postingPeriod);
@@ -2020,6 +2035,12 @@ public class SavingsAccount extends AbstractPersistableCustom {
             final String newValue = command.stringValueOfParameterNamed(SavingsApiConstants.accountNoParamName);
             actualChanges.put(SavingsApiConstants.accountNoParamName, newValue);
             this.accountNumber = StringUtils.defaultIfEmpty(newValue, null);
+        }
+
+        if (command.isChangeInBooleanParameterNamed(SavingsApiConstants.useFloatingInterestRateParamName, this.useFloatingInterestRate)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(SavingsApiConstants.useFloatingInterestRateParamName);
+            actualChanges.put(SavingsApiConstants.useFloatingInterestRateParamName, newValue);
+            this.useFloatingInterestRate = newValue;
         }
 
         if (command.isChangeInStringParameterNamed(SavingsApiConstants.externalIdParamName, this.externalId)) {
@@ -2948,6 +2969,26 @@ public class SavingsAccount extends AbstractPersistableCustom {
         }
 
         return nextDueDate;
+    }
+
+    public void validateAccountBalanceForBnplLoanWithEquityContribution(final BigDecimal bnplEquityAmount, final boolean isException) {
+        Money runningBalance = this.summary.getAccountBalance(getCurrency());
+        Money minRequiredBalance = minRequiredBalanceDerived(getCurrency()).add(bnplEquityAmount);
+        final BigDecimal withdrawalFee = null;
+
+        // In overdraft cases, minRequiredBalance can be in violation after interest posting
+        // and should be checked after processing all transactions
+        if (!isOverdraft()) {
+            if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
+                throw new InsufficientAccountBalanceException("bnplEquityAmount", getAccountBalance(), withdrawalFee, bnplEquityAmount);
+            }
+        }
+
+        if (this.getSavingsHoldAmount().compareTo(BigDecimal.ZERO) > 0) {
+            if (runningBalance.minus(this.getSavingsHoldAmount()).minus(minRequiredBalance).isLessThanZero()) {
+                throw new InsufficientAccountBalanceException("bnplEquityAmount", getAccountBalance(), withdrawalFee, bnplEquityAmount);
+            }
+        }
     }
 
     public void validateAccountBalanceDoesNotBecomeNegativeMinimal(final BigDecimal transactionAmount, final boolean isException) {
@@ -4042,6 +4083,10 @@ public class SavingsAccount extends AbstractPersistableCustom {
         return this.taxGroup;
     }
 
+    public void setTaxGroup(TaxGroup taxGroup) {
+        this.taxGroup = taxGroup;
+    }
+
     public boolean withHoldTax() {
         return this.withHoldTax;
     }
@@ -4634,7 +4679,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
                     compoundingPeriodType, savingsInterestCalculationType, interestRateAsFraction, daysInYearType.getValue(),
                     interestPostingUpToDate, interestPostTransactions, isInterestTransfer, minBalForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, overdraftInterestRateAsFraction, minOdForInterestCalculation, isUserPosting,
-                    financialYearBeginningMonth, includePostingAndWithHoldTax);
+                    financialYearBeginningMonth, includePostingAndWithHoldTax, this, mc);
 
             periodStartingBalance = postingPeriod.closingBalance();
             allPostingPeriods.add(postingPeriod);
@@ -5112,5 +5157,37 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     public LocalDate getUnlockDate() {
         return unlockDate;
+    }
+
+    public Boolean getUseFloatingInterestRate() {
+        return useFloatingInterestRate;
+    }
+
+    public void setUseFloatingInterestRate(Boolean useFloatingInterestRate) {
+        this.useFloatingInterestRate = useFloatingInterestRate;
+    }
+
+    public Set<SavingsAccountFloatingInterestRate> getSavingsAccountFloatingInterestRates() {
+        return savingsAccountFloatingInterestRates;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public void setWithdrawalFrequency(Integer withdrawalFrequency) {
+        this.withdrawalFrequency = withdrawalFrequency;
+    }
+
+    public void setWithdrawalFrequencyEnum(Integer withdrawalFrequencyEnum) {
+        this.withdrawalFrequencyEnum = withdrawalFrequencyEnum;
+    }
+
+    public void setPreviousFlexWithdrawalDate(LocalDate previousFlexWithdrawalDate) {
+        this.previousFlexWithdrawalDate = previousFlexWithdrawalDate;
+    }
+
+    public void setNextFlexWithdrawalDate(LocalDate nextFlexWithdrawalDate) {
+        this.nextFlexWithdrawalDate = nextFlexWithdrawalDate;
     }
 }

@@ -85,4 +85,10 @@ public class SavingsProductFloatingInterestRateData implements Serializable {
     public void setFloatingInterestRate(BigDecimal floatingInterestRate) {
         this.floatingInterestRate = floatingInterestRate;
     }
+
+    public SavingsAccountFloatingInterestRateData toSavingsAccountFloatingInterestRateData() {
+        SavingsAccountFloatingInterestRateData savingsAccountFloatingInterestRateData = SavingsAccountFloatingInterestRateData
+                .instanceWithProductDateForTemplate(this.fromDate, this.endDate, this.floatingInterestRate);
+        return savingsAccountFloatingInterestRateData;
+    }
 }

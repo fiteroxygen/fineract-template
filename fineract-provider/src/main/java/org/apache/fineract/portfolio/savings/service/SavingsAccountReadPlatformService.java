@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
+import org.apache.fineract.portfolio.savings.data.RecurringMissedTargetData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountBlockNarrationHistoryData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
@@ -78,5 +79,7 @@ public interface SavingsAccountReadPlatformService {
     List<Long> retrieveActiveSavingAccountsWithZeroInterest();
 
     List<Long> retrieveActiveOverdraftSavingAccounts();
+
+    RecurringMissedTargetData findRecurringDepositAccountWithMissedTarget(Long savingsAccountId);
 
 }

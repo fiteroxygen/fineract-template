@@ -232,6 +232,17 @@ public class SavingsAccountDataValidator {
             final LocalDate vaultTargetDate = this.fromApiJsonHelper.extractLocalDateNamed(VAULT_TARGET_DATE, element);
             baseDataValidator.reset().parameter(VAULT_TARGET_DATE).value(vaultTargetDate).notNull();
         }
+        if (this.fromApiJsonHelper.parameterExists(SavingsApiConstants.WITHDRAWAL_FREQUENCY, element)) {
+            final Integer withdrawalFrequency = this.fromApiJsonHelper
+                    .extractIntegerSansLocaleNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY, element);
+            baseDataValidator.reset().parameter(SavingsApiConstants.WITHDRAWAL_FREQUENCY).value(withdrawalFrequency).notNull();
+        }
+        if (this.fromApiJsonHelper.parameterExists(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, element)) {
+            final Integer withdrawalFrequencyEnum = this.fromApiJsonHelper
+                    .extractIntegerSansLocaleNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, element);
+            baseDataValidator.reset().parameter(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM).value(withdrawalFrequencyEnum)
+                    .inMinMaxRange(0, 3);
+        }
 
         validateSavingsCharges(element, baseDataValidator);
 

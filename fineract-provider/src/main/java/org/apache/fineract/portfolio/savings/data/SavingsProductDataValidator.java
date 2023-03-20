@@ -115,7 +115,7 @@ public class SavingsProductDataValidator {
             minBalanceForInterestCalculationParamName, withHoldTaxParamName, taxGroupIdParamName, isInterestPostingConfigUpdateParamName,
             numberOfCreditTransactionsParamName, numberOfDebitTransactionsParamName, "receivablePenaltyAccountId",
             "receivableInterestAccountId", "receivableFeeAccountId", "interestPayableAccountId", useFloatingInterestRateParamName,
-            floatingInterestRatesParamName));
+            floatingInterestRatesParamName, SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, SavingsApiConstants.WITHDRAWAL_FREQUENCY));
 
     @Autowired
     public SavingsProductDataValidator(final FromJsonHelper fromApiJsonHelper) {
@@ -298,6 +298,17 @@ public class SavingsProductDataValidator {
                     .extractBigDecimalWithLocaleNamed(minBalanceForInterestCalculationParamName, element);
             baseDataValidator.reset().parameter(minBalanceForInterestCalculationParamName).value(minBalanceForInterestCalculation)
                     .ignoreIfNull().zeroOrPositiveAmount();
+        }
+        if (this.fromApiJsonHelper.parameterExists(SavingsApiConstants.WITHDRAWAL_FREQUENCY, element)) {
+            final Integer withdrawalFrequency = this.fromApiJsonHelper
+                    .extractIntegerSansLocaleNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY, element);
+            baseDataValidator.reset().parameter(SavingsApiConstants.WITHDRAWAL_FREQUENCY).value(withdrawalFrequency).notNull();
+        }
+        if (this.fromApiJsonHelper.parameterExists(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, element)) {
+            final Integer withdrawalFrequencyEnum = this.fromApiJsonHelper
+                    .extractIntegerSansLocaleNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, element);
+            baseDataValidator.reset().parameter(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM).value(withdrawalFrequencyEnum)
+                    .inMinMaxRange(0, 3);
         }
 
         validateTaxWithHoldingParams(baseDataValidator, element, true);
@@ -567,6 +578,17 @@ public class SavingsProductDataValidator {
                         .extractLongNamed(SavingProductAccountingParams.ESCHEAT_LIABILITY.getValue(), element);
                 baseDataValidator.reset().parameter(SavingProductAccountingParams.ESCHEAT_LIABILITY.getValue())
                         .value(escheatLiabilityAccountId).notNull().integerGreaterThanZero();
+            }
+            if (this.fromApiJsonHelper.parameterExists(SavingsApiConstants.WITHDRAWAL_FREQUENCY, element)) {
+                final Integer withdrawalFrequency = this.fromApiJsonHelper
+                        .extractIntegerSansLocaleNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY, element);
+                baseDataValidator.reset().parameter(SavingsApiConstants.WITHDRAWAL_FREQUENCY).value(withdrawalFrequency).notNull();
+            }
+            if (this.fromApiJsonHelper.parameterExists(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, element)) {
+                final Integer withdrawalFrequencyEnum = this.fromApiJsonHelper
+                        .extractIntegerSansLocaleNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, element);
+                baseDataValidator.reset().parameter(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM).value(withdrawalFrequencyEnum)
+                        .inMinMaxRange(0, 3);
             }
         }
 

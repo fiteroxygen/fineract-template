@@ -37,6 +37,7 @@ import org.apache.fineract.organisation.staff.domain.StaffRepositoryWrapper;
 import org.apache.fineract.portfolio.account.domain.AccountAssociationType;
 import org.apache.fineract.portfolio.account.domain.AccountAssociations;
 import org.apache.fineract.portfolio.account.domain.AccountAssociationsRepository;
+import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
@@ -163,7 +164,7 @@ public class GuarantorWritePlatformServiceJpaRepositoryIImpl implements Guaranto
             }
 
             if (guarantor == null) {
-                guarantor = Guarantor.fromJson(loan, clientRelationshipType, command, guarantorFundingDetails);
+                guarantor = Guarantor.fromJson(loan, clientRelationshipType, command, guarantorFundingDetails, getGuarantorGender(command));
             } else {
                 guarantor.addFundingDetails(guarantorFundingDetails);
             }
@@ -183,6 +184,17 @@ public class GuarantorWritePlatformServiceJpaRepositoryIImpl implements Guaranto
             handleGuarantorDataIntegrityIssues(throwable, dve);
             return CommandProcessingResult.empty();
         }
+    }
+
+    private CodeValue getGuarantorGender(JsonCommand guarantorCommand) {
+        // Get gender as CodeValue from command
+        CodeValue gender = null;
+        if (guarantorCommand.parameterExists(GuarantorJSONinputParams.GENDER_ID.getValue())) {
+            final Long genderId = guarantorCommand.longValueOfParameterNamed(GuarantorJSONinputParams.GENDER_ID.getValue());
+            gender = this.codeValueRepositoryWrapper.findOneByCodeNameAndIdWithNotFoundDetection(ClientApiConstants.GENDER, genderId);
+        }
+
+        return gender;
     }
 
     private void validateGuarantorSavingsAccountActivationDateWithLoanSubmittedOnDate(final Loan loan,
@@ -210,7 +222,7 @@ public class GuarantorWritePlatformServiceJpaRepositoryIImpl implements Guaranto
                 throw new GuarantorNotFoundException(loanId, guarantorId);
             }
 
-            final Map<String, Object> changesOnly = guarantorForUpdate.update(command);
+            final Map<String, Object> changesOnly = guarantorForUpdate.update(command, getGuarantorGender(command));
 
             if (changesOnly.containsKey(GuarantorJSONinputParams.CLIENT_RELATIONSHIP_TYPE_ID.getValue())) {
                 final Long clientRelationshipId = guarantorCommand.getClientRelationshipTypeId();

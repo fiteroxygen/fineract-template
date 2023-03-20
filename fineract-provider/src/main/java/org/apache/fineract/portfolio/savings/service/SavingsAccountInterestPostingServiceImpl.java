@@ -281,7 +281,7 @@ public class SavingsAccountInterestPostingServiceImpl implements SavingsAccountI
                     interestCalculationType, interestRateAsFraction, daysInYearType.getValue(), upToInterestCalculationDate,
                     interestPostTransactions, isInterestTransfer, minBalanceForInterestCalculation,
                     isSavingsInterestPostingAtCurrentPeriodEnd, overdraftInterestRateAsFraction, minOverdraftForInterestCalculation,
-                    isUserPosting, financialYearBeginningMonth, savingsAccountData.isAllowOverdraft());
+                    isUserPosting, financialYearBeginningMonth, savingsAccountData.isAllowOverdraft(), savingsAccountData, mc);
 
             periodStartingBalance = postingPeriod.closingBalance();
 

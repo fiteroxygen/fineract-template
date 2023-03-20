@@ -64,16 +64,28 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.accounting.common.AccountingRuleType;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.charge.exception.ChargeCannotBeAppliedToException;
 import org.apache.fineract.portfolio.loanproduct.exception.InvalidCurrencyException;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
@@ -216,13 +228,47 @@ public class SavingsProductAssembler {
         final Long numOfCreditTransaction = command.longValueOfParameterNamed(numberOfCreditTransactionsParamName);
         final Long numOfDebitTransaction = command.longValueOfParameterNamed(numberOfDebitTransactionsParamName);
 
+        final Integer withdrawalFrequency = command.integerValueOfParameterNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY);
+        final Integer withdrawalFrequencyEnum = command.integerValueOfParameterNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM);
+
+        if (withdrawalFrequency != null) {
+            if (withdrawalFrequencyEnum == null) {
+                throw new GeneralPlatformDomainRuleException(
+                        "Please provide withdrawalFrequencyEnum since you provided withdrawalFrequency",
+                        "Please provide withdrawalFrequencyEnum since you provided withdrawalFrequency");
+            }
+            if (CollectionUtils.isEmpty(charges)) {
+                throw new GeneralPlatformDomainRuleException("withdrawalFrequency.requires.a.withdrawal.fee.charge.on.this.product",
+                        "withdrawalFrequency requires a charge of ChargeTimeType [withdrawalFee ] on this product");
+            }
+            List<Charge> chargeList = new ArrayList<>();
+
+            for (Charge charge : charges) {
+                if (ChargeTimeType.fromInt(charge.getChargeTimeType()).equals(ChargeTimeType.WITHDRAWAL_FEE)) {
+                    chargeList.add(charge);
+                }
+            }
+            if (chargeList.size() == 0) {
+                throw new GeneralPlatformDomainRuleException(
+                        "ithdrawalFrequency.requires.a.withdrawal.fee.charge.on.this.product.but.it's not.supplied",
+                        "withdrawalFrequency requires a charge of ChargeTimeType [withdrawalFee ] on this product but it's not supplied");
+
+            }
+        } else {
+            if (withdrawalFrequencyEnum != null) {
+                throw new GeneralPlatformDomainRuleException(
+                        "Please provide withdrawalFrequency since you provided withdrawalFrequencyEnum",
+                        "Please provide withdrawalFrequency since you provided withdrawalFrequencyEnum");
+            }
+        }
+
         return SavingsProduct.createNew(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, lienAllowed, maxAllowedLienLimit,
                 minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax,
                 taxGroup, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, isInterestPostingConfigUpdate,
-                numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate);
+                numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate, withdrawalFrequency, withdrawalFrequencyEnum);
     }
 
     public Set<SavingsProductFloatingInterestRate> assembleListOfFloatingInterestRates(final JsonCommand command,
@@ -235,6 +281,7 @@ public class SavingsProductAssembler {
                     final JsonObject floatingInterestRateElement = floatingInterestRatesArray.get(i).getAsJsonObject();
                     SavingsProductFloatingInterestRate floatingInterestRate = assembleSavingsProductFloatingInterestRateFrom(
                             floatingInterestRateElement, savingsProduct);
+                    validateSavingsProductFloatingInterestRate(floatingInterestRate, floatingInterestRates);
                     floatingInterestRates.add(floatingInterestRate);
                 }
             }
@@ -293,9 +340,69 @@ public class SavingsProductAssembler {
         final BigDecimal floatingInterestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(floatingInterestRateValueParamName,
                 element);
 
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource("SavingsProductFloatingInterestRates");
+        if (fromDate == null) {
+            baseDataValidator.parameter("fromDate").failWithCode("fromDate.is.empty");
+        }
+        if (floatingInterestRate == null) {
+            baseDataValidator.parameter("floatingInterestRate").failWithCode("floatingInterestRate.is.empty");
+        }
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+
         final SavingsProductFloatingInterestRate savingsProductFloatingInterestRate = SavingsProductFloatingInterestRate.createNew(fromDate,
                 toDate, floatingInterestRate, savingsProduct);
 
         return savingsProductFloatingInterestRate;
+    }
+
+    public void validateSavingsProductFloatingInterestRate(SavingsProductFloatingInterestRate savingsProductFloatingInterestRateToValidate,
+            Set<SavingsProductFloatingInterestRate> existingSavingProductFloatingInterestRates) {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource("SavingsProductFloatingInterestRates");
+
+        if (CollectionUtils.isNotEmpty(existingSavingProductFloatingInterestRates)) {
+
+            // is floating Interest with same from date already exist , throw validation error
+            for (SavingsProductFloatingInterestRate existingSavingsProductFloatingInterestRate : existingSavingProductFloatingInterestRates) {
+                if (DateUtils.isSameLocalDate(savingsProductFloatingInterestRateToValidate.getFromDate(),
+                        existingSavingsProductFloatingInterestRate.getFromDate())) {
+                    baseDataValidator.parameter("fromDate").failWithCode("multiple.interest.rate.with.same.fromDate");
+                }
+
+                if (savingsProductFloatingInterestRateToValidate.getFromDate()
+                        .isAfter(existingSavingsProductFloatingInterestRate.getFromDate())
+                        && (existingSavingsProductFloatingInterestRate.getEndDate() != null && savingsProductFloatingInterestRateToValidate
+                                .getFromDate().isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
+                    baseDataValidator.parameter("fromDate")
+                            .failWithCode("fromDate.is.overlapping.with.other.floating.interest.rate.period");
+                }
+
+                if (savingsProductFloatingInterestRateToValidate.getEndDate() != null) {
+                    if (savingsProductFloatingInterestRateToValidate.getEndDate()
+                            .isAfter(existingSavingsProductFloatingInterestRate.getFromDate())
+                            && (existingSavingsProductFloatingInterestRate.getEndDate() != null
+                                    && savingsProductFloatingInterestRateToValidate.getEndDate()
+                                            .isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
+                        baseDataValidator.parameter("endDate")
+                                .failWithCode("endDate.is.overlapping.with.other.floating.interest.rate.period");
+                    }
+                }
+            }
+        }
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
+        if (!dataValidationErrors.isEmpty()) {
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                    dataValidationErrors);
+        }
+    }
+
+    public static Date asDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 }
