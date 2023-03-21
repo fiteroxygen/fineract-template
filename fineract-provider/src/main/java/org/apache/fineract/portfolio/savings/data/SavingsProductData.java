@@ -27,6 +27,7 @@ import org.apache.fineract.accounting.common.AccountingRuleType;
 import org.apache.fineract.accounting.glaccount.data.GLAccountData;
 import org.apache.fineract.accounting.producttoaccountmapping.data.ChargeToGLAccountMapper;
 import org.apache.fineract.accounting.producttoaccountmapping.data.PaymentTypeToGLAccountMapper;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.portfolio.charge.data.ChargeData;
@@ -105,6 +106,14 @@ public final class SavingsProductData implements Serializable {
     private final Boolean useFloatingInterestRate;
     private final Collection<SavingsProductFloatingInterestRateData> floatingInterestRates;
 
+    private List<CodeValueData> productCategories;
+
+    private List<CodeValueData> productTypes;
+
+    private Long productTypeId;
+
+    private Long productCategoryId;
+
     public static SavingsProductData template(final CurrencyData currency, final EnumOptionData interestCompoundingPeriodType,
             final EnumOptionData interestPostingPeriodType, final EnumOptionData interestCalculationType,
             final EnumOptionData interestCalculationDaysInYearType, final EnumOptionData accountingRule,
@@ -117,7 +126,7 @@ public final class SavingsProductData implements Serializable {
             final Map<String, List<GLAccountData>> accountingMappingOptions, final Collection<ChargeData> chargeOptions,
             final Collection<ChargeData> penaltyOptions, final Collection<TaxGroupData> taxGroupOptions,
             final String accountMappingForPayment, EnumOptionData withdrawalFrequencyEnum,
-            Collection<EnumOptionData> withdrawalFrequencyOptions) {
+            Collection<EnumOptionData> withdrawalFrequencyOptions, List<CodeValueData> productCategories, List<CodeValueData> productTypes) {
 
         final Long id = null;
         final String name = null;
@@ -152,6 +161,9 @@ public final class SavingsProductData implements Serializable {
         final Long numOfCreditTransaction = null;
         final Long numOfDebitTransaction = null;
         final Integer withdrawalFrequency = null;
+        final Long productCategoryId=null;
+        final Long productTypeId=null;
+
 
         return new SavingsProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -164,7 +176,7 @@ public final class SavingsProductData implements Serializable {
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, taxGroupOptions,
                 isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, accountMappingForPayment,
                 isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, null, null, withdrawalFrequencyEnum,
-                withdrawalFrequencyOptions, withdrawalFrequency);
+                withdrawalFrequencyOptions, withdrawalFrequency,productCategoryId,productTypeId,productCategories,productTypes);
     }
 
     public static SavingsProductData withFloatingInterestRates(final SavingsProductData product,
@@ -185,7 +197,8 @@ public final class SavingsProductData implements Serializable {
                 product.isDormancyTrackingActive, product.daysToInactive, product.daysToDormancy, product.daysToEscheat,
                 product.accountMappingForPayment, product.isInterestPostingConfigUpdate, product.numOfCreditTransaction,
                 product.numOfDebitTransaction, product.useFloatingInterestRate, floatingInterestRates, product.withdrawalFrequencyEnum,
-                product.withdrawalFrequencyOptions, product.withdrawalFrequency);
+                product.withdrawalFrequencyOptions, product.withdrawalFrequency, product.productCategoryId,
+                product.productTypeId,product.productCategories,product.productTypes);
     }
 
     public static SavingsProductData withCharges(final SavingsProductData product, final Collection<ChargeData> charges) {
@@ -205,16 +218,18 @@ public final class SavingsProductData implements Serializable {
                 product.isDormancyTrackingActive, product.daysToInactive, product.daysToDormancy, product.daysToEscheat,
                 product.accountMappingForPayment, product.isInterestPostingConfigUpdate, product.numOfCreditTransaction,
                 product.numOfDebitTransaction, product.useFloatingInterestRate, product.floatingInterestRates,
-                product.withdrawalFrequencyEnum, product.withdrawalFrequencyOptions, product.getWithdrawalFrequency());
+                product.withdrawalFrequencyEnum, product.withdrawalFrequencyOptions, product.getWithdrawalFrequency(),
+                product.productCategoryId, product.productTypeId,product.productCategories,product.productTypes);
     }
 
     /**
      * Returns a {@link SavingsProductData} that contains and exist {@link SavingsProductData} data with further
      * template data for dropdowns.
      *
-     * @param taxGroupOptions
-     *            TODO
+     * @param taxGroupOptions          TODO
      * @param accountMappingForPayment
+     * @param productCategories
+     * @param productTypes
      */
     public static SavingsProductData withTemplate(final SavingsProductData existingProduct, final Collection<CurrencyData> currencyOptions,
             final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions,
@@ -225,7 +240,8 @@ public final class SavingsProductData implements Serializable {
             final Collection<PaymentTypeData> paymentTypeOptions, final Collection<EnumOptionData> accountingRuleOptions,
             final Map<String, List<GLAccountData>> accountingMappingOptions, final Collection<ChargeData> chargeOptions,
             final Collection<ChargeData> penaltyOptions, Collection<TaxGroupData> taxGroupOptions, final String accountMappingForPayment,
-            EnumOptionData withdrawalFrequencyEnum, Collection<EnumOptionData> withdrawalFrequencyOptions) {
+            EnumOptionData withdrawalFrequencyEnum, Collection<EnumOptionData> withdrawalFrequencyOptions,
+            final List<CodeValueData> productCategories, final List<CodeValueData> productTypes) {
 
         return new SavingsProductData(existingProduct.id, existingProduct.name, existingProduct.shortName, existingProduct.description,
                 existingProduct.currency, existingProduct.nominalAnnualInterestRate, existingProduct.interestCompoundingPeriodType,
@@ -244,7 +260,8 @@ public final class SavingsProductData implements Serializable {
                 existingProduct.daysToInactive, existingProduct.daysToDormancy, existingProduct.daysToEscheat, accountMappingForPayment,
                 existingProduct.isInterestPostingConfigUpdate, existingProduct.numOfCreditTransaction,
                 existingProduct.numOfDebitTransaction, existingProduct.useFloatingInterestRate, existingProduct.floatingInterestRates,
-                withdrawalFrequencyEnum, withdrawalFrequencyOptions, existingProduct.getWithdrawalFrequency());
+                withdrawalFrequencyEnum, withdrawalFrequencyOptions, existingProduct.getWithdrawalFrequency(),
+                existingProduct.productCategoryId, existingProduct.productTypeId,productCategories,productTypes);
     }
 
     public static SavingsProductData withAccountingDetails(final SavingsProductData existingProduct,
@@ -264,7 +281,6 @@ public final class SavingsProductData implements Serializable {
         final Map<String, List<GLAccountData>> accountingMappingOptions = null;
         final Collection<ChargeData> chargeOptions = null;
         final Collection<ChargeData> penaltyOptions = null;
-        final String accountMappingForPayment = null;
 
         return new SavingsProductData(existingProduct.id, existingProduct.name, existingProduct.shortName, existingProduct.description,
                 existingProduct.currency, existingProduct.nominalAnnualInterestRate, existingProduct.interestCompoundingPeriodType,
@@ -284,7 +300,8 @@ public final class SavingsProductData implements Serializable {
                 existingProduct.daysToEscheat, existingProduct.accountMappingForPayment, existingProduct.isInterestPostingConfigUpdate,
                 existingProduct.numOfCreditTransaction, existingProduct.numOfDebitTransaction, existingProduct.useFloatingInterestRate,
                 existingProduct.floatingInterestRates, existingProduct.withdrawalFrequencyEnum, existingProduct.withdrawalFrequencyOptions,
-                existingProduct.getWithdrawalFrequency());
+                existingProduct.getWithdrawalFrequency(),existingProduct.productCategoryId,existingProduct.productTypeId,
+                existingProduct.productCategories,existingProduct.productTypes);
     }
 
     public static SavingsProductData instance(final Long id, final String name, final String shortName, final String description,
@@ -299,7 +316,8 @@ public final class SavingsProductData implements Serializable {
             final boolean withHoldTax, final TaxGroupData taxGroup, final Boolean isDormancyTrackingActive, final Long daysToInactive,
             final Long daysToDormancy, final Long daysToEscheat, final Boolean isInterestPostingConfigUpdate,
             final Long numOfCreditTransaction, final Long numOfDebitTransaction, final Boolean useFloatingInterestRate,
-            final Integer withdrawalFrequency, final EnumOptionData withdrawalFrequencyEnum) {
+            final Integer withdrawalFrequency, final EnumOptionData withdrawalFrequencyEnum,
+            final  Long productCategoryId, final  Long productTypeId) {
 
         final Map<String, Object> accountingMappings = null;
         final Collection<PaymentTypeToGLAccountMapper> paymentChannelToFundSourceMappings = null;
@@ -321,6 +339,9 @@ public final class SavingsProductData implements Serializable {
         final Collection<ChargeToGLAccountMapper> penaltyToIncomeAccountMappings = null;
         final Collection<TaxGroupData> taxGroupOptions = null;
         final String accountMappingForPayment = null;
+        final List<CodeValueData> productCategories=null;
+        final List<CodeValueData> productTypes=null;
+
 
         return new SavingsProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -333,7 +354,7 @@ public final class SavingsProductData implements Serializable {
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, taxGroupOptions,
                 isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, accountMappingForPayment,
                 isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate, null,
-                withdrawalFrequencyEnum, null, withdrawalFrequency);
+                withdrawalFrequencyEnum, null, withdrawalFrequency,productCategoryId,productTypeId,productCategories,productTypes);
     }
 
     public static SavingsProductData lookup(final Long id, final String name) {
@@ -389,6 +410,11 @@ public final class SavingsProductData implements Serializable {
         final Boolean isInterestPostingConfigUpdate = null;
         final Long numOfCreditTransaction = null;
         final Long numOfDebitTransaction = null;
+        final Long productCategoryId=null;
+        final Long productTypeId=null;
+        final List<CodeValueData> productCategories=null;
+        final List<CodeValueData> productTypes=null;
+
 
         return new SavingsProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -400,7 +426,8 @@ public final class SavingsProductData implements Serializable {
                 minRequiredBalance, enforceMinRequiredBalance, maxAllowedLienLimit, lienAllowed, minBalanceForInterestCalculation,
                 nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax, taxGroup, taxGroupOptions,
                 isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, accountMappingForPayment,
-                isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, null, null, null, null, null);
+                isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, null, null, null, null, null
+                ,productCategoryId,productTypeId,productCategories,productTypes);
     }
 
     public static SavingsProductData createForInterestPosting(final Long id, final EnumOptionData accountingRule) {
@@ -499,7 +526,9 @@ public final class SavingsProductData implements Serializable {
             final String accountMappingForPayment, final Boolean isInterestPostingConfigUpdate, final Long numOfCreditTransaction,
             final Long numOfDebitTransaction, Boolean useFloatingInterestRate,
             final Collection<SavingsProductFloatingInterestRateData> floatingInterestRates, final EnumOptionData withdrawalFrequencyEnum,
-            final Collection<EnumOptionData> withdrawalFrequencyOptions, final Integer withdrawalFrequency) {
+            final Collection<EnumOptionData> withdrawalFrequencyOptions, final Integer withdrawalFrequency,
+            final  Long productCategoryId, final  Long productTypeId,
+            final List<CodeValueData> productCategories, final List<CodeValueData> productTypes) {
         this.id = id;
         this.name = name;
         this.shortName = shortName;
@@ -515,6 +544,10 @@ public final class SavingsProductData implements Serializable {
         this.lockinPeriodFrequency = lockinPeriodFrequency;
         this.lockinPeriodFrequencyType = lockinPeriodFrequencyType;
         this.withdrawalFeeForTransfers = withdrawalFeeForTransfers;
+        this.productCategoryId=productCategoryId;
+        this.productTypeId=productTypeId;
+        this.productCategories=productCategories;
+        this.productTypes=productTypes;
 
         this.currencyOptions = currencyOptions;
         this.interestCompoundingPeriodTypeOptions = interestCompoundingPeriodTypeOptions;

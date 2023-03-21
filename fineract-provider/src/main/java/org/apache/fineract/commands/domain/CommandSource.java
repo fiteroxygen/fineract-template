@@ -27,9 +27,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.logging.log4j.util.Strings;
 
 @Entity
 @Table(name = "m_portfolio_command_source")
@@ -270,6 +272,18 @@ public class CommandSource extends AbstractPersistableCustom {
 
     public void updateTransaction(final String transactionId) {
         this.transactionId = transactionId;
+    }
+
+    public void updateActionNameAndEntityName(CommandProcessingResult commandProcessingResult){
+
+        if(commandProcessingResult != null & !Strings.isEmpty(commandProcessingResult.getActionName())){
+            this.actionName = commandProcessingResult.getActionName();
+        }
+
+        if(commandProcessingResult != null & !Strings.isEmpty(commandProcessingResult.getEntityName())){
+            this.entityName = commandProcessingResult.getEntityName();
+        }
+
     }
 
 }

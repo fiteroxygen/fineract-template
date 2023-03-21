@@ -179,6 +179,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final CodeValueRepositoryWrapper codeValueRepositoryWrapper;
     private final PaymentTypeRepositoryWrapper repositoryWrapper;
 
+    private final SavingsAccountTransactionLimitPlatformService savingsAccountTransactionLimitPlatformService;
+
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
@@ -203,7 +205,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final JdbcTemplate jdbcTemplate, final SavingsAccountInterestPostingService savingsAccountInterestPostingService,
             final CodeValueRepositoryWrapper codeValueRepositoryWrapper,
             final VaultTribeCustomSavingsAccountTransactionRepository vaultTribeCustomSavingsAccountTransactionRepository,
-            final PaymentTypeRepositoryWrapper repositoryWrapper) {
+            final PaymentTypeRepositoryWrapper repositoryWrapper,final SavingsAccountTransactionLimitPlatformService savingsAccountTransactionLimitPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -235,6 +237,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
         this.vaultTribeCustomSavingsAccountTransactionRepository = vaultTribeCustomSavingsAccountTransactionRepository;
         this.repositoryWrapper = repositoryWrapper;
+        this.savingsAccountTransactionLimitPlatformService = savingsAccountTransactionLimitPlatformService;
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(SavingsAccountWritePlatformServiceJpaRepositoryImpl.class);
@@ -485,8 +488,11 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             this.noteRepository.save(note);
         }
 
-        return new CommandProcessingResultBuilder() //
-                .withEntityId(withdrawal.getId()) //
+        final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder();
+        savingsAccountTransactionLimitPlatformService.handleApprovalsForSessionTransactionLimits(command, account, withdrawal, account.getClient(),builder);
+
+        //
+        return builder.withEntityId(withdrawal.getId()) //
                 .withOfficeId(account.officeId()) //
                 .withClientId(account.clientId()) //
                 .withGroupId(account.groupId()) //
@@ -939,7 +945,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             account.postInterest(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null);
         } else {
             account.calculateInterestUsing(mc, today, false, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, null,
-                    includePostingAndWithHoldTax);
+                    includePostingAndWithHoldTax, false, false);
         }
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) > 0) {
@@ -1633,7 +1639,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate, includePostingAndWithHoldTax);
+                    financialYearBeginningMonth, postInterestOnDate, includePostingAndWithHoldTax, false, false);
         }
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) > 0) {

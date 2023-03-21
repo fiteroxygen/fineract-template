@@ -1795,11 +1795,11 @@ public final class LoanProductDataValidator {
             maxPrincipalAmount = loanProduct.getMaxPrincipalAmount().getAmount();
         }
 
-        if (minPrincipalUpdated) {
+        if (minPrincipalUpdated && maxPrincipalAmount != null && maxPrincipalAmount.compareTo(BigDecimal.ZERO) > 0) {
             baseDataValidator.reset().parameter(minPrincipalParameterName).value(minPrincipalAmount).notGreaterThanMax(maxPrincipalAmount);
         }
 
-        if (maxPrincipalUpdated) {
+        if (maxPrincipalUpdated && minPrincipalAmount != null && minPrincipalAmount.compareTo(BigDecimal.ZERO) > 0) {
             baseDataValidator.reset().parameter(maxPrincipalParameterName).value(maxPrincipalAmount).notLessThanMin(minPrincipalAmount);
         }
 

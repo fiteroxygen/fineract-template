@@ -52,6 +52,8 @@ import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToG
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -106,6 +108,7 @@ public class SavingsProductsApiResource {
     private final TaxReadPlatformService taxReadPlatformService;
     private final ConfigurationDomainService configurationDomainService;
     private final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService;
+    private final CodeValueReadPlatformService codeValueReadPlatformService;
 
     @Autowired
     public SavingsProductsApiResource(final SavingsProductReadPlatformService savingProductReadPlatformService,
@@ -118,7 +121,8 @@ public class SavingsProductsApiResource {
             final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService,
             final ChargeReadPlatformService chargeReadPlatformService, PaymentTypeReadPlatformService paymentTypeReadPlatformService,
             final TaxReadPlatformService taxReadPlatformService, final ConfigurationDomainService configurationDomainService,
-            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService) {
+            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService
+            ,final  CodeValueReadPlatformService codeValueReadPlatformService) {
         this.savingProductReadPlatformService = savingProductReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.currencyReadPlatformService = currencyReadPlatformService;
@@ -133,6 +137,7 @@ public class SavingsProductsApiResource {
         this.taxReadPlatformService = taxReadPlatformService;
         this.configurationDomainService = configurationDomainService;
         this.savingsProductFloatingInterestRateReadPlatformService = savingsProductFloatingInterestRateReadPlatformService;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
     }
 
     @POST
@@ -278,6 +283,11 @@ public class SavingsProductsApiResource {
             currency = new ArrayList<>(currencyOptions).get(0);
         }
 
+        final List<CodeValueData> productCategories = new ArrayList<>(
+                this.codeValueReadPlatformService.retrieveCodeValuesByCode(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY));
+        final List<CodeValueData> productTypes = new ArrayList<>(
+                this.codeValueReadPlatformService.retrieveCodeValuesByCode(SavingsApiConstants.SAVINGS_PRODUCT_TYPE));
+
         final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions = this.dropdownReadPlatformService
                 .retrieveCompoundingInterestPeriodTypeOptions();
 
@@ -322,14 +332,14 @@ public class SavingsProductsApiResource {
                     interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                     lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions, accountingRuleOptions,
                     accountingMappingOptions, chargeOptions, penaltyOptions, taxGroupOptions, accountMappingForPayment,
-                    savingsProduct.getWithdrawalFrequencyEnum(), withdrawalFrequencyOptions);
+                    savingsProduct.getWithdrawalFrequencyEnum(), withdrawalFrequencyOptions,productCategories,productTypes);
         } else {
             savingsProductToReturn = SavingsProductData.template(currency, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, taxGroupOptions,
-                    accountMappingForPayment, withdrawalFrequencyEnum, withdrawalFrequencyOptions);
+                    accountMappingForPayment, withdrawalFrequencyEnum, withdrawalFrequencyOptions,productCategories,productTypes);
         }
 
         return savingsProductToReturn;

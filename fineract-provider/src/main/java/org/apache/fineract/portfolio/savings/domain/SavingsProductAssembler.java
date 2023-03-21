@@ -18,6 +18,44 @@
  */
 package org.apache.fineract.portfolio.savings.domain;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.fineract.accounting.common.AccountingRuleType;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
+import org.apache.fineract.portfolio.charge.domain.Charge;
+import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
+import org.apache.fineract.portfolio.charge.exception.ChargeCannotBeAppliedToException;
+import org.apache.fineract.portfolio.loanproduct.exception.InvalidCurrencyException;
+import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
+import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
+import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
+import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
+import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.apache.fineract.portfolio.tax.domain.TaxGroup;
+import org.apache.fineract.portfolio.tax.domain.TaxGroupRepositoryWrapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import static org.apache.fineract.portfolio.interestratechart.InterestRateChartApiConstants.endDateParamName;
 import static org.apache.fineract.portfolio.interestratechart.InterestRateChartApiConstants.fromDateParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
@@ -59,43 +97,6 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.useFloat
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.fineract.accounting.common.AccountingRuleType;
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.ApiParameterError;
-import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
-import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
-import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
-import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
-import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
-import org.apache.fineract.portfolio.charge.domain.Charge;
-import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
-import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
-import org.apache.fineract.portfolio.charge.exception.ChargeCannotBeAppliedToException;
-import org.apache.fineract.portfolio.loanproduct.exception.InvalidCurrencyException;
-import org.apache.fineract.portfolio.savings.SavingsApiConstants;
-import org.apache.fineract.portfolio.savings.SavingsCompoundingInterestPeriodType;
-import org.apache.fineract.portfolio.savings.SavingsInterestCalculationDaysInYearType;
-import org.apache.fineract.portfolio.savings.SavingsInterestCalculationType;
-import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
-import org.apache.fineract.portfolio.savings.SavingsPostingInterestPeriodType;
-import org.apache.fineract.portfolio.tax.domain.TaxGroup;
-import org.apache.fineract.portfolio.tax.domain.TaxGroupRepositoryWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 @Component
 public class SavingsProductAssembler {
 
@@ -109,6 +110,10 @@ public class SavingsProductAssembler {
         this.chargeRepository = chargeRepository;
         this.taxGroupRepository = taxGroupRepository;
         this.fromApiJsonHelper = fromApiJsonHelper;
+    }
+
+    public static Date asDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 
     public SavingsProduct assemble(final JsonCommand command) {
@@ -125,19 +130,22 @@ public class SavingsProductAssembler {
         final BigDecimal interestRate = command.bigDecimalValueOfParameterNamed(nominalAnnualInterestRateParamName);
 
         SavingsCompoundingInterestPeriodType interestCompoundingPeriodType = null;
-        final Integer interestPeriodTypeValue = command.integerValueOfParameterNamed(interestCompoundingPeriodTypeParamName);
+        final Integer interestPeriodTypeValue = command.integerValueOfParameterNamed(
+                interestCompoundingPeriodTypeParamName);
         if (interestPeriodTypeValue != null) {
             interestCompoundingPeriodType = SavingsCompoundingInterestPeriodType.fromInt(interestPeriodTypeValue);
         }
 
         SavingsPostingInterestPeriodType interestPostingPeriodType = null;
-        final Integer interestPostingPeriodTypeValue = command.integerValueOfParameterNamed(interestPostingPeriodTypeParamName);
+        final Integer interestPostingPeriodTypeValue = command.integerValueOfParameterNamed(
+                interestPostingPeriodTypeParamName);
         if (interestPostingPeriodTypeValue != null) {
             interestPostingPeriodType = SavingsPostingInterestPeriodType.fromInt(interestPostingPeriodTypeValue);
         }
 
         SavingsInterestCalculationType interestCalculationType = null;
-        final Integer interestCalculationTypeValue = command.integerValueOfParameterNamed(interestCalculationTypeParamName);
+        final Integer interestCalculationTypeValue = command.integerValueOfParameterNamed(
+                interestCalculationTypeParamName);
         if (interestCalculationTypeValue != null) {
             interestCalculationType = SavingsInterestCalculationType.fromInt(interestCalculationTypeValue);
         }
@@ -146,25 +154,30 @@ public class SavingsProductAssembler {
         final Integer interestCalculationDaysInYearTypeValue = command
                 .integerValueOfParameterNamed(interestCalculationDaysInYearTypeParamName);
         if (interestCalculationDaysInYearTypeValue != null) {
-            interestCalculationDaysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(interestCalculationDaysInYearTypeValue);
+            interestCalculationDaysInYearType = SavingsInterestCalculationDaysInYearType.fromInt(
+                    interestCalculationDaysInYearTypeValue);
         }
 
         final BigDecimal minRequiredOpeningBalance = command
                 .bigDecimalValueOfParameterNamedDefaultToNullIfZero(minRequiredOpeningBalanceParamName);
 
-        final Integer lockinPeriodFrequency = command.integerValueOfParameterNamedDefaultToNullIfZero(lockinPeriodFrequencyParamName);
+        final Integer lockinPeriodFrequency = command.integerValueOfParameterNamedDefaultToNullIfZero(
+                lockinPeriodFrequencyParamName);
         SavingsPeriodFrequencyType lockinPeriodFrequencyType = null;
-        final Integer lockinPeriodFrequencyTypeValue = command.integerValueOfParameterNamed(lockinPeriodFrequencyTypeParamName);
+        final Integer lockinPeriodFrequencyTypeValue = command.integerValueOfParameterNamed(
+                lockinPeriodFrequencyTypeParamName);
         if (lockinPeriodFrequencyTypeValue != null) {
             lockinPeriodFrequencyType = SavingsPeriodFrequencyType.fromInt(lockinPeriodFrequencyTypeValue);
         }
 
         boolean iswithdrawalFeeApplicableForTransfer = false;
         if (command.parameterExists(withdrawalFeeForTransfersParamName)) {
-            iswithdrawalFeeApplicableForTransfer = command.booleanPrimitiveValueOfParameterNamed(withdrawalFeeForTransfersParamName);
+            iswithdrawalFeeApplicableForTransfer = command.booleanPrimitiveValueOfParameterNamed(
+                    withdrawalFeeForTransfersParamName);
         }
 
-        final AccountingRuleType accountingRuleType = AccountingRuleType.fromInt(command.integerValueOfParameterNamed("accountingRule"));
+        final AccountingRuleType accountingRuleType = AccountingRuleType.fromInt(
+                command.integerValueOfParameterNamed("accountingRule"));
 
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
@@ -181,17 +194,20 @@ public class SavingsProductAssembler {
 
         BigDecimal nominalAnnualInterestRateOverdraft = BigDecimal.ZERO;
         if (command.parameterExists(nominalAnnualInterestRateOverdraftParamName)) {
-            nominalAnnualInterestRateOverdraft = command.bigDecimalValueOfParameterNamed(nominalAnnualInterestRateOverdraftParamName);
+            nominalAnnualInterestRateOverdraft = command.bigDecimalValueOfParameterNamed(
+                    nominalAnnualInterestRateOverdraftParamName);
         }
 
         BigDecimal minOverdraftForInterestCalculation = BigDecimal.ZERO;
         if (command.parameterExists(minOverdraftForInterestCalculationParamName)) {
-            minOverdraftForInterestCalculation = command.bigDecimalValueOfParameterNamed(minOverdraftForInterestCalculationParamName);
+            minOverdraftForInterestCalculation = command.bigDecimalValueOfParameterNamed(
+                    minOverdraftForInterestCalculationParamName);
         }
 
         boolean enforceMinRequiredBalance = false;
         if (command.parameterExists(enforceMinRequiredBalanceParamName)) {
-            enforceMinRequiredBalance = command.booleanPrimitiveValueOfParameterNamed(enforceMinRequiredBalanceParamName);
+            enforceMinRequiredBalance = command.booleanPrimitiveValueOfParameterNamed(
+                    enforceMinRequiredBalanceParamName);
         }
 
         boolean useFloatingInterestRate = false;
@@ -211,7 +227,8 @@ public class SavingsProductAssembler {
 
         BigDecimal maxAllowedLienLimit = BigDecimal.ZERO;
         if (command.parameterExists(maxAllowedLienLimitParamName)) {
-            maxAllowedLienLimit = command.bigDecimalValueOfParameterNamedDefaultToNullIfZero(maxAllowedLienLimitParamName);
+            maxAllowedLienLimit = command.bigDecimalValueOfParameterNamedDefaultToNullIfZero(
+                    maxAllowedLienLimitParamName);
         }
         final BigDecimal minBalanceForInterestCalculation = command
                 .bigDecimalValueOfParameterNamedDefaultToNullIfZero(minBalanceForInterestCalculationParamName);
@@ -219,17 +236,21 @@ public class SavingsProductAssembler {
         boolean withHoldTax = command.booleanPrimitiveValueOfParameterNamed(withHoldTaxParamName);
         final TaxGroup taxGroup = assembleTaxGroup(command);
 
-        final Boolean isDormancyTrackingActive = command.booleanObjectValueOfParameterNamed(isDormancyTrackingActiveParamName);
+        final Boolean isDormancyTrackingActive = command.booleanObjectValueOfParameterNamed(
+                isDormancyTrackingActiveParamName);
         final Long daysToInactive = command.longValueOfParameterNamed(daysToInactiveParamName);
         final Long daysToDormancy = command.longValueOfParameterNamed(daysToDormancyParamName);
         final Long daysToEscheat = command.longValueOfParameterNamed(daysToEscheatParamName);
 
-        final Boolean isInterestPostingConfigUpdate = command.booleanObjectValueOfParameterNamed(isInterestPostingConfigUpdateParamName);
+        final Boolean isInterestPostingConfigUpdate = command.booleanObjectValueOfParameterNamed(
+                isInterestPostingConfigUpdateParamName);
         final Long numOfCreditTransaction = command.longValueOfParameterNamed(numberOfCreditTransactionsParamName);
         final Long numOfDebitTransaction = command.longValueOfParameterNamed(numberOfDebitTransactionsParamName);
 
-        final Integer withdrawalFrequency = command.integerValueOfParameterNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY);
-        final Integer withdrawalFrequencyEnum = command.integerValueOfParameterNamed(SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM);
+        final Integer withdrawalFrequency = command.integerValueOfParameterNamed(
+                SavingsApiConstants.WITHDRAWAL_FREQUENCY);
+        final Integer withdrawalFrequencyEnum = command.integerValueOfParameterNamed(
+                SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM);
 
         if (withdrawalFrequency != null) {
             if (withdrawalFrequencyEnum == null) {
@@ -238,7 +259,8 @@ public class SavingsProductAssembler {
                         "Please provide withdrawalFrequencyEnum since you provided withdrawalFrequency");
             }
             if (CollectionUtils.isEmpty(charges)) {
-                throw new GeneralPlatformDomainRuleException("withdrawalFrequency.requires.a.withdrawal.fee.charge.on.this.product",
+                throw new GeneralPlatformDomainRuleException(
+                        "withdrawalFrequency.requires.a.withdrawal.fee.charge.on.this.product",
                         "withdrawalFrequency requires a charge of ChargeTimeType [withdrawalFee ] on this product");
             }
             List<Charge> chargeList = new ArrayList<>();
@@ -262,13 +284,20 @@ public class SavingsProductAssembler {
             }
         }
 
-        return SavingsProduct.createNew(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
-                interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
-                lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, accountingRuleType, charges,
-                allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, lienAllowed, maxAllowedLienLimit,
-                minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax,
-                taxGroup, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, isInterestPostingConfigUpdate,
-                numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate, withdrawalFrequency, withdrawalFrequencyEnum);
+        return SavingsProduct.createNew(name, shortName, description, currency, interestRate,
+                interestCompoundingPeriodType,
+                interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
+                minRequiredOpeningBalance,
+                lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer,
+                accountingRuleType, charges,
+                allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, lienAllowed,
+                maxAllowedLienLimit,
+                minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft,
+                minOverdraftForInterestCalculation, withHoldTax,
+                taxGroup, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,
+                isInterestPostingConfigUpdate,
+                numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate, withdrawalFrequency,
+                withdrawalFrequencyEnum);
     }
 
     public Set<SavingsProductFloatingInterestRate> assembleListOfFloatingInterestRates(final JsonCommand command,
@@ -337,7 +366,8 @@ public class SavingsProductAssembler {
 
         final LocalDate fromDate = this.fromApiJsonHelper.extractLocalDateNamed(fromDateParamName, element);
         final LocalDate toDate = this.fromApiJsonHelper.extractLocalDateNamed(endDateParamName, element);
-        final BigDecimal floatingInterestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(floatingInterestRateValueParamName,
+        final BigDecimal floatingInterestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
+                floatingInterestRateValueParamName,
                 element);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
@@ -351,7 +381,8 @@ public class SavingsProductAssembler {
         }
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
 
-        final SavingsProductFloatingInterestRate savingsProductFloatingInterestRate = SavingsProductFloatingInterestRate.createNew(fromDate,
+        final SavingsProductFloatingInterestRate savingsProductFloatingInterestRate = SavingsProductFloatingInterestRate.createNew(
+                fromDate,
                 toDate, floatingInterestRate, savingsProduct);
 
         return savingsProductFloatingInterestRate;
@@ -375,7 +406,7 @@ public class SavingsProductAssembler {
                 if (savingsProductFloatingInterestRateToValidate.getFromDate()
                         .isAfter(existingSavingsProductFloatingInterestRate.getFromDate())
                         && (existingSavingsProductFloatingInterestRate.getEndDate() != null && savingsProductFloatingInterestRateToValidate
-                                .getFromDate().isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
+                        .getFromDate().isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
                     baseDataValidator.parameter("fromDate")
                             .failWithCode("fromDate.is.overlapping.with.other.floating.interest.rate.period");
                 }
@@ -384,8 +415,8 @@ public class SavingsProductAssembler {
                     if (savingsProductFloatingInterestRateToValidate.getEndDate()
                             .isAfter(existingSavingsProductFloatingInterestRate.getFromDate())
                             && (existingSavingsProductFloatingInterestRate.getEndDate() != null
-                                    && savingsProductFloatingInterestRateToValidate.getEndDate()
-                                            .isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
+                            && savingsProductFloatingInterestRateToValidate.getEndDate()
+                            .isBefore(existingSavingsProductFloatingInterestRate.getEndDate()))) {
                         baseDataValidator.parameter("endDate")
                                 .failWithCode("endDate.is.overlapping.with.other.floating.interest.rate.period");
                     }
@@ -397,12 +428,9 @@ public class SavingsProductAssembler {
 
     private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
         if (!dataValidationErrors.isEmpty()) {
-            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                    "Validation errors exist.",
                     dataValidationErrors);
         }
-    }
-
-    public static Date asDate(LocalDate localDate) {
-        return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 }

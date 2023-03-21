@@ -103,7 +103,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
 
         SavingProductMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
-            sqlBuilder.append("sp.id as id, sp.name as name, sp.short_name as shortName, sp.description as description, ");
+            sqlBuilder.append("sp.id as id, sp.name as name,sp.product_type_id productTypeId, sp.product_category_id productCategoryId, sp.short_name as shortName, sp.description as description, ");
             sqlBuilder.append(
                     "sp.currency_code as currencyCode, sp.currency_digits as currencyDigits, sp.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
@@ -157,6 +157,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             final String name = rs.getString("name");
             final String shortName = rs.getString("shortName");
             final String description = rs.getString("description");
+            final Long productCategoryId = rs.getLong("productCategoryId");
+            final Long productTypeId = rs.getLong("productTypeId");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -242,7 +244,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
                     lienAllowed, minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,
                     withHoldTax, taxGroupData, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,
                     isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate,
-                    withdrawalFrequency, withdrawalFrequencyEnum);
+                    withdrawalFrequency, withdrawalFrequencyEnum,productCategoryId,productTypeId);
         }
     }
 

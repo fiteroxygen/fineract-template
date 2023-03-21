@@ -31,6 +31,8 @@ import javax.persistence.PersistenceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -58,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,13 +76,15 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
     private final FineractEntityAccessUtil fineractEntityAccessUtil;
     private final SavingsProductFloatingInterestRateRepository savingsProductFloatingInterestRateRepository;
 
+    private final CodeValueRepositoryWrapper codeValueRepository;
+
     @Autowired
     public SavingsProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final SavingsProductRepository savingProductRepository, final SavingsProductDataValidator fromApiJsonDataValidator,
             final SavingsProductAssembler savingsProductAssembler,
             final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
             final SavingsProductFloatingInterestRateRepository savingsProductFloatingInterestRateRepository,
-            final FineractEntityAccessUtil fineractEntityAccessUtil) {
+            final FineractEntityAccessUtil fineractEntityAccessUtil, CodeValueRepositoryWrapper codeValueRepository) {
         this.context = context;
         this.savingProductRepository = savingProductRepository;
         this.fromApiJsonDataValidator = fromApiJsonDataValidator;
@@ -87,6 +92,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
         this.fineractEntityAccessUtil = fineractEntityAccessUtil;
         this.savingsProductFloatingInterestRateRepository = savingsProductFloatingInterestRateRepository;
+        this.codeValueRepository = codeValueRepository;
     }
 
     /*
@@ -123,6 +129,14 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             this.fromApiJsonDataValidator.validateForCreate(command.json());
 
             final SavingsProduct product = this.savingsProductAssembler.assemble(command);
+            CodeValue productCategory = getLoanProductCategory(command);
+            if (productCategory != null) {
+                product.setProductCategory(productCategory);
+            }
+            CodeValue productType = getLoanProductType(command);
+            if (productType != null) {
+                product.setProductType(productType);
+            }
 
             this.savingProductRepository.saveAndFlush(product);
 
@@ -163,6 +177,20 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             this.context.authenticatedUser();
             final SavingsProduct product = this.savingProductRepository.findById(productId)
                     .orElseThrow(() -> new SavingsProductNotFoundException(productId));
+
+            CodeValue productCategory = getLoanProductCategory(command);
+            if (productCategory != null) {
+                product.setProductCategory(productCategory);
+            }
+
+            CodeValue productType = getLoanProductType(command);
+            if (productType != null) {
+                product.setProductType(productType);
+            }
+
+            if(productCategory != null|| productType != null){
+                this.savingProductRepository.saveAndFlush(product);
+            }
 
             this.fromApiJsonDataValidator.validateForUpdate(command.json(), product);
 
@@ -266,6 +294,28 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         return new CommandProcessingResultBuilder() //
                 .withEntityId(product.getId()) //
                 .build();
+    }
+
+    @Nullable
+    private CodeValue getLoanProductType(JsonCommand command) {
+        CodeValue productType = null;
+        final Long productTypeId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductTypeIdParamName);
+        if (productTypeId != null) {
+            productType = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_TYPE,
+                    productTypeId);
+        }
+        return productType;
+    }
+
+    @Nullable
+    private CodeValue getLoanProductCategory(JsonCommand command) {
+        CodeValue productCategory = null;
+        final Long productCategoryId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductCategoryIdParamName);
+        if (productCategoryId != null) {
+            productCategory = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY,
+                    productCategoryId);
+        }
+        return productCategory;
     }
 
 }

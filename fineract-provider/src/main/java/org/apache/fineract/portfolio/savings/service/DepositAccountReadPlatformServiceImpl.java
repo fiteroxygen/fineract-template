@@ -557,7 +557,8 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             selectFieldsSqlBuilder.append("sa.id as id, sa.account_no as accountNo, sa.external_id as externalId, ");
             selectFieldsSqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
             selectFieldsSqlBuilder.append("g.id as groupId, g.display_name as groupName, ");
-            selectFieldsSqlBuilder.append("sp.id as productId, sp.name as productName, ");
+            selectFieldsSqlBuilder.append("sp.id as productId, sp.name as productName,sp.product_type_id productTypeId, ");
+            selectFieldsSqlBuilder.append(" sp.product_category_id productCategoryId, ");
             selectFieldsSqlBuilder.append("s.id fieldOfficerId, s.display_name as fieldOfficerName, ");
             selectFieldsSqlBuilder.append("sa.status_enum as statusEnum, ");
             selectFieldsSqlBuilder.append("sa.submittedon_date as submittedOnDate,");
@@ -651,7 +652,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
 
             final Long productId = rs.getLong("productId");
             final String productName = rs.getString("productName");
-
             final Long fieldOfficerId = rs.getLong("fieldOfficerId");
             final String fieldOfficerName = rs.getString("fieldOfficerName");
 

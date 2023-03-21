@@ -711,7 +711,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
         this.recalculateRunningBalances();
 
         final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer,
-                isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, true);
+                isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, true, false, false);
         Money interestPostedToDate = Money.zero(this.currency);
 
         boolean applyWithHoldTax = isWithHoldTax();
@@ -1182,11 +1182,23 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate upToInterestCalculationDate,
             boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
-            final LocalDate postInterestOnDate, final Boolean includePostingAndWithHoldTax) {
+            final LocalDate postInterestOnDate, final Boolean includePostingAndWithHoldTax, final boolean backdatedTxnsAllowedTill,
+            final boolean postReversals) {
+
+        // no openingBalance concept supported yet but probably will to allow
+        // for migrations.
+        Money openingAccountBalance = null;
+
+        // Check global configurations and 'pivot' date is null
+        if (backdatedTxnsAllowedTill) {
+            openingAccountBalance = Money.of(this.currency, this.summary.getRunningBalanceOnPivotDate());
+        } else {
+            openingAccountBalance = Money.zero(this.currency);
+        }
 
         // update existing transactions so derived balance fields are
         // correct.
-        resetAccountTransactionsEndOfDayBalances(getTransactions(), upToInterestCalculationDate);
+        recalculateDailyBalances(openingAccountBalance, upToInterestCalculationDate, backdatedTxnsAllowedTill, postReversals);
 
         // 1. default to calculate interest based on entire history OR
         // 2. determine latest 'posting period' and find interest credited to

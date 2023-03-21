@@ -85,6 +85,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import org.apache.fineract.accounting.common.AccountingRuleType;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
@@ -243,6 +244,14 @@ public class SavingsProduct extends AbstractPersistableCustom {
     private Integer withdrawalFrequency;
     @Column(name = "withdrawal_frequency_enum")
     private Integer withdrawalFrequencyEnum;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_category_id")
+    private CodeValue productCategory;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_type_id")
+    private CodeValue productType;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsProduct", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<SavingsProductFloatingInterestRate> savingsProductFloatingInterestRates = new HashSet<>();
@@ -918,6 +927,23 @@ public class SavingsProduct extends AbstractPersistableCustom {
 
     public boolean isUSDProduct() {
         return this.isUSDProduct;
+    }
+
+
+    public CodeValue getProductCategory() {
+        return productCategory;
+    }
+
+    public CodeValue getProductType() {
+        return productType;
+    }
+
+    public void setProductCategory(CodeValue productCategory) {
+        this.productCategory = productCategory;
+    }
+
+    public void setProductType(CodeValue productType) {
+        this.productType = productType;
     }
 
 }
