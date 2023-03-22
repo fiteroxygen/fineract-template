@@ -116,7 +116,8 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
             final FineractEntityAccessUtil fineractEntityAccessUtil, final FloatingRateRepositoryWrapper floatingRateRepository,
             final LoanRepositoryWrapper loanRepositoryWrapper, final BusinessEventNotifierService businessEventNotifierService,
-            DepositProductAssembler depositProductAssembler, InterestRateChartAssembler chartAssembler, CodeValueRepositoryWrapper codeValueRepository) {
+            DepositProductAssembler depositProductAssembler, InterestRateChartAssembler chartAssembler,
+            CodeValueRepositoryWrapper codeValueRepository) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.loanProductRepository = loanProductRepository;
@@ -165,7 +166,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             CodeValue productCategory = getLoanProductCategory(command);
             CodeValue productType = getLoanProductType(command);
             final LoanProduct loanProduct = LoanProduct.assembleFromJson(fund, loanTransactionProcessingStrategy, charges, command,
-                    this.aprCalculator, floatingRate, rates,productCategory,productType);
+                    this.aprCalculator, floatingRate, rates, productCategory, productType);
             loanProduct.updateLoanProductInRelatedClasses();
             // Interest rate charts
             final List<ApiParameterError> dataValidationErrors = new ArrayList<>();

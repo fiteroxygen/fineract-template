@@ -146,7 +146,7 @@ public class FixedDepositProductWritePlatformServiceJpaRepositoryImpl implements
                 product.setProductType(productType);
             }
 
-            if(productCategory != null|| productType != null){
+            if (productCategory != null || productType != null) {
                 this.fixedDepositProductRepository.saveAndFlush(product);
             }
             product.setHelpers(this.chartAssembler);
@@ -263,8 +263,8 @@ public class FixedDepositProductWritePlatformServiceJpaRepositoryImpl implements
         CodeValue productCategory = null;
         final Long productCategoryId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductCategoryIdParamName);
         if (productCategoryId != null) {
-            productCategory = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY,
-                    productCategoryId);
+            productCategory = this.codeValueRepository
+                    .findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY, productCategoryId);
         }
         return productCategory;
     }

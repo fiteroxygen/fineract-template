@@ -3622,4 +3622,13 @@ public class CommandWrapperBuilder {
         this.href = "/loans/" + loanId + "?command=updateArrearsTolerance";
         return this;
     }
+
+    public CommandWrapperBuilder nextWithdrawalDateSavingsAccount(final Long accountId) {
+        this.actionName = "NEXTWITHDRAWALDATE";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=nextWithdrawalDate";
+        return this;
+    }
 }

@@ -117,8 +117,8 @@ public final class LoanProductDataValidator {
             LoanProductConstants.LOAN_TERM_INCLUDES_TOPPED_UP_LOAN_TERM, LoanProductConstants.IS_ACCOUNT_LEVEL_ARREARS_TOLERANCE_ENABLE,
             DepositsApiConstants.chartsParamName, LoanProductConstants.advancePaymentInterestForExactDaysInPeriodParamName,
             LoanProductConstants.isBnplLoanProductParamName, LoanProductConstants.requiresEquityContributionParamName,
-            LoanProductConstants.equityContributionLoanPercentageParamName,
-            LoanProductConstants.LOAN_PRODUCT_CATEGORY, LoanProductConstants.LOAN_PRODUCT_TYPE));
+            LoanProductConstants.equityContributionLoanPercentageParamName, LoanProductConstants.LOAN_PRODUCT_CATEGORY,
+            LoanProductConstants.LOAN_PRODUCT_TYPE));
 
     private static final String[] supportedloanConfigurableAttributes = { LoanProductConstants.amortizationTypeParamName,
             LoanProductConstants.interestTypeParamName, LoanProductConstants.transactionProcessingStrategyIdParamName,

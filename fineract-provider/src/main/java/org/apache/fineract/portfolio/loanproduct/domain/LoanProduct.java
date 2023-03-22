@@ -1736,7 +1736,6 @@ public class LoanProduct extends AbstractPersistableCustom {
         return equityContributionLoanPercentage;
     }
 
-
     public CodeValue getProductCategory() {
         return productCategory;
     }

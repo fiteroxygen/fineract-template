@@ -808,7 +808,9 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.account_type_enum as accountType, ");
             sqlBuilder.append("sa.lockedin_until_date_derived as lockedInUntilDate, ");
             sqlBuilder.append("sa.withdrawal_frequency as withdrawalFrequency, ");
-            sqlBuilder.append("sa.withdrawal_frequency_enum as withdrawalFrequencyEnum ");
+            sqlBuilder.append("sa.withdrawal_frequency_enum as withdrawalFrequencyEnum, ");
+            sqlBuilder.append("sa.previous_flex_withdrawal_date as previousFlexWithdrawalDate, ");
+            sqlBuilder.append("sa.next_flex_withdrawal_date as nextFlexWithdrawalDate ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -1040,6 +1042,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                 withdrawalFrequencyEnum = SavingsEnumerations
                         .withdrawalFrequency(WithdrawalFrequency.fromInt(withdrawalFrequencyEnumValue));
             }
+            final LocalDate previousFlexWithdrawalDate = JdbcSupport.getLocalDate(rs, "previousFlexWithdrawalDate");
+            final LocalDate nextFlexWithdrawalDate = JdbcSupport.getLocalDate(rs, "nextFlexWithdrawalDate");
 
             SavingsAccountData savingsAccountData = SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName,
                     clientId, clientName, productId, productName, fieldOfficerId, fieldOfficerName, status, subStatus, reasonForBlock,
@@ -1054,6 +1058,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             savingsAccountData.setUseFloatingInterestRate(useFloatingInterestRate);
             savingsAccountData.setWithdrawalFrequency(withdrawalFrequency);
             savingsAccountData.setWithdrawalFrequencyEnum(withdrawalFrequencyEnum);
+            savingsAccountData.setPreviousFlexWithdrawalDate(previousFlexWithdrawalDate);
+            savingsAccountData.setNextFlexWithdrawalDate(nextFlexWithdrawalDate);
             return savingsAccountData;
         }
     }

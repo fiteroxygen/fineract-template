@@ -130,10 +130,10 @@ public class DepositProductData {
         final boolean isUSDProduct = false;
         final boolean allowManuallyEnterInterestRate = false;
         final boolean addPenaltyOnMissedTargetSavings = false;
-        final  List<CodeValueData> productCategories=null;
-        final  List<CodeValueData> productTypes=null;
-        final  Long productCategoryId=null;
-        final Long productTypeId=null;
+        final List<CodeValueData> productCategories = null;
+        final List<CodeValueData> productTypes = null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
 
         return new DepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, lockinPeriodFrequency,
@@ -142,8 +142,8 @@ public class DepositProductData {
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions,
                 accountingRuleOptions, accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, minBalanceForInterestCalculation, withHoldTax, taxGroup,
-                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings,productCategories
-                ,productTypes,productCategoryId,productTypeId);
+                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings, productCategories,
+                productTypes, productCategoryId, productTypeId);
     }
 
     public static DepositProductData withCharges(final DepositProductData existingProduct, final Collection<ChargeData> charges) {
@@ -161,8 +161,8 @@ public class DepositProductData {
                 existingProduct.penaltyToIncomeAccountMappings, existingProduct.interestRateCharts, existingProduct.chartTemplate,
                 existingProduct.minBalanceForInterestCalculation, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions, existingProduct.isUSDProduct, existingProduct.allowManuallyEnterInterestRate,
-                existingProduct.addPenaltyOnMissedTargetSavings,existingProduct.productCategories,existingProduct.productTypes,
-                existingProduct.productCategoryId,existingProduct.productTypeId);
+                existingProduct.addPenaltyOnMissedTargetSavings, existingProduct.productCategories, existingProduct.productTypes,
+                existingProduct.productCategoryId, existingProduct.productTypeId);
     }
 
     /**
@@ -196,8 +196,8 @@ public class DepositProductData {
                 existingProduct.interestRateCharts, chartTemplate, existingProduct.minBalanceForInterestCalculation,
                 existingProduct.withHoldTax, existingProduct.taxGroup, taxGroupOptions, existingProduct.isUSDProduct,
                 existingProduct.allowManuallyEnterInterestRate, existingProduct.addPenaltyOnMissedTargetSavings,
-                existingProduct.productCategories,existingProduct.productTypes,
-                existingProduct.productCategoryId, existingProduct.productTypeId);
+                existingProduct.productCategories, existingProduct.productTypes, existingProduct.productCategoryId,
+                existingProduct.productTypeId);
     }
 
     public static DepositProductData withAccountingDetails(final DepositProductData existingProduct,
@@ -231,8 +231,8 @@ public class DepositProductData {
                 existingProduct.interestRateCharts, existingProduct.chartTemplate, existingProduct.minBalanceForInterestCalculation,
                 existingProduct.withHoldTax, existingProduct.taxGroup, taxGroupOptions, existingProduct.isUSDProduct,
                 existingProduct.allowManuallyEnterInterestRate, existingProduct.addPenaltyOnMissedTargetSavings,
-                existingProduct.productCategories,existingProduct.productTypes,
-                existingProduct.productCategoryId, existingProduct.productTypeId);
+                existingProduct.productCategories, existingProduct.productTypes, existingProduct.productCategoryId,
+                existingProduct.productTypeId);
     }
 
     public static DepositProductData instance(final Long id, final String name, final String shortName, final String description,
@@ -241,8 +241,8 @@ public class DepositProductData {
             final EnumOptionData interestCalculationDaysInYearType, final Integer lockinPeriodFrequency,
             final EnumOptionData lockinPeriodFrequencyType, final EnumOptionData accountingType,
             final BigDecimal minBalanceForInterestCalculation, boolean withHoldTax, TaxGroupData taxGroup, boolean isUSDProduct,
-            boolean allowManuallyEnterInterestRate, boolean addPenaltyOnMissedTargetSavings,final  Long productCategoryId,
-           final Long productTypeId ) {
+            boolean allowManuallyEnterInterestRate, boolean addPenaltyOnMissedTargetSavings, final Long productCategoryId,
+            final Long productTypeId) {
 
         final Map<String, Object> accountingMappings = null;
         final Collection<PaymentTypeToGLAccountMapper> paymentChannelToFundSourceMappings = null;
@@ -265,8 +265,8 @@ public class DepositProductData {
         final Collection<InterestRateChartData> interestRateCharts = null;
         final InterestRateChartData chartTemplate = null;
         final Collection<TaxGroupData> taxGroupOptions = null;
-        final  List<CodeValueData> productCategories=null;
-        final  List<CodeValueData> productTypes=null;
+        final List<CodeValueData> productCategories = null;
+        final List<CodeValueData> productTypes = null;
 
         return new DepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, lockinPeriodFrequency,
@@ -275,8 +275,8 @@ public class DepositProductData {
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions,
                 accountingRuleOptions, accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, minBalanceForInterestCalculation, withHoldTax, taxGroup,
-                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings,productCategories,productTypes,
-                productCategoryId,productTypeId);
+                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings, productCategories,
+                productTypes, productCategoryId, productTypeId);
     }
 
     public static DepositProductData lookup(final Long id, final String name, boolean allowManuallyEnterInterestRate) {
@@ -319,10 +319,10 @@ public class DepositProductData {
         boolean isUSDProduct = false;
         final TaxGroupData taxGroup = null;
         final Collection<TaxGroupData> taxGroupOptions = null;
-        final  List<CodeValueData> productCategories=null;
-        final  List<CodeValueData> productTypes=null;
-        final  Long productCategoryId=null;
-        final Long productTypeId=null;
+        final List<CodeValueData> productCategories = null;
+        final List<CodeValueData> productTypes = null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
 
         return new DepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, lockinPeriodFrequency,
@@ -331,8 +331,8 @@ public class DepositProductData {
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions,
                 accountingRuleOptions, accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, minBalanceForInterestCalculation, withHoldTax, taxGroup,
-                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings,productCategories,productTypes,
-                productCategoryId,productTypeId);
+                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings, productCategories,
+                productTypes, productCategoryId, productTypeId);
     }
 
     public static DepositProductData withInterestChart(final DepositProductData existingProduct,
@@ -352,7 +352,7 @@ public class DepositProductData {
                 existingProduct.chartTemplate, existingProduct.minBalanceForInterestCalculation, existingProduct.withHoldTax,
                 existingProduct.taxGroup, existingProduct.taxGroupOptions, existingProduct.isUSDProduct,
                 existingProduct.allowManuallyEnterInterestRate, existingProduct.addPenaltyOnMissedTargetSavings,
-                existingProduct.productCategories,existingProduct.productTypes,existingProduct.productCategoryId,
+                existingProduct.productCategories, existingProduct.productTypes, existingProduct.productCategoryId,
                 existingProduct.productTypeId);
     }
 
@@ -375,10 +375,8 @@ public class DepositProductData {
             final Collection<InterestRateChartData> interestRateCharts, final InterestRateChartData chartTemplate,
             final BigDecimal minBalanceForInterestCalculation, final boolean withHoldTax, final TaxGroupData taxGroup,
             final Collection<TaxGroupData> taxGroupOptions, boolean isUSDProduct, boolean allowManuallyEnterInterestRate,
-            boolean addPenaltyOnMissedTargetSavings,
-            final  List<CodeValueData> productCategories,
-            final  List<CodeValueData> productTypes,
-            final  Long productCategoryId, final Long productTypeId) {
+            boolean addPenaltyOnMissedTargetSavings, final List<CodeValueData> productCategories, final List<CodeValueData> productTypes,
+            final Long productCategoryId, final Long productTypeId) {
 
         this.id = id;
         this.name = name;
@@ -393,10 +391,10 @@ public class DepositProductData {
         this.accountingRule = accountingType;
         this.lockinPeriodFrequency = lockinPeriodFrequency;
         this.lockinPeriodFrequencyType = lockinPeriodFrequencyType;
-        this.productCategories=productCategories;
-        this.productTypes=productTypes;
-        this.productCategoryId=productCategoryId;
-        this.productTypeId=productTypeId;
+        this.productCategories = productCategories;
+        this.productTypes = productTypes;
+        this.productCategoryId = productCategoryId;
+        this.productTypeId = productTypeId;
 
         this.currencyOptions = currencyOptions;
         this.interestCompoundingPeriodTypeOptions = interestCompoundingPeriodTypeOptions;

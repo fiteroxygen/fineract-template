@@ -167,6 +167,9 @@ public class SavingsAccountTransactionsApiResource {
             } else if (is(commandParam, "unlock")) {
                 final CommandWrapper commandRequest = builder.unlockSavingsAccount(savingsId).build();
                 result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            } else if (is(commandParam, "nextWithdrawalDate")) {
+                final CommandWrapper commandRequest = builder.nextWithdrawalDateSavingsAccount(savingsId).build();
+                result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             }
 
             if (result == null) {

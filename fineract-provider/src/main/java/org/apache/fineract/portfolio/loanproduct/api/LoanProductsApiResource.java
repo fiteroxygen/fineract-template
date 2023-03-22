@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -154,7 +153,8 @@ public class LoanProductsApiResource {
             final DropdownReadPlatformService commonDropdownReadPlatformService,
             PaymentTypeReadPlatformService paymentTypeReadPlatformService,
             final FloatingRatesReadPlatformService floatingRateReadPlatformService, final RateReadService rateReadService,
-            final ConfigurationDomainService configurationDomainService, InterestRateChartReadPlatformService chartReadPlatformService, CodeValueReadPlatformService codeValueReadPlatformService) {
+            final ConfigurationDomainService configurationDomainService, InterestRateChartReadPlatformService chartReadPlatformService,
+            CodeValueReadPlatformService codeValueReadPlatformService) {
         this.context = context;
         this.loanProductReadPlatformService = readPlatformService;
         this.chargeReadPlatformService = chargeReadPlatformService;
@@ -384,15 +384,15 @@ public class LoanProductsApiResource {
                 .retrivePreCloseInterestCalculationStrategyOptions();
         final List<FloatingRateData> floatingRateOptions = this.floatingRateReadPlatformService.retrieveLookupActive();
 
-        LoanProductData loanProductDataResponse = new LoanProductData(productData, chargeOptions, penaltyOptions, paymentTypeOptions, currencyOptions, amortizationTypeOptions,
-                interestTypeOptions, interestCalculationPeriodTypeOptions, repaymentFrequencyTypeOptions, interestRateFrequencyTypeOptions,
-                fundOptions, transactionProcessingStrategyOptions, rateOptions, accountOptions, accountingRuleTypeOptions,
-                loanCycleValueConditionTypeOptions, daysInMonthTypeOptions, daysInYearTypeOptions,
-                interestRecalculationCompoundingTypeOptions, rescheduleStrategyTypeOptions, interestRecalculationFrequencyTypeOptions,
-                preCloseInterestCalculationStrategyOptions, floatingRateOptions, interestRecalculationNthDayTypeOptions,
-                interestRecalculationDayOfWeekTypeOptions, isRatesEnabled, productCategories,
-                productTypes,productData.getProductCategoryId(), productData.getProductTypeId());
-                
+        LoanProductData loanProductDataResponse = new LoanProductData(productData, chargeOptions, penaltyOptions, paymentTypeOptions,
+                currencyOptions, amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions,
+                repaymentFrequencyTypeOptions, interestRateFrequencyTypeOptions, fundOptions, transactionProcessingStrategyOptions,
+                rateOptions, accountOptions, accountingRuleTypeOptions, loanCycleValueConditionTypeOptions, daysInMonthTypeOptions,
+                daysInYearTypeOptions, interestRecalculationCompoundingTypeOptions, rescheduleStrategyTypeOptions,
+                interestRecalculationFrequencyTypeOptions, preCloseInterestCalculationStrategyOptions, floatingRateOptions,
+                interestRecalculationNthDayTypeOptions, interestRecalculationDayOfWeekTypeOptions, isRatesEnabled, productCategories,
+                productTypes, productData.getProductCategoryId(), productData.getProductTypeId());
+
         loanProductDataResponse.setBnplLoanProduct(productData.getBnplLoanProduct());
         loanProductDataResponse.setRequiresEquityContribution(productData.getRequiresEquityContribution());
         loanProductDataResponse.setEquityContributionLoanPercentage(productData.getEquityContributionLoanPercentage());

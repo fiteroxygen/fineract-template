@@ -70,7 +70,7 @@ public final class FixedDepositProductData extends DepositProductData {
             final Collection<ChargeData> penaltyOptions, final InterestRateChartData chartTemplate,
             final Collection<EnumOptionData> preClosurePenalInterestOnTypeOptions,
             final Collection<EnumOptionData> periodFrequencyTypeOptions, final Collection<TaxGroupData> taxGroupOptions,
-            final  List<CodeValueData> productCategories,final  List<CodeValueData> productTypes) {
+            final List<CodeValueData> productCategories, final List<CodeValueData> productTypes) {
 
         final Long id = null;
         final String name = null;
@@ -105,8 +105,8 @@ public final class FixedDepositProductData extends DepositProductData {
         final boolean allowPartialLiquidation = false;
         final Integer totalLiquidationsAllowed = null;
         final boolean allowManuallyEnterInterestRate = false;
-        final  Long productCategoryId=null;
-        final Long productTypeId=null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
 
         return new FixedDepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -118,8 +118,8 @@ public final class FixedDepositProductData extends DepositProductData {
                 preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnType, preClosurePenalInterestOnTypeOptions,
                 minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType, inMultiplesOfDepositTerm,
                 inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount, periodFrequencyTypeOptions, withHoldTax,
-                taxGroup, taxGroupOptions, isUSDProduct, allowPartialLiquidation, totalLiquidationsAllowed, allowManuallyEnterInterestRate
-                ,productCategories,productTypes,productCategoryId,productTypeId);
+                taxGroup, taxGroupOptions, isUSDProduct, allowPartialLiquidation, totalLiquidationsAllowed, allowManuallyEnterInterestRate,
+                productCategories, productTypes, productCategoryId, productTypeId);
     }
 
     public static FixedDepositProductData withCharges(final FixedDepositProductData existingProduct, final Collection<ChargeData> charges) {
@@ -143,8 +143,8 @@ public final class FixedDepositProductData extends DepositProductData {
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions, existingProduct.isUSDProduct, existingProduct.allowPartialLiquidation,
                 existingProduct.totalLiquidationAllowed, existingProduct.allowManuallyEnterInterestRate,
-                existingProduct.getProductCategories(),existingProduct.getProductTypes(),
-                existingProduct.getProductCategoryId(), existingProduct.getProductTypeId());
+                existingProduct.getProductCategories(), existingProduct.getProductTypes(), existingProduct.getProductCategoryId(),
+                existingProduct.getProductTypeId());
     }
 
     /**
@@ -165,7 +165,7 @@ public final class FixedDepositProductData extends DepositProductData {
             final Collection<ChargeData> penaltyOptions, final InterestRateChartData chartTemplate,
             final Collection<EnumOptionData> preClosurePenalInterestOnTypeOptions,
             final Collection<EnumOptionData> periodFrequencyTypeOptions, final Collection<TaxGroupData> taxGroupOptions,
-            final  List<CodeValueData> productCategories,final  List<CodeValueData> productTypes) {
+            final List<CodeValueData> productCategories, final List<CodeValueData> productTypes) {
 
         return new FixedDepositProductData(existingProduct.id, existingProduct.name, existingProduct.shortName, existingProduct.description,
                 existingProduct.currency, existingProduct.nominalAnnualInterestRate, existingProduct.interestCompoundingPeriodType,
@@ -184,8 +184,8 @@ public final class FixedDepositProductData extends DepositProductData {
                 existingProduct.inMultiplesOfDepositTermType, existingProduct.minDepositAmount, existingProduct.depositAmount,
                 existingProduct.maxDepositAmount, periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 taxGroupOptions, existingProduct.isUSDProduct, existingProduct.allowPartialLiquidation,
-                existingProduct.totalLiquidationAllowed, existingProduct.allowManuallyEnterInterestRate,
-                productCategories,productTypes, existingProduct.getProductCategoryId(),existingProduct.getProductTypeId());
+                existingProduct.totalLiquidationAllowed, existingProduct.allowManuallyEnterInterestRate, productCategories, productTypes,
+                existingProduct.getProductCategoryId(), existingProduct.getProductTypeId());
     }
 
     public static FixedDepositProductData withAccountingDetails(final FixedDepositProductData existingProduct,
@@ -224,8 +224,8 @@ public final class FixedDepositProductData extends DepositProductData {
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions, existingProduct.isUSDProduct, existingProduct.allowPartialLiquidation,
                 existingProduct.totalLiquidationAllowed, existingProduct.allowManuallyEnterInterestRate,
-                existingProduct.getProductCategories(),existingProduct.getProductTypes(),
-                existingProduct.getProductCategoryId(), existingProduct.getProductTypeId());
+                existingProduct.getProductCategories(), existingProduct.getProductTypes(), existingProduct.getProductCategoryId(),
+                existingProduct.getProductTypeId());
     }
 
     public static FixedDepositProductData instance(final DepositProductData depositProductData, final boolean preClosurePenalApplicable,
@@ -274,8 +274,7 @@ public final class FixedDepositProductData extends DepositProductData {
                 inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount, periodFrequencyTypeOptions,
                 depositProductData.withHoldTax, depositProductData.taxGroup, taxGroupOptions, depositProductData.isUSDProduct,
                 allowPartialLiquidation, totalLiquidationsAllowed, depositProductData.allowManuallyEnterInterestRate,
-                depositProductData.getProductCategories(),depositProductData.getProductTypes()
-                ,depositProductData.getProductCategoryId(),
+                depositProductData.getProductCategories(), depositProductData.getProductTypes(), depositProductData.getProductCategoryId(),
                 depositProductData.getProductTypeId());
     }
 
@@ -334,10 +333,10 @@ public final class FixedDepositProductData extends DepositProductData {
         final boolean allowPartialLiquidation = false;
         final Integer totalLiquidationsAllowed = null;
         final boolean allowManuallyEnterInterestRate = false;
-        final  List<CodeValueData> productCategories=null;
-        final  List<CodeValueData> productTypes=null;
-        final  Long productCategoryId=null;
-        final Long productTypeId=null;
+        final List<CodeValueData> productCategories = null;
+        final List<CodeValueData> productTypes = null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
 
         return new FixedDepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -350,7 +349,7 @@ public final class FixedDepositProductData extends DepositProductData {
                 minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType, inMultiplesOfDepositTerm,
                 inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount, periodFrequencyTypeOptions, withHoldTax,
                 taxGroup, taxGroupOptions, isUSDProduct, allowPartialLiquidation, totalLiquidationsAllowed, allowManuallyEnterInterestRate,
-                productCategories,productTypes,productCategoryId,productTypeId);
+                productCategories, productTypes, productCategoryId, productTypeId);
     }
 
     public static FixedDepositProductData withInterestChart(final FixedDepositProductData existingProduct,
@@ -375,8 +374,8 @@ public final class FixedDepositProductData extends DepositProductData {
                 existingProduct.periodFrequencyTypeOptions, existingProduct.withHoldTax, existingProduct.taxGroup,
                 existingProduct.taxGroupOptions, existingProduct.isUSDProduct, existingProduct.allowPartialLiquidation,
                 existingProduct.totalLiquidationAllowed, existingProduct.allowManuallyEnterInterestRate,
-                existingProduct.getProductCategories(),existingProduct.getProductTypes(),
-                existingProduct.getProductCategoryId(), existingProduct.getProductTypeId());
+                existingProduct.getProductCategories(), existingProduct.getProductTypes(), existingProduct.getProductCategoryId(),
+                existingProduct.getProductTypeId());
 
     }
 
@@ -406,8 +405,8 @@ public final class FixedDepositProductData extends DepositProductData {
             final BigDecimal maxDepositAmount, final Collection<EnumOptionData> periodFrequencyTypeOptions, final boolean withHoldTax,
             final TaxGroupData taxGroup, final Collection<TaxGroupData> taxGroupOptions, boolean isUSDProduct,
             final boolean allowPartialLiquidation, final Integer totalLiquidationAllowed, boolean allowManuallyEnterInterestRate,
-            final  List<CodeValueData> productCategories,final  List<CodeValueData> productTypes,
-            final  Long productCategoryId, final Long productTypeId ) {
+            final List<CodeValueData> productCategories, final List<CodeValueData> productTypes, final Long productCategoryId,
+            final Long productTypeId) {
 
         super(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, lockinPeriodFrequency,
@@ -416,7 +415,7 @@ public final class FixedDepositProductData extends DepositProductData {
                 interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions,
                 accountingRuleOptions, accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, minBalanceForInterestCalculation, withHoldTax, taxGroup,
-                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, false,productCategories,productTypes,productCategoryId,
+                taxGroupOptions, isUSDProduct, allowManuallyEnterInterestRate, false, productCategories, productTypes, productCategoryId,
                 productTypeId);
 
         // fixed deposit additional fields

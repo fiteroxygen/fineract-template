@@ -308,8 +308,8 @@ public class LoanProductData implements Serializable {
         final Integer maxNumberOfLoanExtensionsAllowed = null;
         final boolean loanTermIncludesToppedUpLoanTerm = false;
         final boolean isAccountLevelArrearsToleranceEnable = false;
-        final Long productCategoryId=null;
-        final Long productTypeId=null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
                 minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType,
@@ -327,7 +327,7 @@ public class LoanProductData implements Serializable {
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
                 fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
-                isAccountLevelArrearsToleranceEnable,productCategoryId,productTypeId);
+                isAccountLevelArrearsToleranceEnable, productCategoryId, productTypeId);
 
     }
 
@@ -416,8 +416,8 @@ public class LoanProductData implements Serializable {
         final Integer maxNumberOfLoanExtensionsAllowed = null;
         final boolean isAccountLevelArrearsToleranceEnable = false;
         final boolean loanTermIncludesToppedUpLoanTerm = false;
-        final Long productCategoryId=null;
-        final Long productTypeId=null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
                 minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType,
@@ -435,7 +435,7 @@ public class LoanProductData implements Serializable {
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
                 fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
-                isAccountLevelArrearsToleranceEnable,productCategoryId,productTypeId);
+                isAccountLevelArrearsToleranceEnable, productCategoryId, productTypeId);
 
     }
 
@@ -531,8 +531,8 @@ public class LoanProductData implements Serializable {
         final Integer maxNumberOfLoanExtensionsAllowed = null;
         final boolean loanTermIncludesToppedUpLoanTerm = false;
         final boolean isAccountLevelArrearsToleranceEnable = false;
-        final Long productCategoryId=null;
-        final Long productTypeId=null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -551,7 +551,7 @@ public class LoanProductData implements Serializable {
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
                 fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
-                isAccountLevelArrearsToleranceEnable,productCategoryId,productTypeId);
+                isAccountLevelArrearsToleranceEnable, productCategoryId, productTypeId);
 
     }
 
@@ -641,8 +641,8 @@ public class LoanProductData implements Serializable {
         final Integer maxNumberOfLoanExtensionsAllowed = null;
         final boolean loanTermIncludesToppedUpLoanTerm = false;
         final boolean isAccountLevelArrearsToleranceEnable = false;
-        final Long productCategoryId=null;
-        final Long productTypeId=null;
+        final Long productCategoryId = null;
+        final Long productTypeId = null;
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
                 minInterestRatePerPeriod, maxInterestRatePerPeriod, annualInterestRate, repaymentFrequencyType, interestRateFrequencyType,
@@ -660,7 +660,7 @@ public class LoanProductData implements Serializable {
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
                 syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, rateOptions, rates, isRatesEnabled,
                 fixedPrincipalPercentagePerInstallment, maxNumberOfLoanExtensionsAllowed, loanTermIncludesToppedUpLoanTerm,
-                isAccountLevelArrearsToleranceEnable,productCategoryId,productTypeId);
+                isAccountLevelArrearsToleranceEnable, productCategoryId, productTypeId);
 
     }
 
@@ -712,8 +712,8 @@ public class LoanProductData implements Serializable {
         this.name = name;
         this.shortName = shortName;
         this.description = description;
-        this.productCategoryId=productCategoryId;
-        this.productTypeId=productTypeId;
+        this.productCategoryId = productCategoryId;
+        this.productTypeId = productTypeId;
         this.currency = currency;
         this.principal = principal;
         this.minPrincipal = minPrincipal;
@@ -842,19 +842,19 @@ public class LoanProductData implements Serializable {
             final List<EnumOptionData> rescheduleStrategyTypeOptions, final List<EnumOptionData> interestRecalculationFrequencyTypeOptions,
             final List<EnumOptionData> preCloseInterestCalculationStrategyOptions, final List<FloatingRateData> floatingRateOptions,
             final List<EnumOptionData> interestRecalculationNthDayTypeOptions,
-            final List<EnumOptionData> interestRecalculationDayOfWeekTypeOptions, final boolean isRatesEnabled,final  List<CodeValueData> productCategories,
-            final  List<CodeValueData> productTypes
-            ,final Long productCategoryId, final Long productTypeId) {
+            final List<EnumOptionData> interestRecalculationDayOfWeekTypeOptions, final boolean isRatesEnabled,
+            final List<CodeValueData> productCategories, final List<CodeValueData> productTypes, final Long productCategoryId,
+            final Long productTypeId) {
         this.id = productData.id;
         this.name = productData.name;
         this.shortName = productData.shortName;
         this.description = productData.description;
         this.fundId = productData.fundId;
         this.fundName = productData.fundName;
-        this.productTypeId=productTypeId;
-        this.productCategoryId=productCategoryId;
-        this.productCategories=productCategories;
-        this.productTypes=productTypes;
+        this.productTypeId = productTypeId;
+        this.productCategoryId = productCategoryId;
+        this.productCategories = productCategories;
+        this.productTypes = productTypes;
 
         this.principal = productData.principal;
         this.minPrincipal = productData.minPrincipal;

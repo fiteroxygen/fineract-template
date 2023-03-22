@@ -1669,8 +1669,12 @@ public class SavingsAccount extends AbstractPersistableCustom {
                 "savingsaccount");
         validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_WITHDRAWAL, transactionDTO.getTransactionDate());
 
-        if (applyWithdrawFee) {
+        if (applyWithdrawFee && this.withdrawalFrequency == null && this.withdrawalFrequencyEnum == null) {
             // auto pay withdrawal fee
+            payWithdrawalFee(transactionDTO.getTransactionAmount(), transactionDTO.getTransactionDate(), transactionDTO.getAppUser(),
+                    transactionDTO.getPaymentDetail(), backdatedTxnsAllowedTill, refNo);
+        } else if (applyWithdrawFee && this.withdrawalFrequency != null && this.withdrawalFrequencyEnum != null
+                && !this.nextFlexWithdrawalDate.isEqual(transactionDTO.getTransactionDate())) {
             payWithdrawalFee(transactionDTO.getTransactionAmount(), transactionDTO.getTransactionDate(), transactionDTO.getAppUser(),
                     transactionDTO.getPaymentDetail(), backdatedTxnsAllowedTill, refNo);
         }
@@ -5201,5 +5205,25 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     public void setNextFlexWithdrawalDate(LocalDate nextFlexWithdrawalDate) {
         this.nextFlexWithdrawalDate = nextFlexWithdrawalDate;
+    }
+
+    public Integer getWithdrawalFrequency() {
+        return withdrawalFrequency;
+    }
+
+    public Integer getWithdrawalFrequencyEnum() {
+        return withdrawalFrequencyEnum;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public LocalDate getPreviousFlexWithdrawalDate() {
+        return previousFlexWithdrawalDate;
+    }
+
+    public LocalDate getNextFlexWithdrawalDate() {
+        return nextFlexWithdrawalDate;
     }
 }
