@@ -1491,6 +1491,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder savingsAccountLimitWithdrawal(final Long accountId) {
+        this.actionName = "LIMITWITHDRAWAL";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        return this;
+    }
+
     public CommandWrapperBuilder undoSavingsAccountTransaction(final Long accountId, final Long transactionId) {
         this.actionName = "UNDOTRANSACTION";
         this.entityName = "SAVINGSACCOUNT";
@@ -3611,6 +3620,15 @@ public class CommandWrapperBuilder {
         this.entityId = loanId;
         this.loanId = loanId;
         this.href = "/loans/" + loanId + "?command=updateArrearsTolerance";
+        return this;
+    }
+
+    public CommandWrapperBuilder nextWithdrawalDateSavingsAccount(final Long accountId) {
+        this.actionName = "NEXTWITHDRAWALDATE";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=nextWithdrawalDate";
         return this;
     }
 }

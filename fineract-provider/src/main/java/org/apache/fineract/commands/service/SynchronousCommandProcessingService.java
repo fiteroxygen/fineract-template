@@ -92,9 +92,11 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
             commandSourceResult = CommandSource.fullEntryFrom(wrapper, command, maker);
         }
         commandSourceResult.updateResourceId(result.resourceId());
+        commandSourceResult.updateSubresourceId(result.getSubResourceId());
         commandSourceResult.updateForAudit(result.getOfficeId(), result.getGroupId(), result.getClientId(), result.getLoanId(),
                 result.getSavingsId(), result.getProductId(), result.getTransactionId());
 
+        commandSourceResult.updateActionNameAndEntityName(result);
         String changesOnlyJson = null;
         boolean rollBack = (rollbackTransaction || result.isRollbackTransaction()) && !isApprovedByChecker;
         if (result.hasChanges() && !rollBack) {

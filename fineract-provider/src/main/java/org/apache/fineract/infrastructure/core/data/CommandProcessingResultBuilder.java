@@ -42,10 +42,14 @@ public class CommandProcessingResultBuilder {
     private Long productId;
     private boolean rollbackTransaction = false;
 
+    private String actionName;
+
+    private String entityName;
+
     public CommandProcessingResult build() {
         return CommandProcessingResult.fromDetails(this.commandId, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
                 this.resourceIdentifier, this.entityId, this.gsimId, this.glimId, this.creditBureauReportData, this.transactionId,
-                this.changes, this.productId, this.rollbackTransaction, this.subEntityId);
+                this.changes, this.productId, this.rollbackTransaction, this.subEntityId,this.actionName);
     }
 
     public CommandProcessingResultBuilder withCommandId(final Long withCommandId) {
@@ -125,6 +129,16 @@ public class CommandProcessingResultBuilder {
 
     public CommandProcessingResultBuilder setRollbackTransaction(final boolean rollbackTransaction) {
         this.rollbackTransaction = this.rollbackTransaction || rollbackTransaction;
+        return this;
+    }
+
+    public CommandProcessingResultBuilder withActionName(final String actionName) {
+        this.actionName = actionName;
+        return this;
+    }
+
+    public CommandProcessingResultBuilder withEntityName(final String entityName) {
+        this.entityName = entityName;
         return this;
     }
 

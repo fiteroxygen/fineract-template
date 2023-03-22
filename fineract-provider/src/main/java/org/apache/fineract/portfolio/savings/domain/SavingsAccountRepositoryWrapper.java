@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.savings.domain;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,5 +189,12 @@ public class SavingsAccountRepositoryWrapper {
     public List<SavingsAccount> findByClientIdAndGroupIdAndGsimId(@Param("clientId") Long clientId, @Param("groupId") Long groupId,
             @Param("gsimId") Long gsimId) {
         return this.repository.findByClientIdAndGroupIdAndGsimId(clientId, groupId, gsimId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SavingsAccount> findSavingAccountToUpdateNextFlexWithdrawalDate() {
+        List<SavingsAccount> accounts = this.repository.findSavingAccountToUpdateNextFlexWithdrawalDate(DateUtils.getBusinessLocalDate());
+        loadLazyCollections(accounts);
+        return accounts;
     }
 }

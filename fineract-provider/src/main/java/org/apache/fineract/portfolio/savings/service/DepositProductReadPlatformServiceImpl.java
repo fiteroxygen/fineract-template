@@ -221,8 +221,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             return DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation, withHoldTax,
-                    taxGroupData, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings
-                    ,productCategoryId,productTypeId);
+                    taxGroupData, isUSDProduct, allowManuallyEnterInterestRate, addPenaltyOnMissedTargetSavings, productCategoryId,
+                    productTypeId);
         }
     }
 

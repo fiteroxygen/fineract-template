@@ -89,4 +89,50 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet author="bosco@fiter.io" id="add_m_permissions_NEXTWITHDRAWALDATE_SAVINGSACCOUNT">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(1) FROM m_permission WHERE code = 'NEXTWITHDRAWALDATE_SAVINGSACCOUNT'
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="transaction_savings" />
+            <column name="code" value="NEXTWITHDRAWALDATE_SAVINGSACCOUNT" />
+            <column name="entity_name" value="SAVINGSACCOUNT" />
+            <column name="action_name" value="NEXTWITHDRAWALDATE" />
+            <column name="can_maker_checker" valueBoolean="false" />
+        </insert>
+    </changeSet>
+
+    <changeSet author="bosco@fiter.io" id="add-update-next-withdrawal-date-for-savings-account-job">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(1) FROM job WHERE name = 'Update next withdrawal date for savings account'
+                </sqlCheck>
+            </not>
+        </preConditions>
+
+        <insert tableName="job">
+            <column name="name" value="Update next withdrawal date for savings account" />
+            <column name="display_name" value="Update next withdrawal date for savings account" />
+            <column name="cron_expression" value="0 0 22 1/1 * ? *" />
+            <column name="create_time" value="now()" />
+            <column name="task_priority" value="5" />
+            <column name="group_name" value="null" />
+            <column name="previous_run_start_time" value="null" />
+            <column name="next_run_time" value="null" />
+            <column name="job_key" value="Update next withdrawal date for savings account _ DEFAULT" />
+            <column name="initializing_errorlog" value="null" />
+            <column name="is_active" valueBoolean="true" />
+            <column name="currently_running" valueBoolean="false" />
+            <column name="updates_allowed" valueBoolean="true" />
+            <column name="scheduler_group" value="1" />
+            <column name="is_misfired" valueBoolean="false" />
+            <column name="node_id" value="0" />
+            <column name="is_mismatched_job" valueBoolean="false" />
+
+        </insert>
+    </changeSet>
 </databaseChangeLog>

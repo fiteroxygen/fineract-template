@@ -929,7 +929,6 @@ public class SavingsProduct extends AbstractPersistableCustom {
         return this.isUSDProduct;
     }
 
-
     public CodeValue getProductCategory() {
         return productCategory;
     }

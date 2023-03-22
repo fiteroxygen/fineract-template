@@ -121,8 +121,8 @@ public class SavingsProductsApiResource {
             final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService,
             final ChargeReadPlatformService chargeReadPlatformService, PaymentTypeReadPlatformService paymentTypeReadPlatformService,
             final TaxReadPlatformService taxReadPlatformService, final ConfigurationDomainService configurationDomainService,
-            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService
-            ,final  CodeValueReadPlatformService codeValueReadPlatformService) {
+            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService,
+            final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.savingProductReadPlatformService = savingProductReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.currencyReadPlatformService = currencyReadPlatformService;
@@ -332,14 +332,14 @@ public class SavingsProductsApiResource {
                     interestPostingPeriodTypeOptions, interestCalculationTypeOptions, interestCalculationDaysInYearTypeOptions,
                     lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, paymentTypeOptions, accountingRuleOptions,
                     accountingMappingOptions, chargeOptions, penaltyOptions, taxGroupOptions, accountMappingForPayment,
-                    savingsProduct.getWithdrawalFrequencyEnum(), withdrawalFrequencyOptions,productCategories,productTypes);
+                    savingsProduct.getWithdrawalFrequencyEnum(), withdrawalFrequencyOptions, productCategories, productTypes);
         } else {
             savingsProductToReturn = SavingsProductData.template(currency, interestCompoundingPeriodType, interestPostingPeriodType,
                     interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, taxGroupOptions,
-                    accountMappingForPayment, withdrawalFrequencyEnum, withdrawalFrequencyOptions,productCategories,productTypes);
+                    accountMappingForPayment, withdrawalFrequencyEnum, withdrawalFrequencyOptions, productCategories, productTypes);
         }
 
         return savingsProductToReturn;

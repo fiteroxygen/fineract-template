@@ -151,7 +151,7 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
                 product.setProductType(productType);
             }
 
-            if(productCategory != null|| productType != null){
+            if (productCategory != null || productType != null) {
                 this.recurringDepositProductRepository.saveAndFlush(product);
             }
 
@@ -290,8 +290,8 @@ public class RecurringDepositProductWritePlatformServiceJpaRepositoryImpl implem
         CodeValue productCategory = null;
         final Long productCategoryId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductCategoryIdParamName);
         if (productCategoryId != null) {
-            productCategory = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY,
-                    productCategoryId);
+            productCategory = this.codeValueRepository
+                    .findOneByCodeNameAndIdWithNotFoundDetection(SavingsApiConstants.SAVINGS_PRODUCT_CATEGORY, productCategoryId);
         }
         return productCategory;
     }

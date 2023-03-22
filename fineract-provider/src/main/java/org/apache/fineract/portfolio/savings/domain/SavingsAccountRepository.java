@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.domain;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import javax.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -79,4 +80,7 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
     @Query("select sa from SavingsAccount sa where sa.client.id = :clientId and sa.group.id = :groupId and sa.gsim.id = :gsimId")
     List<SavingsAccount> findByClientIdAndGroupIdAndGsimId(@Param("clientId") Long clientId, @Param("groupId") Long groupId,
             @Param("gsimId") Long gsimId);
+
+    @Query("SELECT sa FROM SavingsAccount sa WHERE sa.withdrawalFrequency IS NOT NULL AND sa.withdrawalFrequencyEnum IS NOT NULL AND sa.status = 300 AND sa.nextFlexWithdrawalDate IS NOT NULL AND sa.nextFlexWithdrawalDate < :today")
+    List<SavingsAccount> findSavingAccountToUpdateNextFlexWithdrawalDate(@Param("today") LocalDate today);
 }

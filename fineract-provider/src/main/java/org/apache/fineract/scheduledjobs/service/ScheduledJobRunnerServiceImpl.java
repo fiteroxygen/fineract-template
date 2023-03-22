@@ -48,8 +48,10 @@ import org.apache.fineract.infrastructure.jobs.service.JobName;
 import org.apache.fineract.infrastructure.jobs.service.JobRegisterService;
 import org.apache.fineract.infrastructure.jobs.service.JobRunner;
 import org.apache.fineract.portfolio.savings.DepositAccountUtils;
+import org.apache.fineract.portfolio.savings.WithdrawalFrequency;
 import org.apache.fineract.portfolio.savings.data.DepositAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.DepositAccountWritePlatformService;
@@ -527,6 +529,41 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     numberOfRetries = maxNumberOfRetries + 1;
                 }
             }
+        }
+    }
+
+    @Override
+    @CronTarget(jobName = JobName.UPDATE_NEXT_WITHDRAWAL_DATE_ON_SAVINGS_ACCOUNT)
+    public void updateNextWithdrawalDateOnSavingsAccount() throws JobExecutionException {
+        final List<SavingsAccount> savingsAccounts = this.savingAccountRepositoryWrapper.findSavingAccountToUpdateNextFlexWithdrawalDate();
+        List<Throwable> exceptions = new ArrayList<>();
+        for (final SavingsAccount account : savingsAccounts) {
+            try {
+                if (account.getWithdrawalFrequency() != null && account.getWithdrawalFrequencyEnum() != null
+                        && DateUtils.getBusinessLocalDate().isAfter(account.getNextFlexWithdrawalDate())) {
+
+                    if (account.getWithdrawalFrequencyEnum().equals(WithdrawalFrequency.MONTH.getValue())) {
+                        LocalDate nextWithDrawDate = account.getNextFlexWithdrawalDate().plusMonths(account.getWithdrawalFrequency());
+                        account.setNextFlexWithdrawalDate(nextWithDrawDate);
+                        this.savingAccountRepositoryWrapper.saveAndFlush(account);
+                    }
+                }
+            } catch (final PlatformApiDataValidationException e) {
+                exceptions.add(e);
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    LOG.error("Apply nextFlexWithdrawalDate for savings failed for account {} with message: {}", account.getId(),
+                            error.getDeveloperMessage(), e);
+                }
+            } catch (final Exception ex) {
+                exceptions.add(ex);
+                LOG.error("Apply nextFlexWithdrawalDate for savings failed for account: {}", account.getId(), ex);
+            }
+        }
+        LOG.info("{}: Records affected by updateNextWithdrawalDateOnSavingsAccount: {}", ThreadLocalContextUtil.getTenant().getName(),
+                savingsAccounts.size());
+        if (!exceptions.isEmpty()) {
+            throw new JobExecutionException(exceptions);
         }
     }
 }

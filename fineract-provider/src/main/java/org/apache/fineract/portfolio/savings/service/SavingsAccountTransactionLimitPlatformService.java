@@ -16,29 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.scheduledjobs.service;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+package org.apache.fineract.portfolio.savings.service;
 
-public interface ScheduledJobRunnerService {
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.portfolio.client.domain.Client;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 
-    void applyAnnualFeeForSavings();
+public interface SavingsAccountTransactionLimitPlatformService {
 
-    void applyDueChargesForSavings() throws JobExecutionException;
-
-    void updateNPA();
-
-    void updateMaturityDetailsOfDepositAccounts();
-
-    void generateRDSchedule();
-
-    void postDividends() throws JobExecutionException;
-
-    void updateTrialBalanceDetails() throws JobExecutionException;
-
-    void executeMissMatchedJobs() throws JobExecutionException;
-
-    void postAccrualInterestForSavings() throws JobExecutionException;
-
-    void updateNextWithdrawalDateOnSavingsAccount() throws JobExecutionException;
+    void handleApprovalsForSessionTransactionLimits(final JsonCommand command, final SavingsAccount savingsAccount, final SavingsAccountTransaction savingsAccountTransaction, final Client client,final CommandProcessingResultBuilder result);
 }

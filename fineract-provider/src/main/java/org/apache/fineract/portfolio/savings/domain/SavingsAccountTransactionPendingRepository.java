@@ -16,29 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.scheduledjobs.service;
+package org.apache.fineract.portfolio.savings.domain;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface ScheduledJobRunnerService {
+public interface SavingsAccountTransactionPendingRepository
+        extends JpaRepository<SavingsAccountTransactionPending, Long>, JpaSpecificationExecutor<SavingsAccountTransactionPending> {
 
-    void applyAnnualFeeForSavings();
-
-    void applyDueChargesForSavings() throws JobExecutionException;
-
-    void updateNPA();
-
-    void updateMaturityDetailsOfDepositAccounts();
-
-    void generateRDSchedule();
-
-    void postDividends() throws JobExecutionException;
-
-    void updateTrialBalanceDetails() throws JobExecutionException;
-
-    void executeMissMatchedJobs() throws JobExecutionException;
-
-    void postAccrualInterestForSavings() throws JobExecutionException;
-
-    void updateNextWithdrawalDateOnSavingsAccount() throws JobExecutionException;
 }

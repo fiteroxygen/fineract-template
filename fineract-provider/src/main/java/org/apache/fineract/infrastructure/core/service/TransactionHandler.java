@@ -16,29 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.scheduledjobs.service;
+package org.apache.fineract.infrastructure.core.service;
 
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-public interface ScheduledJobRunnerService {
+import java.util.function.Supplier;
 
-    void applyAnnualFeeForSavings();
+@Service
+public class TransactionHandler {
 
-    void applyDueChargesForSavings() throws JobExecutionException;
+    @Transactional(propagation = Propagation.REQUIRED)
+    public <T> T runInTransaction(Supplier<T> supplier) {
+        return supplier.get();
+    }
 
-    void updateNPA();
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public <T> T runInNewTransaction(Supplier<T> supplier) {
+        return supplier.get();
+    }
 
-    void updateMaturityDetailsOfDepositAccounts();
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public <T> T pauseTransactionAndRun(Supplier<T> supplier) {
+        return supplier.get();
+    }
 
-    void generateRDSchedule();
-
-    void postDividends() throws JobExecutionException;
-
-    void updateTrialBalanceDetails() throws JobExecutionException;
-
-    void executeMissMatchedJobs() throws JobExecutionException;
-
-    void postAccrualInterestForSavings() throws JobExecutionException;
-
-    void updateNextWithdrawalDateOnSavingsAccount() throws JobExecutionException;
 }
