@@ -274,13 +274,13 @@ public class CommandSource extends AbstractPersistableCustom {
         this.transactionId = transactionId;
     }
 
-    public void updateActionNameAndEntityName(CommandProcessingResult commandProcessingResult){
+    public void updateActionNameAndEntityName(CommandProcessingResult commandProcessingResult) {
 
-        if(commandProcessingResult != null & !Strings.isEmpty(commandProcessingResult.getActionName())){
+        if (commandProcessingResult != null & !Strings.isEmpty(commandProcessingResult.getActionName())) {
             this.actionName = commandProcessingResult.getActionName();
         }
 
-        if(commandProcessingResult != null & !Strings.isEmpty(commandProcessingResult.getEntityName())){
+        if (commandProcessingResult != null & !Strings.isEmpty(commandProcessingResult.getEntityName())) {
             this.entityName = commandProcessingResult.getEntityName();
         }
 

@@ -359,6 +359,7 @@ public final class DepositsApiConstants {
         recurringDepositRequestData.addAll(PRECLOSURE_REQUEST_DATA_PARAMETERS);
         recurringDepositRequestData.addAll(DEPOSIT_TERM_REQUEST_DATA_PARAMETERS);
         recurringDepositRequestData.addAll(RECURRING_DETAILS_REQUEST_DATA_PARAMETERS);
+        recurringDepositRequestData.add(linkedAccountParamName);
         return recurringDepositRequestData;
     }
 

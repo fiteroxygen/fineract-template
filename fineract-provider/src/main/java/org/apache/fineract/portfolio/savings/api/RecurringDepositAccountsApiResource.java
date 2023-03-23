@@ -66,6 +66,8 @@ import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSer
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
+import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
@@ -100,6 +102,8 @@ public class RecurringDepositAccountsApiResource {
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
 
+    private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
+
     @Autowired
     public RecurringDepositAccountsApiResource(final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final PlatformSecurityContext context, final DefaultToApiJsonSerializer<DepositAccountData> toApiJsonSerializer,
@@ -108,7 +112,8 @@ public class RecurringDepositAccountsApiResource {
             final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService, final FromJsonHelper fromJsonHelper,
             final DepositAccountPreMatureCalculationPlatformService accountPreMatureCalculationPlatformService,
             final BulkImportWorkbookService bulkImportWorkbookService,
-            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService) {
+            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
+            AccountAssociationsReadPlatformService accountAssociationsReadPlatformService) {
         this.depositAccountReadPlatformService = depositAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -119,6 +124,7 @@ public class RecurringDepositAccountsApiResource {
         this.accountPreMatureCalculationPlatformService = accountPreMatureCalculationPlatformService;
         this.bulkImportWorkbookService = bulkImportWorkbookService;
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
+        this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
     }
 
     @GET
@@ -237,6 +243,7 @@ public class RecurringDepositAccountsApiResource {
         Collection<SavingsAccountTransactionData> transactions = null;
         Collection<SavingsAccountChargeData> charges = null;
         Long transactionSize = null;
+        PortfolioAccountData linkedAccount = null;
 
         final Set<String> associationParameters = ApiParameterHelper.extractAssociationsForResponseIfProvided(uriInfo.getQueryParameters());
         if (!associationParameters.isEmpty()) {
@@ -274,6 +281,11 @@ public class RecurringDepositAccountsApiResource {
                     charges = currentCharges;
                 }
             }
+
+            if (associationParameters.contains(SavingsApiConstants.linkedAccount)) {
+                mandatoryResponseParameters.add(SavingsApiConstants.linkedAccount);
+                linkedAccount = this.accountAssociationsReadPlatformService.retriveSavingsLinkedAssociation(accountId);
+            }
         }
 
         RecurringDepositAccountData templateData = null;
@@ -286,7 +298,7 @@ public class RecurringDepositAccountsApiResource {
         }
 
         RecurringDepositAccountData result = RecurringDepositAccountData.withTemplateOptions(savingsAccount, templateData, transactions,
-                charges);
+                charges, linkedAccount);
         result.setTransactionSize(transactionSize);
         return result;
     }

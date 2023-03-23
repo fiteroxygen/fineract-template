@@ -18,10 +18,15 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 @Service
 public class NubanAccountServiceImpl implements NubanAccountService {
+
+    @Autowired
+    private Environment env;
 
     @Override
     public String generateNextSerialNumber(String serialNumber) {
@@ -51,7 +56,7 @@ public class NubanAccountServiceImpl implements NubanAccountService {
     public String generateNubanAccountNumber(String serialNumber, String prefix) {
         int[] nubanMultipliers = new int[] { 3, 7, 3, 3, 7, 3, 3, 7, 3, 3, 7, 3 };
         serialNumber = prefix + serialNumber.substring(1);
-        String extendSerialNumber = UNITED_CAPITAL_UNIQUE_CODE_IDENTIFIER + serialNumber;
+        String extendSerialNumber = this.env.getProperty("fineract.configuration.nubanCode") + serialNumber;
         // Step1
         int digit = 0;
         for (int i = 0; i < nubanMultipliers.length; i++) {

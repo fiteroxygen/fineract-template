@@ -424,6 +424,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormatter.ofPattern(command.dateFormat()).withLocale(locale);
             Money amountForDeposit = account.activateWithBalance();
+            amountForDeposit = amountForDeposit.add(account.getRecurringDetail().mandatoryRecommendedDepositAmount());
             if (amountForDeposit.isGreaterThanZero()) {
                 final PortfolioAccountData portfolioAccountData = this.accountAssociationsReadPlatformService
                         .retriveSavingsLinkedAssociation(savingsId);

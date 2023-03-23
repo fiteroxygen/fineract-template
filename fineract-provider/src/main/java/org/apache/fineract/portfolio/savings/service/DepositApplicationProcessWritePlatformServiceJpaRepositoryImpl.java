@@ -294,6 +294,19 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                     financialYearBeginningMonth);
             account.validateApplicableInterestRate();
             savingAccountRepository.save(account);
+
+            // Save linked account information
+            final Long savingsAccountId = command.longValueOfParameterNamed(DepositsApiConstants.linkedAccountParamName);
+            if (savingsAccountId != null) {
+                final SavingsAccount savingsAccount = this.depositAccountAssembler.assembleFrom(savingsAccountId,
+                        DepositAccountType.SAVINGS_DEPOSIT);
+                this.depositAccountDataValidator.validatelinkedSavingsAccount(savingsAccount, account);
+                boolean isActive = true;
+                final AccountAssociations accountAssociations = AccountAssociations.associateSavingsAccount(account, savingsAccount,
+                        AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue(), isActive);
+                this.accountAssociationsRepository.save(accountAssociations);
+            }
+
             businessEventNotifierService.notifyPostBusinessEvent(new RecurringDepositAccountCreateBusinessEvent(account));
 
             return new CommandProcessingResultBuilder() //
@@ -497,6 +510,44 @@ public class DepositApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                 account.validateApplicableInterestRate();
                 this.savingAccountRepository.save(account);
 
+            }
+
+            // Save linked account information
+            final Long savingsAccountId = command.longValueOfParameterNamed(DepositsApiConstants.linkedAccountParamName);
+            AccountAssociations accountAssociations = this.accountAssociationsRepository.findBySavingsIdAndType(accountId,
+                    AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
+            if (savingsAccountId == null) {
+                if (accountAssociations != null) {
+                    if (this.fromJsonHelper.parameterExists(DepositsApiConstants.linkedAccountParamName, command.parsedJson())) {
+                        this.accountAssociationsRepository.delete(accountAssociations);
+                        changes.put(DepositsApiConstants.linkedAccountParamName, null);
+
+                    }
+                }
+            } else {
+                boolean isModified = false;
+                if (accountAssociations == null) {
+                    isModified = true;
+                } else {
+                    final SavingsAccount savingsAccount = accountAssociations.linkedSavingsAccount();
+                    if (savingsAccount == null || !savingsAccount.getId().equals(savingsAccountId)) {
+                        isModified = true;
+                    }
+                }
+                if (isModified) {
+                    final SavingsAccount savingsAccount = this.depositAccountAssembler.assembleFrom(savingsAccountId,
+                            DepositAccountType.SAVINGS_DEPOSIT);
+                    this.depositAccountDataValidator.validatelinkedSavingsAccount(savingsAccount, account);
+                    if (accountAssociations == null) {
+                        boolean isActive = true;
+                        accountAssociations = AccountAssociations.associateSavingsAccount(account, savingsAccount,
+                                AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue(), isActive);
+                    } else {
+                        accountAssociations.updateLinkedSavingsAccount(savingsAccount);
+                    }
+                    changes.put(DepositsApiConstants.linkedAccountParamName, savingsAccountId);
+                    this.accountAssociationsRepository.save(accountAssociations);
+                }
             }
 
             // update calendar details

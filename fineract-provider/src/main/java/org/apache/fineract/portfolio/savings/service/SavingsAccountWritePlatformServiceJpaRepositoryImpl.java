@@ -206,7 +206,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final JdbcTemplate jdbcTemplate, final SavingsAccountInterestPostingService savingsAccountInterestPostingService,
             final CodeValueRepositoryWrapper codeValueRepositoryWrapper,
             final VaultTribeCustomSavingsAccountTransactionRepository vaultTribeCustomSavingsAccountTransactionRepository,
-            final PaymentTypeRepositoryWrapper repositoryWrapper,final SavingsAccountTransactionLimitPlatformService savingsAccountTransactionLimitPlatformService) {
+            final PaymentTypeRepositoryWrapper repositoryWrapper,
+            final SavingsAccountTransactionLimitPlatformService savingsAccountTransactionLimitPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -498,7 +499,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
 
         final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder();
-        savingsAccountTransactionLimitPlatformService.handleApprovalsForSessionTransactionLimits(command, account, withdrawal, account.getClient(),builder);
+        savingsAccountTransactionLimitPlatformService.handleApprovalsForSessionTransactionLimits(command, account, withdrawal,
+                account.getClient(), builder);
 
         //
         return builder.withEntityId(withdrawal.getId()) //

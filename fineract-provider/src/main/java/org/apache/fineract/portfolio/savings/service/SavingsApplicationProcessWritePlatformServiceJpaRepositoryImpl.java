@@ -91,6 +91,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsProduct;
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -123,6 +124,10 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     private final GroupSavingsIndividualMonitoringWritePlatformService gsimWritePlatformService;
     private final NubanAccountService nubanAccountService;
     private final SavingsAccountFloatingInterestRateRepository savingsAccountFloatingInterestRateRepository;
+    @Value("${fineract.configuration.resetNuban}")
+    private Boolean resetNuban;
+    @Value("${fineract.configuration.nubanCode}")
+    private Integer nubanCode;
 
     /*
      * Guaranteed to throw an exception no matter what the data integrity issue is.
@@ -295,21 +300,31 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
     }
 
     private void generateAccountNumber(final SavingsAccount account) {
-        if (account.isAccountNumberRequiresAutoGeneration()) {
+        if (resetNuban.equals(Boolean.TRUE) && !nubanCode.equals(00000)) {
+
+            if (account.isAccountNumberRequiresAutoGeneration()) {
+                final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository
+                        .findByAccountType(EntityAccountType.SAVINGS);
+                account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
+                String serialNumber = account.getAccountNumber();
+                String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+                SavingsAccount existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
+
+                while (existingAccount != null) {
+                    serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
+                    nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
+                    existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
+                }
+                account.updateAccountNo(nubanAccountNumber);
+                this.savingAccountRepository.save(account);
+            }
+
+        } else {
             final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SAVINGS);
             account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
-            String serialNumber = account.getAccountNumber();
-            String nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
-            SavingsAccount existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
-
-            while (existingAccount != null) {
-                serialNumber = this.nubanAccountService.generateNextSerialNumber(serialNumber);
-                nubanAccountNumber = this.nubanAccountService.generateNubanAccountNumber(serialNumber, "1");
-                existingAccount = this.savingAccountRepository.findByAccountNumber(nubanAccountNumber);
-            }
-            account.updateAccountNo(nubanAccountNumber);
-            this.savingAccountRepository.save(account);
+            this.savingAccountRepository.saveAndFlush(account);
         }
+
     }
 
     @Transactional

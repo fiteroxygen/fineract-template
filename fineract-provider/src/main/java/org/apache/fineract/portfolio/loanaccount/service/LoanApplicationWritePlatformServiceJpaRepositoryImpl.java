@@ -1498,7 +1498,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         // if bnpl loan and equity contribution, the check client's savings account for client's contribution for bnpl
         // vendor payment
         BigDecimal amountToDisburseForBnplEquityContributionLoan = BigDecimal.ZERO;
-        Boolean isBnplEquityContributionLoan = loan.getBnplLoan() && loan.getRequiresEquityContribution();
+        Boolean isBnplEquityContributionLoan = loan.getBnplLoan() != null && loan.getBnplLoan()
+                && loan.getRequiresEquityContribution() != null && loan.getRequiresEquityContribution();
         if (isBnplEquityContributionLoan) {
             Money disburseAmount = loan.adjustDisburseAmount(command, expectedDisbursementDate);
             Money amountToDisburse = disburseAmount.copy();

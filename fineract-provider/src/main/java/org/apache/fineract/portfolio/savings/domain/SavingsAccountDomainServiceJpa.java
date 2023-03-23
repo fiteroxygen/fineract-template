@@ -86,7 +86,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
             final BusinessEventNotifierService businessEventNotifierService,
             final SavingsAccountTransactionDataValidator savingsAccountTransactionDataValidator,
             final SavingsAccountAssembler savingAccountAssembler, final LoanReadPlatformService loanReadPlatformService,
-                                          final GlobalConfigurationRepositoryWrapper globalConfigurationRepository) {
+            final GlobalConfigurationRepositoryWrapper globalConfigurationRepository) {
 
         this.savingsAccountRepository = savingsAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
