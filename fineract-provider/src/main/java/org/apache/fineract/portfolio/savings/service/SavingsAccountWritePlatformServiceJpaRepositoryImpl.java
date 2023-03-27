@@ -849,27 +849,29 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         CommandProcessingResult undoPrincipalTransaction = undoTransaction(savingsId, transactionId, allowAccountTransferModification);
 
-        RevokedInterestTransactionData revokedInterestTransaction = this.vaultTribeCustomSavingsAccountTransactionRepository
-                .findRevokedInterestTransaction(principalTransaction.getId(), principalTransaction.getPaymentDetailId());
+        if (!allowAccountTransferModification) {
+            RevokedInterestTransactionData revokedInterestTransaction = this.vaultTribeCustomSavingsAccountTransactionRepository
+                    .findRevokedInterestTransaction(principalTransaction.getId(), principalTransaction.getPaymentDetailId());
 
-        if (revokedInterestTransaction != null
-                && revokedInterestTransaction.getActualTransactionType().equals(SavingsAccountTransactionType.REVOKED_INTEREST.name())) {
+            if (revokedInterestTransaction != null && revokedInterestTransaction.getActualTransactionType()
+                    .equals(SavingsAccountTransactionType.REVOKED_INTEREST.name())) {
 
-            if (principalTransaction.getReversed()) {
-                throw new PlatformServiceUnavailableException("error.msg.saving.account.transaction.reversal.not.allowed",
-                        "Savings account [Revoked Interest] transaction :" + transactionId
-                                + " is already reversed. This action is not Allowed",
-                        transactionId);
+                if (principalTransaction.getReversed()) {
+                    throw new PlatformServiceUnavailableException("error.msg.saving.account.transaction.reversal.not.allowed",
+                            "Savings account [Revoked Interest] transaction :" + transactionId
+                                    + " is already reversed. This action is not Allowed",
+                            transactionId);
+                }
+
+                undoTransaction(revokedInterestTransaction.getSavingsAccountId(), revokedInterestTransaction.getId(),
+                        allowAccountTransferModification);
             }
-
-            undoTransaction(revokedInterestTransaction.getSavingsAccountId(), revokedInterestTransaction.getId(),
-                    allowAccountTransferModification);
         }
         return undoPrincipalTransaction;
     }
 
     private static void validateTransactionsToBeReversed(Long transactionId, RevokedInterestTransactionData principalTransaction) {
-        if (principalTransaction.getReversed()) {
+        if (principalTransaction.getReversed() != null && principalTransaction.getReversed()) {
             throw new PlatformServiceUnavailableException("error.msg.saving.account.transaction.reversal.not.allowed",
                     "Savings account transaction :" + transactionId + " is already reversed. This action is not Allowed", transactionId);
         }
