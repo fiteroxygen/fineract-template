@@ -27,5 +27,6 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 
 public interface SavingsAccountTransactionLimitPlatformService {
 
-    void handleApprovalsForSessionTransactionLimits(final JsonCommand command, final SavingsAccount savingsAccount, final SavingsAccountTransaction savingsAccountTransaction, final Client client,final CommandProcessingResultBuilder result);
+    void handleApprovalsForSessionTransactionLimits(final JsonCommand command, final SavingsAccount savingsAccount,
+            final SavingsAccountTransaction savingsAccountTransaction, final Client client, final CommandProcessingResultBuilder result);
 }

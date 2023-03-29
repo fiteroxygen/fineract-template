@@ -106,13 +106,14 @@ public class RecurringDepositAccountsApiResource {
 
     @Autowired
     public RecurringDepositAccountsApiResource(final DepositAccountReadPlatformService depositAccountReadPlatformService,
-                                               final PlatformSecurityContext context, final DefaultToApiJsonSerializer<DepositAccountData> toApiJsonSerializer,
-                                               final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
-                                               final ApiRequestParameterHelper apiRequestParameterHelper,
-                                               final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService, final FromJsonHelper fromJsonHelper,
-                                               final DepositAccountPreMatureCalculationPlatformService accountPreMatureCalculationPlatformService,
-                                               final BulkImportWorkbookService bulkImportWorkbookService,
-                                               final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService, AccountAssociationsReadPlatformService accountAssociationsReadPlatformService) {
+            final PlatformSecurityContext context, final DefaultToApiJsonSerializer<DepositAccountData> toApiJsonSerializer,
+            final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
+            final ApiRequestParameterHelper apiRequestParameterHelper,
+            final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService, final FromJsonHelper fromJsonHelper,
+            final DepositAccountPreMatureCalculationPlatformService accountPreMatureCalculationPlatformService,
+            final BulkImportWorkbookService bulkImportWorkbookService,
+            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
+            AccountAssociationsReadPlatformService accountAssociationsReadPlatformService) {
         this.depositAccountReadPlatformService = depositAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;

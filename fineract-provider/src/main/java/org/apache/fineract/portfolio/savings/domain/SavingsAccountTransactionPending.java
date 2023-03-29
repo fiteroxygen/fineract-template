@@ -19,61 +19,61 @@
 
 package org.apache.fineract.portfolio.savings.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import org.apache.fineract.infrastructure.core.domain.AbstractAuditableCustom;
-import org.apache.fineract.portfolio.client.domain.Client;
-
+import java.math.BigDecimal;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.apache.fineract.infrastructure.core.domain.AbstractAuditableCustom;
+import org.apache.fineract.portfolio.client.domain.Client;
 
 @lombok.Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "m_savings_account_transaction_pending")
-public class SavingsAccountTransactionPending  extends AbstractAuditableCustom {
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "savings_account_id", referencedColumnName = "id")
-        private SavingsAccount savingsAccount;
+public class SavingsAccountTransactionPending extends AbstractAuditableCustom {
 
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "committed_transaction_id", referencedColumnName = "id")
-        private SavingsAccountTransaction committedTransaction;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "savings_account_id", referencedColumnName = "id")
+    private SavingsAccount savingsAccount;
 
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "client_id", referencedColumnName = "id")
-        private Client client;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "committed_transaction_id", referencedColumnName = "id")
+    private SavingsAccountTransaction committedTransaction;
 
-        @Column(name = "transaction_type_enum")
-        private Integer transactionTypeEnum;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", referencedColumnName = "id")
+    private Client client;
 
-        @Column(name = "amount")
-        private BigDecimal amount;
+    @Column(name = "transaction_type_enum")
+    private Integer transactionTypeEnum;
 
-        @Column(name = "locale")
-        private String locale;
+    @Column(name = "amount")
+    private BigDecimal amount;
 
-        @Column(name = "currency_code")
-        private String currencyCode;
+    @Column(name = "locale")
+    private String locale;
 
-        @Column(name = "external_id")
-        private String externalId;
+    @Column(name = "currency_code")
+    private String currencyCode;
 
-        @Column(name = "is_processed")
-        private Boolean isProcessed;
+    @Column(name = "external_id")
+    private String externalId;
 
-        public static SavingsAccountTransactionPending createNew(final SavingsAccountTransaction savingsAccountTransaction,
-                final SavingsAccount savingsAccount, final Client client, final String externalId, final String locale) {
-            return new SavingsAccountTransactionPending(savingsAccount, null, client, savingsAccountTransaction.getTypeOf(), savingsAccountTransaction.getAmount(),
-                    locale, savingsAccount.getCurrency().getCode(), externalId, false);
-        }
+    @Column(name = "is_processed")
+    private Boolean isProcessed;
 
-        public void updateCommittedTransaction(final SavingsAccountTransaction committedTransaction) {
-                this.isProcessed = true;
-                this.committedTransaction = committedTransaction;
-        }
+    public static SavingsAccountTransactionPending createNew(final SavingsAccountTransaction savingsAccountTransaction,
+            final SavingsAccount savingsAccount, final Client client, final String externalId, final String locale) {
+        return new SavingsAccountTransactionPending(savingsAccount, null, client, savingsAccountTransaction.getTypeOf(),
+                savingsAccountTransaction.getAmount(), locale, savingsAccount.getCurrency().getCode(), externalId, false);
     }
+
+    public void updateCommittedTransaction(final SavingsAccountTransaction committedTransaction) {
+        this.isProcessed = true;
+        this.committedTransaction = committedTransaction;
+    }
+}

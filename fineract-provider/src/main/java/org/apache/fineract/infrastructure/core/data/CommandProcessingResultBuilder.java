@@ -49,7 +49,7 @@ public class CommandProcessingResultBuilder {
     public CommandProcessingResult build() {
         return CommandProcessingResult.fromDetails(this.commandId, this.officeId, this.groupId, this.clientId, this.loanId, this.savingsId,
                 this.resourceIdentifier, this.entityId, this.gsimId, this.glimId, this.creditBureauReportData, this.transactionId,
-                this.changes, this.productId, this.rollbackTransaction, this.subEntityId,this.actionName);
+                this.changes, this.productId, this.rollbackTransaction, this.subEntityId, this.actionName);
     }
 
     public CommandProcessingResultBuilder withCommandId(final Long withCommandId) {

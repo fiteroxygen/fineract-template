@@ -80,6 +80,7 @@ public final class SavingsAccountData implements Serializable {
     private final boolean allowOverdraft;
     private final BigDecimal overdraftLimit;
     private final BigDecimal minRequiredBalance;
+    private boolean postOverdraftInterestOnDeposit;
     private final boolean enforceMinRequiredBalance;
     private final BigDecimal maxAllowedLienLimit;
     private final boolean lienAllowed;
@@ -1245,5 +1246,13 @@ public final class SavingsAccountData implements Serializable {
 
     public void setNextFlexWithdrawalDate(LocalDate nextFlexWithdrawalDate) {
         this.nextFlexWithdrawalDate = nextFlexWithdrawalDate;
+    }
+
+    public void setPostOverdraftInterestOnDeposit(boolean postOverdraftInterestOnDeposit) {
+        this.postOverdraftInterestOnDeposit = postOverdraftInterestOnDeposit;
+    }
+
+    public boolean isPostOverdraftInterestOnDeposit() {
+        return this.postOverdraftInterestOnDeposit;
     }
 }

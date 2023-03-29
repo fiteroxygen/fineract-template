@@ -120,7 +120,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     private final SavingsAccountTransactionsForBatchMapper savingsAccountTransactionsForBatchMapper;
     private final SavingAccountMapper savingAccountMapper;
     private final SavingAccountMapperForInterestPosting savingAccountMapperForInterestPosting;
-    // private final SavingsAccountAnnualFeeMapper annualFeeMapper;
 
     // pagination
     private final PaginationHelper paginationHelper;
@@ -810,7 +809,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sa.withdrawal_frequency as withdrawalFrequency, ");
             sqlBuilder.append("sa.withdrawal_frequency_enum as withdrawalFrequencyEnum, ");
             sqlBuilder.append("sa.previous_flex_withdrawal_date as previousFlexWithdrawalDate, ");
-            sqlBuilder.append("sa.next_flex_withdrawal_date as nextFlexWithdrawalDate ");
+            sqlBuilder.append("sa.next_flex_withdrawal_date as nextFlexWithdrawalDate, ");
+            sqlBuilder.append("sa.post_overdraft_interest_on_deposit as postOverdraftInterestOnDeposit ");
             sqlBuilder.append("from m_savings_account sa ");
             sqlBuilder.append("join m_savings_product sp ON sa.product_id = sp.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
@@ -1044,6 +1044,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             }
             final LocalDate previousFlexWithdrawalDate = JdbcSupport.getLocalDate(rs, "previousFlexWithdrawalDate");
             final LocalDate nextFlexWithdrawalDate = JdbcSupport.getLocalDate(rs, "nextFlexWithdrawalDate");
+            final boolean postOverdraftInterestOnDeposit = rs.getBoolean("postOverdraftInterestOnDeposit");
 
             SavingsAccountData savingsAccountData = SavingsAccountData.instance(id, accountNo, depositType, externalId, groupId, groupName,
                     clientId, clientName, productId, productName, fieldOfficerId, fieldOfficerName, status, subStatus, reasonForBlock,
@@ -1060,6 +1061,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             savingsAccountData.setWithdrawalFrequencyEnum(withdrawalFrequencyEnum);
             savingsAccountData.setPreviousFlexWithdrawalDate(previousFlexWithdrawalDate);
             savingsAccountData.setNextFlexWithdrawalDate(nextFlexWithdrawalDate);
+            savingsAccountData.setPostOverdraftInterestOnDeposit(postOverdraftInterestOnDeposit);
             return savingsAccountData;
         }
     }
@@ -1191,7 +1193,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     }
                 }
             }
-
+            boolean postOverdraftInterestOnDeposit = template.isPostOverdraftInterestOnDeposit();
             template = SavingsAccountData.withTemplateOptions(template, productOptions, fieldOfficerOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, transactions,
@@ -1199,6 +1201,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             template.setFloatingInterestRates(accountFloatingInterestRates);
             template.setUseFloatingInterestRate(useFloatingInterestRateFromProduct);
             template.setWithdrawalFrequencyOptions(withdrawalFrequencyOptions);
+            template.setPostOverdraftInterestOnDeposit(postOverdraftInterestOnDeposit);
         } else {
 
             String clientName = null;
@@ -1279,7 +1282,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public Collection<SavingsAccountTransactionData> retrieveAllTransactions(final Long savingsId, DepositAccountType depositAccountType,
             Integer offset, Integer limit) {
         if (offset == null) {
-            offset = 1;
+            offset = 0;
         }
         if (limit == null) {
             limit = 15;
@@ -1295,7 +1298,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     public Collection<SavingsAccountTransactionData> retrieveAccrualTransactions(final Long savingsId,
             DepositAccountType depositAccountType, Integer offset, Integer limit) {
         if (offset == null) {
-            offset = 1;
+            offset = 0;
         }
         if (limit == null) {
             limit = 15;
@@ -1561,7 +1564,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("sp.use_floating_interest_rate as useFloatingInterestRate, ");
             sqlBuilder.append("sp.is_lien_allowed as lienAllowed, ");
             sqlBuilder.append("sp.withdrawal_frequency as withdrawalFrequency, ");
-            sqlBuilder.append("sp.withdrawal_frequency_enum as withdrawalFrequencyEnum ");
+            sqlBuilder.append("sp.withdrawal_frequency_enum as withdrawalFrequencyEnum, ");
+            sqlBuilder.append("sp.post_overdraft_interest_on_deposit as postOverdraftInterestOnDeposit ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id  ");
@@ -1680,6 +1684,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                 withdrawalFrequencyEnum = SavingsEnumerations
                         .withdrawalFrequency(WithdrawalFrequency.fromInt(withdrawalFrequencyEnumValue));
             }
+            final boolean postOverdraftInterestOnDeposit = rs.getBoolean("postOverdraftInterestOnDeposit");
 
             SavingsAccountData savingsAccountData = SavingsAccountData.instance(null, null, depositType, null, groupId, groupName, clientId,
                     clientName, productId, productName, fieldOfficerId, fieldOfficerName, status, subStatus, reasonForBlock, timeline,
@@ -1693,6 +1698,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             savingsAccountData.setUseFloatingInterestRate(useFloatingInterestRate);
             savingsAccountData.setWithdrawalFrequency(withdrawalFrequency);
             savingsAccountData.setWithdrawalFrequencyEnum(withdrawalFrequencyEnum);
+            savingsAccountData.setPostOverdraftInterestOnDeposit(postOverdraftInterestOnDeposit);
             return savingsAccountData;
         }
     }
@@ -1899,13 +1905,13 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     @Override
     public List<Long> retrieveActiveSavingAccountsWithZeroInterest() {
         String sql = "select id from m_savings_account where status_enum = 300 and nominal_annual_interest_rate != 0 and deposit_type_enum != 200";
-        return this.jdbcTemplate.queryForList(sql, Long.class);
+        return this.jdbcTemplate.queryForList(sql, Long.class, true);
     }
 
     @Override
     public List<Long> retrieveActiveOverdraftSavingAccounts() {
         String sql = "select id from m_savings_account where status_enum = 300 and (allow_overdraft = true or account_balance_derived <= 0) and deposit_type_enum != 200";
-        return this.jdbcTemplate.queryForList(sql, Long.class);
+        return this.jdbcTemplate.queryForList(sql, Long.class, true);
     }
 
     @Override

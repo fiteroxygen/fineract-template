@@ -214,7 +214,9 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
                     final SavingsAccount savingAccount = this.savingAccountAssembler.assembleFrom(savingAccountId);
                     savingsAccountNumber = savingAccount.getAccountNumber();
                     checkClientOrGroupActive(savingAccount);
-                    this.savingsAccountWritePlatformService.postInterest(savingAccount, false, jobRunDate);
+                    if (!savingAccount.isPostOverdraftInterestOnDeposit()) {
+                        this.savingsAccountWritePlatformService.postInterest(savingAccount, false, jobRunDate);
+                    }
                     numberOfRetries = maxNumberOfRetries + 1;
                 } catch (CannotAcquireLockException | ObjectOptimisticLockingFailureException exception) {
                     logger.info("Recalulate interest job has been retried  " + numberOfRetries + " time(s)");

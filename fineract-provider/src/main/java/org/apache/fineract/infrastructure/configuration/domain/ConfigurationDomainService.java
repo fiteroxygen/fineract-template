@@ -123,4 +123,9 @@ public interface ConfigurationDomainService {
 
     boolean enforceOverdueLoansForMinBalance();
 
+    boolean isPostOverdraftInterestOnDepositEnabled();
+
+    boolean isMaxActiveLoansEnabled();
+
+    Long getMaxActiveLoans();
 }

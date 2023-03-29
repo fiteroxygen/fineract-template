@@ -34,26 +34,27 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionPen
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.stereotype.Service;
 
-
 @Service
 @lombok.RequiredArgsConstructor
-public class SavingsAccountTransactionLimitPlatformServiceImpl implements SavingsAccountTransactionLimitPlatformService{
+public class SavingsAccountTransactionLimitPlatformServiceImpl implements SavingsAccountTransactionLimitPlatformService {
 
     private final GlobalConfigurationRepositoryWrapper globalConfigurationRepositoryWrapper;
     private final SavingsAccountTransactionPendingRepository savingsAccountTransactionPendingRepository;
     private final PlatformSecurityContext context;
     private final TransactionHandler transactionHandler;
 
-
     @Override
-    public void handleApprovalsForSessionTransactionLimits(final JsonCommand command, final SavingsAccount savingsAccount, final SavingsAccountTransaction savingsAccountTransaction, final Client client,final CommandProcessingResultBuilder builder) {
+    public void handleApprovalsForSessionTransactionLimits(final JsonCommand command, final SavingsAccount savingsAccount,
+            final SavingsAccountTransaction savingsAccountTransaction, final Client client, final CommandProcessingResultBuilder builder) {
 
-        GlobalConfigurationProperty maxWithdrawPerSessionConfig = this.globalConfigurationRepositoryWrapper.findOneByNameWithNotFoundDetection("max-withdraw-amount-per-session");
+        GlobalConfigurationProperty maxWithdrawPerSessionConfig = this.globalConfigurationRepositoryWrapper
+                .findOneByNameWithNotFoundDetection("max-withdraw-amount-per-session");
         if (maxWithdrawPerSessionConfig.isEnabled() && maxWithdrawPerSessionConfig.getValue() > 0l && command.entityId() == null
-                && maxWithdrawPerSessionConfig.getValue() < savingsAccountTransaction.getAmount().longValue()){
-            //check if max withdraw limit is per session is configured
+                && maxWithdrawPerSessionConfig.getValue() < savingsAccountTransaction.getAmount().longValue()) {
+            // check if max withdraw limit is per session is configured
             transactionHandler.pauseTransactionAndRun(() -> {
-                SavingsAccountTransactionPending transactionPendingApproval = SavingsAccountTransactionPending.createNew(savingsAccountTransaction, savingsAccount, client, null, command.locale());
+                SavingsAccountTransactionPending transactionPendingApproval = SavingsAccountTransactionPending
+                        .createNew(savingsAccountTransaction, savingsAccount, client, null, command.locale());
                 this.savingsAccountTransactionPendingRepository.saveAndFlush(transactionPendingApproval);
                 builder.setRollbackTransaction(true);
                 builder.withSubEntityId(transactionPendingApproval.getId());
@@ -62,21 +63,24 @@ public class SavingsAccountTransactionLimitPlatformServiceImpl implements Saving
             });
         }
 
-        if(maxWithdrawPerSessionConfig.isEnabled() && maxWithdrawPerSessionConfig.getValue() > 0l && command.entityId() != null
-                && maxWithdrawPerSessionConfig.getValue() < savingsAccountTransaction.getAmount().longValue()){
+        if (maxWithdrawPerSessionConfig.isEnabled() && maxWithdrawPerSessionConfig.getValue() > 0l && command.entityId() != null
+                && maxWithdrawPerSessionConfig.getValue() < savingsAccountTransaction.getAmount().longValue()) {
 
-            //Check that app user has specific permission APPROVEWITHDRAWAL
+            // Check that app user has specific permission APPROVEWITHDRAWAL
 
             transactionHandler.runInTransaction(() -> {
                 final AppUser currentUser = this.context.authenticatedUser();
                 final boolean hasPermission = currentUser.hasSpecificPermissionTo("WITHDRAWAL_WITH_LIMIT_SAVINGSACCOUNT_CHECKER");
-                if(!hasPermission){
-                    throw new PlatformServiceUnavailableException("error.msg.savings.account.transaction.approve.withdrawal.permission", "User does not have permission to approve limit withdrawal");
+                if (!hasPermission) {
+                    throw new PlatformServiceUnavailableException("error.msg.savings.account.transaction.approve.withdrawal.permission",
+                            "User does not have permission to approve limit withdrawal");
                 }
 
-                SavingsAccountTransactionPending transactionPendingApproval = this.savingsAccountTransactionPendingRepository.findById(command.subentityId()).orElse(null);
-                if(transactionPendingApproval == null){
-                    throw new PlatformServiceUnavailableException("error.msg.savings.account.transaction.approve.withdrawal.not.found", "Transaction Pending Approval not found");
+                SavingsAccountTransactionPending transactionPendingApproval = this.savingsAccountTransactionPendingRepository
+                        .findById(command.subentityId()).orElse(null);
+                if (transactionPendingApproval == null) {
+                    throw new PlatformServiceUnavailableException("error.msg.savings.account.transaction.approve.withdrawal.not.found",
+                            "Transaction Pending Approval not found");
                 }
                 transactionPendingApproval.updateCommittedTransaction(savingsAccountTransaction);
                 this.savingsAccountTransactionPendingRepository.saveAndFlush(transactionPendingApproval);

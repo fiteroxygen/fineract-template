@@ -18,11 +18,10 @@
  */
 package org.apache.fineract.infrastructure.core.service;
 
+import java.util.function.Supplier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.function.Supplier;
 
 @Service
 public class TransactionHandler {

@@ -206,7 +206,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final JdbcTemplate jdbcTemplate, final SavingsAccountInterestPostingService savingsAccountInterestPostingService,
             final CodeValueRepositoryWrapper codeValueRepositoryWrapper,
             final VaultTribeCustomSavingsAccountTransactionRepository vaultTribeCustomSavingsAccountTransactionRepository,
-            final PaymentTypeRepositoryWrapper repositoryWrapper,final SavingsAccountTransactionLimitPlatformService savingsAccountTransactionLimitPlatformService) {
+            final PaymentTypeRepositoryWrapper repositoryWrapper,
+            final SavingsAccountTransactionLimitPlatformService savingsAccountTransactionLimitPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -398,6 +399,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
         boolean isRegularTransaction = true;
+        // Post overdraft interest if applicable
+        this.postOverdraftInterest(account, transactionDate);
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
                 transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction, backdatedTxnsAllowedTill);
 
@@ -433,6 +436,18 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .with(changes) //
                 .build();
 
+    }
+
+    /**
+     * Checks if account is in overdraft and if so, posts overdraft interest for the transactionDate if the global
+     * feature is turned on.
+     */
+    private void postOverdraftInterest(SavingsAccount account, LocalDate transactionDate) {
+        if (this.configurationDomainService.isPostOverdraftInterestOnDepositEnabled() && account.isPostOverdraftInterestOnDeposit()) {
+            if (account.isOverdraft() && BigDecimal.ZERO.compareTo(account.getSummary().getAccountBalance()) > 0) {
+                this.postInterest(account, true, transactionDate);
+            }
+        }
     }
 
     private Long saveTransactionToGenerateTransactionId(final SavingsAccountTransaction transaction) {
@@ -498,7 +513,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
 
         final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder();
-        savingsAccountTransactionLimitPlatformService.handleApprovalsForSessionTransactionLimits(command, account, withdrawal, account.getClient(),builder);
+        savingsAccountTransactionLimitPlatformService.handleApprovalsForSessionTransactionLimits(command, account, withdrawal,
+                account.getClient(), builder);
 
         //
         return builder.withEntityId(withdrawal.getId()) //
@@ -847,27 +863,29 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         CommandProcessingResult undoPrincipalTransaction = undoTransaction(savingsId, transactionId, allowAccountTransferModification);
 
-        RevokedInterestTransactionData revokedInterestTransaction = this.vaultTribeCustomSavingsAccountTransactionRepository
-                .findRevokedInterestTransaction(principalTransaction.getId(), principalTransaction.getPaymentDetailId());
+        if (!allowAccountTransferModification) {
+            RevokedInterestTransactionData revokedInterestTransaction = this.vaultTribeCustomSavingsAccountTransactionRepository
+                    .findRevokedInterestTransaction(principalTransaction.getId(), principalTransaction.getPaymentDetailId());
 
-        if (revokedInterestTransaction != null
-                && revokedInterestTransaction.getActualTransactionType().equals(SavingsAccountTransactionType.REVOKED_INTEREST.name())) {
+            if (revokedInterestTransaction != null && revokedInterestTransaction.getActualTransactionType()
+                    .equals(SavingsAccountTransactionType.REVOKED_INTEREST.name())) {
 
-            if (principalTransaction.getReversed()) {
-                throw new PlatformServiceUnavailableException("error.msg.saving.account.transaction.reversal.not.allowed",
-                        "Savings account [Revoked Interest] transaction :" + transactionId
-                                + " is already reversed. This action is not Allowed",
-                        transactionId);
+                if (principalTransaction.getReversed()) {
+                    throw new PlatformServiceUnavailableException("error.msg.saving.account.transaction.reversal.not.allowed",
+                            "Savings account [Revoked Interest] transaction :" + transactionId
+                                    + " is already reversed. This action is not Allowed",
+                            transactionId);
+                }
+
+                undoTransaction(revokedInterestTransaction.getSavingsAccountId(), revokedInterestTransaction.getId(),
+                        allowAccountTransferModification);
             }
-
-            undoTransaction(revokedInterestTransaction.getSavingsAccountId(), revokedInterestTransaction.getId(),
-                    allowAccountTransferModification);
         }
         return undoPrincipalTransaction;
     }
 
     private static void validateTransactionsToBeReversed(Long transactionId, RevokedInterestTransactionData principalTransaction) {
-        if (principalTransaction.getReversed()) {
+        if (principalTransaction.getReversed() != null && principalTransaction.getReversed()) {
             throw new PlatformServiceUnavailableException("error.msg.saving.account.transaction.reversal.not.allowed",
                     "Savings account transaction :" + transactionId + " is already reversed. This action is not Allowed", transactionId);
         }

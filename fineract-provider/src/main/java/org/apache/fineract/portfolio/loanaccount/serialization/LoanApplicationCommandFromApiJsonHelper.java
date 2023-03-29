@@ -574,7 +574,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                     .value(equityContributionLoanPercentage).ignoreIfNull().zeroOrPositiveAmount();
         }
 
-        validateBnplValues(baseDataValidator, isBnplLoan, requiresEquityContribution, equityContributionLoanPercentage);
+        validateBnplValues(baseDataValidator, isBnplLoan == null ? false : isBnplLoan,
+                requiresEquityContribution == null ? false : requiresEquityContribution, equityContributionLoanPercentage);
     }
 
     private void validateBnplValues(final DataValidatorBuilder baseDataValidator, Boolean isBnplLoan, Boolean requiresEquityContribution,
@@ -1111,7 +1112,8 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                 ? existingLoanApplication.getEquityContributionLoanPercentage()
                 : equityContributionLoanPercentage;
 
-        validateBnplValues(baseDataValidator, isBnplLoan, requiresEquityContribution, equityContributionLoanPercentage);
+        validateBnplValues(baseDataValidator, isBnplLoan == null ? false : isBnplLoan,
+                requiresEquityContribution == null ? false : requiresEquityContribution, equityContributionLoanPercentage);
 
         if (!dataValidationErrors.isEmpty()) {
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",

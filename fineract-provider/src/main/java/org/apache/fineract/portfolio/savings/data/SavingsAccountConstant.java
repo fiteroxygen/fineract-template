@@ -40,7 +40,7 @@ public class SavingsAccountConstant extends SavingsApiConstants {
             nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName, withHoldTaxParamName, datatables,
             gsimApplicationId, gsimLastApplication, VAULT_TARGET_AMOUNT, VAULT_TARGET_DATE, useFloatingInterestRateParamName,
             floatingInterestRatesParamName, SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, SavingsApiConstants.WITHDRAWAL_FREQUENCY,
-            SavingsApiConstants.WITHDRAWAL_FREQUENCY_OPTIONS));
+            SavingsApiConstants.WITHDRAWAL_FREQUENCY_OPTIONS, postOverdraftInterestOnDepositParamName));
 
     protected static final Set<String> ADD_MORE_MEMBERS_TO_VAULT_TRIBE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             localeParamName, isGSIM, clientIdParamName, groupIdParamName, productIdParamName, nominalAnnualInterestRateParamName,

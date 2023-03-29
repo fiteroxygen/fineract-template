@@ -2376,6 +2376,12 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     }
 
     @Override
+    public Integer retrieveNumberOfActiveLoansByClientId(Long clientId) {
+        final String sql = "select count(*) from m_loan where client_id = ? and (loan_status_id = 300 or loan_status_id = 301)";
+        return this.jdbcTemplate.queryForObject(sql, Integer.class, clientId);
+    }
+
+    @Override
     public CollectionData retrieveLoanCollectionData(Long loanId) {
         final CollectionDataMapper mapper = new CollectionDataMapper(sqlGenerator);
         String sql = "select " + mapper.schema();

@@ -24,6 +24,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.account.domain.AccountTransferDetails;
+import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 
 public interface AccountTransfersWritePlatformService {
@@ -34,7 +35,7 @@ public interface AccountTransfersWritePlatformService {
 
     Long transferFunds(AccountTransferDTO accountTransferDTO);
 
-    void reverseAllTransactions(Long accountId, PortfolioAccountType accountTypeId);
+    void reverseAllTransactions(Long accountId, PortfolioAccountType accountTypeId, Loan loan);
 
     void updateLoanTransaction(Long loanTransactionId, LoanTransaction newLoanTransaction);
 

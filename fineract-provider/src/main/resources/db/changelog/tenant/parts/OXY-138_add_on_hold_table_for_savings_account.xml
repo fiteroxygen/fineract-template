@@ -85,7 +85,7 @@
             <column name="code" value="WITHDRAWAL_WITH_LIMIT_SAVINGSACCOUNT_CHECKER"/>
             <column name="entity_name" value="SAVINGSACCOUNT"/>
             <column name="action_name" value="WITHDRAWAL_WITH_LIMIT_CHECKER"/>
-            <column name="can_maker_checker" value="0"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
     </changeSet>
 
@@ -101,7 +101,7 @@
             <column name="code" value="WITHDRAWAL_WITH_LIMIT_SAVINGSACCOUNT"/>
             <column name="entity_name" value="SAVINGSACCOUNT"/>
             <column name="action_name" value="WITHDRAWAL_WITH_LIMIT"/>
-            <column name="can_maker_checker" value="0"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
     </changeSet>
 </databaseChangeLog>

@@ -315,6 +315,7 @@ public class SavingsAccountsApiResource {
         savingsAccountData.setFloatingInterestRates(floatingInterestRates);
         savingsAccountData.setUseFloatingInterestRate(savingsAccount.getUseFloatingInterestRate());
         savingsAccountData.setTransactionSize(transactionSize);
+        savingsAccountData.setPostOverdraftInterestOnDeposit(savingsAccount.isPostOverdraftInterestOnDeposit());
         return savingsAccountData;
     }
 

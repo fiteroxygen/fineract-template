@@ -132,6 +132,7 @@ public class SavingsApiConstants {
     public static final String bankNumberParamName = "bankNumber";
     public static final String allowOverdraftParamName = "allowOverdraft";
     public static final String overdraftLimitParamName = "overdraftLimit";
+    public static final String postOverdraftInterestOnDepositParamName = "postOverdraftInterestOnDeposit";
     public static final String nominalAnnualInterestRateOverdraftParamName = "nominalAnnualInterestRateOverdraft";
     public static final String minOverdraftForInterestCalculationParamName = "minOverdraftForInterestCalculation";
     public static final String minRequiredBalanceParamName = "minRequiredBalance";
