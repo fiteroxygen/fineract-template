@@ -1,0 +1,49 @@
+{
+  "loan1": {
+    "clientId": "#(clientId)",
+    "productId": "#(loanProductId)",
+    "disbursementData": [],
+    "principal": "#(loanAmount)",
+    "loanTermFrequency": 12,
+    "loanTermFrequencyType": 2,
+    "numberOfRepayments": 12,
+    "repaymentEvery": 1,
+    "repaymentFrequencyType": 2,
+    "interestRatePerPeriod": 3,
+    "amortizationType": 1,
+    "isEqualAmortization": false,
+    "interestType": 0,
+    "interestCalculationPeriodType": 1,
+    "allowPartialPeriodInterestCalcualtion": false,
+    "transactionProcessingStrategyId": 1,
+    "rates": [],
+    "linkAccountId": null,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "loanType": "individual",
+    "expectedDisbursementDate": "#(submittedOnDate)",
+    "submittedOnDate": "#(submittedOnDate)"
+  },
+  "approve": {
+    "approvedOnDate": "#(approvalDate)",
+    "approvedLoanAmount": "#(loanAmount)",
+    "expectedDisbursementDate": "#(approvalDate)",
+    "disbursementData": [],
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "disburse": {
+    "paymentTypeId": 1,
+    "transactionAmount": "#(loanAmount)",
+    "actualDisbursementDate": "#(disbursementDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "transaction": {
+    "transactionDate": "#(repaymentDate)",
+    "paymentTypeId": 1,
+    "transactionAmount": "#(repaymentAmount)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  }
+}

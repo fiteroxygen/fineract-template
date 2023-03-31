@@ -73,7 +73,7 @@
     </createTable>
 </changeSet>
 
-    <changeSet id="add_permission_for_limit_withdrawal" author="naphlin@fiter.io">
+    <changeSet id="fix_add_permission_for_limit_withdrawal_1" author="naphlin@fiter.io">
         <!-- Add permission for limit withdrawal -->
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -89,7 +89,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="add_permission_for_limit_withdrawal_2" author="naphlin@fiter.io">
+    <changeSet id="fix_add_permission_for_limit_withdrawal_2" author="naphlin@fiter.io">
         <!-- Add permission for limit withdrawal -->
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">

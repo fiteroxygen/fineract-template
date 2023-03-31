@@ -217,6 +217,14 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             // initialize set the value to null
             LocalDate submittedOnDate = null;
 
+            BigDecimal newPrincipalDueFixedAmount = null;
+
+            if (jsonCommand.hasParameter(RescheduleLoansApiConstants.newPrincipalDueFixedAmount)) {
+
+                newPrincipalDueFixedAmount = jsonCommand
+                        .bigDecimalValueOfParameterNamed(RescheduleLoansApiConstants.newPrincipalDueFixedAmount);
+            }
+
             // check if the parameter is in the JsonCommand object
             if (jsonCommand.hasParameter(RescheduleLoansApiConstants.submittedOnDateParamName)) {
                 // create a LocalDate object from the "submittedOnDate" Date
@@ -269,7 +277,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             // create term variations for flat and declining balance loans
             createLoanTermVariationsForRegularLoans(loan, graceOnPrincipal, graceOnInterest, extraTerms, interestRate, rescheduleFromDate,
                     adjustedDueDate, loanRescheduleRequest, loanRescheduleRequestToTermVariationMappings, isActive, isSpecificToInstallment,
-                    decimalValue, dueDate, endDate, emi);
+                    decimalValue, dueDate, endDate, emi, newPrincipalDueFixedAmount);
 
             // create a new entry in the m_loan_reschedule_request table
 
@@ -293,24 +301,17 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             final Integer extraTerms, final BigDecimal interestRate, LocalDate rescheduleFromDate, LocalDate adjustedDueDate,
             final LoanRescheduleRequest loanRescheduleRequest,
             List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings, final Boolean isActive,
-            final boolean isSpecificToInstallment, BigDecimal decimalValue, LocalDate dueDate, LocalDate endDate, BigDecimal emi) {
+            final boolean isSpecificToInstallment, BigDecimal decimalValue, LocalDate dueDate, LocalDate endDate, final BigDecimal emi,
+            final BigDecimal newPrincipalDueFixedAmount) {
 
         if (rescheduleFromDate != null && endDate != null && emi != null) {
-            LoanTermVariations parent = null;
-            LocalDate rescheduleFromLocDate = rescheduleFromDate;
-            LocalDate endDateLocDate = endDate;
-            final Integer termType = LoanTermVariationType.EMI_AMOUNT.getValue();
-            List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
-            for (LoanRepaymentScheduleInstallment installment : installments) {
-                if (installment.getDueDate().isEqual(rescheduleFromLocDate) || installment.getDueDate().isEqual(endDateLocDate)
-                        || (installment.getDueDate().isAfter(rescheduleFromLocDate) && installment.getDueDate().isBefore(endDateLocDate))) {
-                    createLoanTermVariations(loanRescheduleRequest, termType, loan, installment.getDueDate(), installment.getDueDate(),
-                            loanRescheduleRequestToTermVariationMappings, isActive, true, emi, parent);
-                }
-                if (installment.getDueDate().isAfter(endDateLocDate)) {
-                    break;
-                }
-            }
+            createEMIVariation(loan, rescheduleFromDate, loanRescheduleRequest, loanRescheduleRequestToTermVariationMappings, isActive,
+                    endDate, emi);
+        }
+
+        if (rescheduleFromDate != null && newPrincipalDueFixedAmount != null) {
+            createFixedPrincipalVariation(loan, rescheduleFromDate, loanRescheduleRequest, loanRescheduleRequestToTermVariationMappings,
+                    isActive, newPrincipalDueFixedAmount);
         }
 
         if (rescheduleFromDate != null && adjustedDueDate != null) {
@@ -357,6 +358,41 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                     parent);
         }
         loanRescheduleRequest.updateLoanRescheduleRequestToTermVariationMappings(loanRescheduleRequestToTermVariationMappings);
+    }
+
+    private void createEMIVariation(Loan loan, LocalDate rescheduleFromDate, LoanRescheduleRequest loanRescheduleRequest,
+            List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings, Boolean isActive,
+            LocalDate endDate, BigDecimal emi) {
+        LoanTermVariations parent = null;
+        LocalDate rescheduleFromLocDate = rescheduleFromDate;
+        LocalDate endDateLocDate = endDate;
+        final Integer termType = LoanTermVariationType.EMI_AMOUNT.getValue();
+        List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
+        for (LoanRepaymentScheduleInstallment installment : installments) {
+            if (installment.getDueDate().isEqual(rescheduleFromLocDate) || installment.getDueDate().isEqual(endDateLocDate)
+                    || (installment.getDueDate().isAfter(rescheduleFromLocDate) && installment.getDueDate().isBefore(endDateLocDate))) {
+                createLoanTermVariations(loanRescheduleRequest, termType, loan, installment.getDueDate(), installment.getDueDate(),
+                        loanRescheduleRequestToTermVariationMappings, isActive, true, emi, parent);
+            }
+            if (installment.getDueDate().isAfter(endDateLocDate)) {
+                break;
+            }
+        }
+    }
+
+    private void createFixedPrincipalVariation(Loan loan, LocalDate rescheduleFromDate, LoanRescheduleRequest loanRescheduleRequest,
+            List<LoanRescheduleRequestToTermVariationMapping> loanRescheduleRequestToTermVariationMappings, Boolean isActive,
+            BigDecimal principalAmount) {
+        LoanTermVariations parent = null;
+        LocalDate rescheduleFromLocDate = rescheduleFromDate;
+        final Integer termType = LoanTermVariationType.PRINCIPAL_DUE_FIXED_AMOUNT.getValue();
+        List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
+        for (LoanRepaymentScheduleInstallment installment : installments) {
+            if (installment.getDueDate().isEqual(rescheduleFromLocDate) || installment.getDueDate().isAfter(rescheduleFromLocDate)) {
+                createLoanTermVariations(loanRescheduleRequest, termType, loan, installment.getDueDate(), installment.getDueDate(),
+                        loanRescheduleRequestToTermVariationMappings, isActive, true, principalAmount, parent);
+            }
+        }
     }
 
     private LoanTermVariations createLoanTermVariations(LoanRescheduleRequest loanRescheduleRequest, final Integer termType,

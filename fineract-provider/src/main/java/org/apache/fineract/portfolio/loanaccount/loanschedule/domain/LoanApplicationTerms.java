@@ -207,6 +207,8 @@ public final class LoanApplicationTerms {
     private Money interestTobeApproppriated;
     private final BigDecimal fixedPrincipalPercentagePerInstallment;
 
+    private boolean fixedDueAmountChange;
+
     private LocalDate newScheduledDueDateStart;
 
     private boolean advancePaymentInterestForExactDaysInPeriod;
@@ -930,6 +932,7 @@ public final class LoanApplicationTerms {
             Money interestForThisInstallment) {
         final int totalRepaymentsWithCapitalPayment = calculateNumberOfRepaymentsWithPrincipalPayment();
         Money principalPerPeriod = null;
+        //
         if (getFixedEmiAmount() == null) {
             if (this.fixedPrincipalPercentagePerInstallment != null) {
                 principalPerPeriod = this.principal.minus(totalPrincipalAccounted)
@@ -1838,5 +1841,13 @@ public final class LoanApplicationTerms {
 
     public boolean isAdvancePaymentInterestForExactDaysInPeriodEnabled() {
         return this.advancePaymentInterestForExactDaysInPeriod;
+    }
+
+    public boolean isFixedDueAmountChange() {
+        return fixedDueAmountChange;
+    }
+
+    public void setFixedDueAmountChange(boolean fixedDueAmountChange) {
+        this.fixedDueAmountChange = fixedDueAmountChange;
     }
 }

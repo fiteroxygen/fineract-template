@@ -69,4 +69,14 @@ public interface SavingsAccountTransactionRepository
     List<SavingsAccountTransaction> findInterestPostingToBeRevokedOnVaultTribe(@Param("savingsAccount") SavingsAccount savingsAccount,
             @Param("transactionDate") LocalDate transactionDate);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select st from SavingsAccountTransaction st  INNER JOIN FETCH st.paymentDetail where  st.typeOf = 2 AND st.paymentDetail IS NOT NULL AND st.paymentDetail.parentSavingsAccountTransactionId = :transactionId AND  st.paymentDetail.parentTransactionPaymentDetailsId = :paymentDetailsId ")
+    SavingsAccountTransaction findRevokedInterestTransaction(@Param("transactionId") Long transactionId,
+            @Param("paymentDetailsId") Long paymentDetailsId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select st from SavingsAccountTransaction st INNER JOIN FETCH st.savingsAccount  where  st.id = :transactionId AND st.savingsAccount.id = :savingsAccountId ")
+    SavingsAccountTransaction findSavingsAccountTransaction(@Param("transactionId") Long transactionId,
+            @Param("savingsAccountId") Long savingsAccountId);
+
 }

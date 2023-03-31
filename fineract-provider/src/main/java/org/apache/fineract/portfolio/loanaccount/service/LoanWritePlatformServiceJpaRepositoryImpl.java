@@ -2813,7 +2813,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         LocalDate startDate = dueDate.plusDays(penaltyWaitPeriodValue.intValue() + 1);
         Loan loanData = this.loanAssembler.assembleFrom(loanId);
         LocalDate endDate = DateUtils.getBusinessLocalDate();
-        if (dueDate.isBefore(loanData.getMaturityDate())) {
+        if (dueDate.isBefore(loanData.getExpectedMaturityDate())) {
             if (chargeDefinition.feeInterval() != null) {
                 endDate = scheduledDateGenerator.getRepaymentPeriodDate(PeriodFrequencyType.fromInt(feeFrequency),
                         chargeDefinition.feeInterval(), startDate);

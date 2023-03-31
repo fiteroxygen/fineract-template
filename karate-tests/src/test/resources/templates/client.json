@@ -1,0 +1,31 @@
+{
+  "createClientPayload": {
+    "address": [],
+    "familyMembers": [],
+    "officeId": 1,
+    "legalFormId": 1,
+    "firstname": "#(faker.name().firstName())",
+    "lastname": "#(faker.name().lastName())",
+    "mobileNo": "#(faker.phoneNumber())",
+    "active": true,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "activationDate": "#(clientCreationDate)",
+    "submittedOnDate": "#(clientCreationDate)",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))"
+  },
+  "updateClientPayload": {
+    "address": [],
+    "officeId": 1,
+    "legalFormId": 1,
+    "firstname": "#(faker.name().firstName())",
+    "lastname": "#(faker.name().lastName())",
+    "mobileNo": "#(faker.phoneNumber())",
+    "active": true,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "activationDate": "#(df.format(calendar.getTime()))",
+    "submittedOnDate": "#(df.format(calendar.getTime()))",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))"
+  }
+}
