@@ -1,0 +1,16 @@
+{
+  "penaltyFlatChargeWithNoFrequencyPayLoad": {
+    "chargeAppliesTo": 1,
+    "name": "#(faker.lorem().word())",
+    "currencyCode": "USD",
+    "chargeTimeType": 9,
+    "chargeCalculationType": 1,
+    "chargePaymentMode": 0,
+    "amount": "#(chargeAmount)",
+    "active": true,
+    "penalty": true,
+    "enableFreeWithdrawalCharge": false,
+    "enablePaymentType": false,
+    "locale": "en"
+  }
+}

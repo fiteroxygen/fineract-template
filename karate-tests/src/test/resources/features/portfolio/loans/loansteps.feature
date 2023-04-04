@@ -220,3 +220,20 @@ Feature: Create loan stapes
     When method POST
     Then status 403
     Then match $ contains { developerMessage: '#notnull' }
+
+    # This steps has no HardCodes Product
+  @ignore
+  @createLoanWithConfigurableProductStep
+  Scenario: Create loan account With Configurable Product
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.loan1
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId
