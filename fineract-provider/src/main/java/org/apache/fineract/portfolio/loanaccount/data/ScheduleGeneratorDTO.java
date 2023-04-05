@@ -47,6 +47,8 @@ public class ScheduleGeneratorDTO {
     final boolean isInterestToBeRecoveredFirstWhenGreaterThanEMI;
     final boolean isPrincipalCompoundingDisabledForOverdueLoans;
 
+    private Integer totalNumberOfInstallmentFromOriginalSchedule;
+
     public ScheduleGeneratorDTO(final LoanScheduleGeneratorFactory loanScheduleFactory, final ApplicationCurrency applicationCurrency,
             final LocalDate calculatedRepaymentsStartingFromDate, final HolidayDetailDTO holidayDetailDTO,
             final CalendarInstance calendarInstanceForInterestRecalculation, final CalendarInstance compoundingCalendarInstance,
@@ -159,5 +161,13 @@ public class ScheduleGeneratorDTO {
 
     public boolean isPrincipalCompoundingDisabledForOverdueLoans() {
         return isPrincipalCompoundingDisabledForOverdueLoans;
+    }
+
+    public void setTotalNumberOfInstallmentFromOriginalSchedule(Integer totalNumberOfInstallmentFromOriginalSchedule) {
+        this.totalNumberOfInstallmentFromOriginalSchedule = totalNumberOfInstallmentFromOriginalSchedule;
+    }
+
+    public Integer getTotalNumberOfInstallmentFromOriginalSchedule() {
+        return totalNumberOfInstallmentFromOriginalSchedule;
     }
 }

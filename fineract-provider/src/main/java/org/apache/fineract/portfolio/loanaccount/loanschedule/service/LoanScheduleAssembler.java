@@ -491,7 +491,7 @@ public class LoanScheduleAssembler {
                 loanTermVariations, isInterestChargedFromDateSameAsDisbursalDateEnabled, numberOfDays, isSkipMeetingOnFirstDay, detailDTO,
                 allowCompoundingOnEod, isEqualAmortization, isInterestToBeRecoveredFirstWhenGreaterThanEMI,
                 fixedPrincipalPercentagePerInstallment, isPrincipalCompoundingDisabledForOverdueLoans,
-                advancePaymentInterestForExactDaysInPeriod);
+                advancePaymentInterestForExactDaysInPeriod, null);
     }
 
     private CalendarInstance createCalendarForSameAsRepayment(final Integer repaymentEvery,

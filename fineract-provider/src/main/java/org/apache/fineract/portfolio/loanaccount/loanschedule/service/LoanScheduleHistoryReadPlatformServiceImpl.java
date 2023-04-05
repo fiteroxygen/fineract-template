@@ -219,4 +219,11 @@ public class LoanScheduleHistoryReadPlatformServiceImpl implements LoanScheduleH
 
     }
 
+    @Override
+    public Integer totalInstallmentsFromOriginalSchedule(Long loanId) {
+        final String sql = "select coalesce(count(1),0) from m_loan_repayment_schedule_history mlrsh where mlrsh.loan_id = ?";
+
+        return this.jdbcTemplate.queryForObject(sql, new Object[] { loanId }, Integer.class);
+    }
+
 }
