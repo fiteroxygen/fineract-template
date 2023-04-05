@@ -15,7 +15,7 @@ Feature: Test loan account apis
     * def loanProductId = loanProduct.loanProductId
 
     #create savings account with clientCreationDate
-    * def submittedOnDate = df.format(faker.date().past(30, 29, TimeUnit.DAYS))
+    * def submittedOnDate = df.format(faker.date().past(425, 421, TimeUnit.DAYS))
 
     * def result = call read('classpath:features/portfolio/clients/clientsteps.feature@create') { clientCreationDate : '#(submittedOnDate)' }
     * def clientId = result.response.resourceId
@@ -25,12 +25,18 @@ Feature: Test loan account apis
     * def loanId = loan.loanId
 
       #approval
-    * def approvalDate = submittedOnDate
-    * call read('classpath:features/portfolio/loans/loansteps.feature@approveloan') { approvalDate : '#(approvalDate)', loanAmount : '#(loanAmount)', loanId : '#(loanId)' }
+    * call read('classpath:features/portfolio/loans/loansteps.feature@approveloan') { approvalDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanId : '#(loanId)' }
 
       #disbursal
-    * def disbursementDate = submittedOnDate
-    * def disburseloan = call read('classpath:features/portfolio/loans/loansteps.feature@disburseToSavingsAccountStep') { loanAmount : '#(loanAmount)', disbursementDate : '#(disbursementDate)', loanId : '#(loanId)',  loanAmount : '#(loanAmount)'  }
+    * def disburseloan = call read('classpath:features/portfolio/loans/loansteps.feature@disburse') { loanAmount : '#(loanAmount)', disbursementDate : '#(submittedOnDate)', loanId : '#(loanId)'}
      #fetch loan details here
     * def loanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+
+    * assert clientId == loanResponse.loanAccount.clientId
+    * assert loanAmount == loanResponse.loanAccount.principal
+    * assert loanResponse.loanAccount.status.value == 'Active'
+    * assert karate.sizeOf(loanResponse.loanAccount.charges) == 12
+    * def loanTerm = loanResponse.loanAccount.termFrequency
+    Then print 'Loan Term',loanTerm
+    * assert karate.sizeOf(loanResponse.loanAccount.repaymentSchedule.periods) == loanTerm + 1
 

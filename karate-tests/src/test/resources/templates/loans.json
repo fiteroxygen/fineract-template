@@ -89,5 +89,31 @@
     "note": "Reject this Loan Account",
     "locale": "en",
     "dateFormat": "#(format)"
+  },
+  "loanAccountWithNewProductPayLoad": {
+    "clientId": "#(clientId)",
+    "interestRatePerPeriod": 6,
+    "productId": "#(loanProductId)",
+    "disbursementData": [],
+    "principal": "#(loanAmount)",
+    "loanTermFrequency": 12,
+    "loanTermFrequencyType": 2,
+    "numberOfRepayments": 12,
+    "repaymentEvery": 1,
+    "repaymentFrequencyType": 2,
+    "amortizationType": 1,
+    "isEqualAmortization": false,
+    "interestType": 0,
+    "interestCalculationPeriodType": 1,
+    "allowPartialPeriodInterestCalcualtion": false,
+    "transactionProcessingStrategyId": 1,
+    "rates": [],
+    "isBnplLoan": false,
+    "requiresEquityContribution": false,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "loanType": "individual",
+    "expectedDisbursementDate": "#(submittedOnDate)",
+    "submittedOnDate": "#(submittedOnDate)"
   }
 }

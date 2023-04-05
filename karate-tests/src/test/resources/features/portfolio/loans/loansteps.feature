@@ -232,7 +232,7 @@ Feature: Create loan stapes
     And header Content-Type = 'application/json'
     And header Authorization = authToken
     And header fineract-platform-tenantid = tenantId
-    And request loansData.loan1
+    And request loansData.loanAccountWithNewProductPayLoad
     When method POST
     Then status 200
     Then match $ contains { resourceId: '#notnull' }
