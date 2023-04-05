@@ -38,6 +38,15 @@ public class DateRange {
 
     }
 
+    public DateRange(LocalDate startDate, LocalDate endDate) {
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public static DateRange of(final LocalDate startDate, final LocalDate endDate) {
+        return new DateRange(startDate, endDate);
+    }
+
     public LocalDate getStartDate() {
         return startDate;
     }
