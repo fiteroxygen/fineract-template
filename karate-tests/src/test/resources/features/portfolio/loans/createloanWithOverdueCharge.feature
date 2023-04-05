@@ -39,4 +39,5 @@ Feature: Test loan account apis
     * def loanTerm = loanResponse.loanAccount.termFrequency
     Then print 'Loan Term',loanTerm
     * assert karate.sizeOf(loanResponse.loanAccount.repaymentSchedule.periods) == loanTerm + 1
+    * assert karate.sizeOf(loanResponse.loanAccount.transactions) == 1
 
