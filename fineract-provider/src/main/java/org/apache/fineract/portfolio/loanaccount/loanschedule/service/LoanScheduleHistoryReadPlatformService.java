@@ -29,4 +29,6 @@ public interface LoanScheduleHistoryReadPlatformService {
 
     LoanScheduleData retrieveRepaymentArchiveSchedule(Long loanId, RepaymentScheduleRelatedLoanData repaymentScheduleRelatedLoanData,
             Collection<DisbursementData> disbursementData);
+
+    Integer totalInstallmentsFromOriginalSchedule(Long loanId);
 }

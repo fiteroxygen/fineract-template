@@ -28,6 +28,9 @@ public interface ScheduledDateGenerator {
 
     LocalDate getLastRepaymentDate(LoanApplicationTerms loanApplicationTerms, HolidayDetailDTO holidayDetailDTO);
 
+    LocalDate getLastRepaymentDateBasedOnOriginalSchedule(LoanApplicationTerms loanApplicationTerms, HolidayDetailDTO holidayDetailDTO,
+            boolean interestRecalculationForExactDaysInPeriod);
+
     LocalDate idealDisbursementDateBasedOnFirstRepaymentDate(PeriodFrequencyType repaymentPeriodFrequencyType, int repaidEvery,
             LocalDate firstRepaymentDate, Calendar loanCalendar, HolidayDetailDTO holidayDetailDTO,
             LoanApplicationTerms loanApplicationTerms);

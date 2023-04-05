@@ -73,7 +73,9 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
         final ApplicationCurrency applicationCurrency = loanApplicationTerms.getApplicationCurrency();
         // generate list of proposed schedule due dates
-        LocalDate loanEndDate = this.scheduledDateGenerator.getLastRepaymentDate(loanApplicationTerms, holidayDetailDTO);
+        LocalDate loanEndDate = this.scheduledDateGenerator.getLastRepaymentDateBasedOnOriginalSchedule(loanApplicationTerms,
+                holidayDetailDTO, loanApplicationTerms.isAdvancePaymentInterestForExactDaysInPeriodEnabled());
+
         LoanTermVariationsData lastDueDateVariation = loanApplicationTerms.getLoanTermVariations()
                 .fetchLoanTermDueDateVariationsData(loanEndDate);
         if (lastDueDateVariation != null) {
@@ -188,8 +190,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             scheduleParams.setActualRepaymentDate(adjustedDateDetailsDTO.getChangedActualRepaymentDate());
             isFirstRepayment = false;
 
-            LocalDate scheduledDueDate = !lastRestDate.isAfter(adjustedDateDetailsDTO.getChangedScheduleDate())
-                    && loanApplicationTerms.isAdvancePaymentInterestForExactDaysInPeriodEnabled() ? lastRestDate
+            LocalDate scheduledDueDate = adjustedDateDetailsDTO.getChangedScheduleDate().isAfter(loanEndDate)
+                    && loanApplicationTerms.isAdvancePaymentInterestForExactDaysInPeriodEnabled() ? loanEndDate
                             : adjustedDateDetailsDTO.getChangedScheduleDate();
 
             // calculated interest start date for the period
