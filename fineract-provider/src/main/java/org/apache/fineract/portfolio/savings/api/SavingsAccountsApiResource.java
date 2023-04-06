@@ -643,8 +643,7 @@ public class SavingsAccountsApiResource {
     @Operation(summary = "Search Savings Account transactions", description = "Retrieves a list of savings transactions based on the provided filter constraints.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = SavingsAccountTransactionData.class)))) })
-    public String searchSavingsTransactions(@Context final UriInfo uriInfo,
-            @Parameter(hidden = true) final  String filterConstraintJson,
+    public String searchSavingsTransactions(@Context final UriInfo uriInfo, @Parameter(hidden = true) final String filterConstraintJson,
             @QueryParam("limit") @DefaultValue("15") Integer limit, @QueryParam("offset") @DefaultValue("0") Integer offset) {
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);

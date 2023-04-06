@@ -20,6 +20,8 @@ package org.apache.fineract.portfolio.loanaccount.service;
 
 import static org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations.interestType;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,6 +41,7 @@ import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformSer
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
+import org.apache.fineract.infrastructure.core.filters.FilterConstraint;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.PaginationHelper;
@@ -125,6 +128,9 @@ import org.apache.fineract.portfolio.loanproduct.service.LoanProductReadPlatform
 import org.apache.fineract.portfolio.paymentdetail.data.PaymentDetailData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountSearchParameterNotProvidedException;
+import org.apache.fineract.portfolio.savings.request.FilterSelection;
+import org.apache.fineract.portfolio.search.service.SearchReadPlatformService;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -167,6 +173,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     private final DatabaseSpecificSQLGenerator sqlGenerator;
     private final PortfolioAccountReadPlatformService portfolioAccountReadPlatformService;
 
+    private final SearchReadPlatformService searchReadPlatformService;
+
     @Autowired
     public LoanReadPlatformServiceImpl(final PlatformSecurityContext context,
             final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
@@ -181,7 +189,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final ConfigurationDomainService configurationDomainService,
             final PortfolioAccountReadPlatformService portfolioAccountReadPlatformService,
             final AccountDetailsReadPlatformService accountDetailsReadPlatformService, final LoanRepositoryWrapper loanRepositoryWrapper,
-            final ColumnValidator columnValidator, DatabaseSpecificSQLGenerator sqlGenerator, PaginationHelper paginationHelper) {
+            final ColumnValidator columnValidator, DatabaseSpecificSQLGenerator sqlGenerator, PaginationHelper paginationHelper,
+            SearchReadPlatformService searchReadPlatformService) {
         this.context = context;
         this.loanRepositoryWrapper = loanRepositoryWrapper;
         this.applicationCurrencyRepository = applicationCurrencyRepository;
@@ -207,6 +216,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         this.sqlGenerator = sqlGenerator;
         this.paginationHelper = paginationHelper;
         this.portfolioAccountReadPlatformService = portfolioAccountReadPlatformService;
+        this.searchReadPlatformService = searchReadPlatformService;
     }
 
     @Override
@@ -1330,11 +1340,11 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " tr.fee_charges_portion_derived as fees, tr.penalty_charges_portion_derived as penalties, "
                     + " tr.overpayment_portion_derived as overpayment, tr.outstanding_loan_balance_derived as outstandingLoanBalance, "
                     + " tr.unrecognized_income_portion as unrecognizedIncome," + " tr.submitted_on_date as submittedOnDate, "
-                    + " tr.manually_adjusted_or_reversed as manuallyReversed, "
+                    + " tr.manually_adjusted_or_reversed as manuallyReversed, mo.id officeId,au.id userId, mc.id clientId,"
                     + " pd.payment_type_id as paymentType,pd.account_number as accountNumber,pd.check_number as checkNumber, "
                     + " pd.receipt_number as receiptNumber, pd.bank_number as bankNumber,pd.routing_code as routingCode, l.net_disbursal_amount as netDisbursalAmount,"
                     + " l.currency_code as currencyCode, l.currency_digits as currencyDigits, l.currency_multiplesof as inMultiplesOf, rc."
-                    + sqlGenerator.escape("name") + " as currencyName, "
+                    + sqlGenerator.escape("name") + " as currencyName,lp.id productId,tr.office_id officeId, "
                     + " rc.display_symbol as currencyDisplaySymbol, rc.internationalized_name_code as currencyNameCode, "
                     + " pt.value as paymentTypeName, tr.external_id as externalId, tr.office_id as officeId, office.name as officeName, "
                     + " fromtran.id as fromTransferId, fromtran.is_reversed as fromTransferReversed,"
@@ -1343,7 +1353,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " totran.id as toTransferId, totran.is_reversed as toTransferReversed,"
                     + " totran.transaction_date as toTransferDate, totran.amount as toTransferAmount,"
                     + " totran.description as toTransferDescription " + " from m_loan l join m_loan_transaction tr on tr.loan_id = l.id"
-                    + " join m_currency rc on rc." + sqlGenerator.escape("code") + " = l.currency_code "
+                    + "  left join m_product_loan lp on lp.id = l.product_id " + "  left join m_office mo on mo.id=tr.office_id "
+                    + "  left join m_client mc on mc.id = l.client_id " + "  left join m_appuser au on au.id=tr.created_by"
+                    + " left join m_currency rc on rc." + sqlGenerator.escape("code") + " = l.currency_code "
                     + " left JOIN m_payment_detail pd ON tr.payment_detail_id = pd.id"
                     + " left join m_payment_type pt on pd.payment_type_id = pt.id" + " left join m_office office on office.id=tr.office_id"
                     + " left join m_account_transfer_transaction fromtran on fromtran.from_loan_transaction_id = tr.id "
@@ -2431,6 +2443,35 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             accountOptions = null;
         }
         return accountOptions;
+    }
+
+    @Override
+    public Collection<LoanTransactionData> retrieveLoanTransactions(String filterConstraintJson, Integer limit, Integer offset) {
+        this.context.authenticatedUser();
+        ObjectMapper mapper = new ObjectMapper();
+        if (StringUtils.isEmpty(filterConstraintJson)) {
+            throw new SavingsAccountSearchParameterNotProvidedException();
+        }
+
+        try {
+
+            List<Object> params = new ArrayList<>();
+            final LoanTransactionsMapper transactionsMapper = new LoanTransactionsMapper(sqlGenerator);
+            StringBuilder queryBuilder = new StringBuilder("select " + transactionsMapper.loanPaymentsSchema()
+                    + " where tr.transaction_type_enum not in (0, 3) and  (tr.is_reversed=false or tr.manually_adjusted_or_reversed = true) ");
+            FilterConstraint[] filterConstraints = mapper.readValue(filterConstraintJson, FilterConstraint[].class);
+            final String extraCriteria = searchReadPlatformService.buildSqlStringFromFilterConstraints(filterConstraints, params,
+                    FilterSelection.LOAN_SEARCH_REQUEST_MAP);
+            queryBuilder.append(extraCriteria);
+            queryBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC LIMIT ? OFFSET ?");
+            params.add(limit);
+            params.add(offset);
+
+            return this.jdbcTemplate.query(queryBuilder.toString(), transactionsMapper, params.toArray());
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final class CollectionDataMapper implements RowMapper<CollectionData> {

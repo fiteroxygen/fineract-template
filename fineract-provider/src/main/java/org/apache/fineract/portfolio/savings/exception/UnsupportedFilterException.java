@@ -16,21 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.infrastructure.core.exception;
+package org.apache.fineract.portfolio.savings.exception;
 
-/**
- * A {@link RuntimeException} that is thrown in the case where invalid filter are sent in the body of the request to
- * the platform api.
- */
-public class UnsupportedFilterException extends RuntimeException {
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 
-    private final String unsupportedFilter;
+public class UnsupportedFilterException extends AbstractPlatformDomainRuleException {
 
-    public UnsupportedFilterException(final String unsupportedFilter) {
-        this.unsupportedFilter = unsupportedFilter;
-    }
-
-    public String getUnsupportedFilter() {
-        return unsupportedFilter;
+    public UnsupportedFilterException(final String filterElement) {
+        super("error.msg.unsupported.filter.exception", "The filter " + filterElement + " is unsupported", filterElement);
     }
 }

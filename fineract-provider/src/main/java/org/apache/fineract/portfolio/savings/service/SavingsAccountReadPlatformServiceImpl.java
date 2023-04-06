@@ -25,15 +25,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +39,6 @@ import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
-import org.apache.fineract.infrastructure.core.exception.UnsupportedFilterException;
 import org.apache.fineract.infrastructure.core.filters.FilterConstraint;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
@@ -59,7 +54,6 @@ import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
 import org.apache.fineract.organisation.monetary.data.CurrencyData;
 import org.apache.fineract.organisation.staff.data.StaffData;
 import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
-import org.apache.fineract.organisation.teller.util.DateRange;
 import org.apache.fineract.portfolio.account.data.AccountTransferData;
 import org.apache.fineract.portfolio.accountdetails.domain.AccountType;
 import org.apache.fineract.portfolio.charge.data.ChargeData;
@@ -98,6 +92,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountSearchParameterNotProvidedException;
 import org.apache.fineract.portfolio.savings.request.FilterSelection;
+import org.apache.fineract.portfolio.search.service.SearchReadPlatformService;
 import org.apache.fineract.portfolio.tax.data.TaxComponentData;
 import org.apache.fineract.portfolio.tax.data.TaxDetailsData;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
@@ -143,6 +138,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     private final SavingsAccountBlockNarrationHistoryMapper savingsAccountBlockNarrationHistoryMapper;
     private final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService;
 
+    private final SearchReadPlatformService searchReadPlatformService;
+
     @Autowired
     public SavingsAccountReadPlatformServiceImpl(final PlatformSecurityContext context, final JdbcTemplate jdbcTemplate,
             final ClientReadPlatformService clientReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
@@ -152,7 +149,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator,
             final SavingsAccountAssembler savingAccountAssembler, PaginationHelper paginationHelper,
             DatabaseSpecificSQLGenerator sqlGenerator, final CodeValueReadPlatformService codeValueReadPlatformService,
-            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService) {
+            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService,
+            SearchReadPlatformService searchReadPlatformService) {
         this.context = context;
         this.jdbcTemplate = jdbcTemplate;
         this.clientReadPlatformService = clientReadPlatformService;
@@ -161,6 +159,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         this.staffReadPlatformService = staffReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.sqlGenerator = sqlGenerator;
+        this.searchReadPlatformService = searchReadPlatformService;
         this.transactionTemplateMapper = new SavingsAccountTransactionTemplateMapper();
         this.transactionsMapper = new SavingsAccountTransactionsMapper();
         this.savingsAccountTransactionsForBatchMapper = new SavingsAccountTransactionsForBatchMapper();
@@ -734,9 +733,10 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             StringBuilder queryBuilder = new StringBuilder(
                     "select " + this.transactionsMapper.schema() + " where transaction_type_enum not in (22,25) ");
             FilterConstraint[] filterConstraints = mapper.readValue(filterConstraintJson, FilterConstraint[].class);
-            final String extraCriteria = buildSqlStringFromCriteria(filterConstraints, params);
+            final String extraCriteria = searchReadPlatformService.buildSqlStringFromFilterConstraints(filterConstraints, params,
+                    FilterSelection.SAVINGS_SEARCH_REQUEST_MAP);
             queryBuilder.append(extraCriteria);
-            queryBuilder.append("LIMIT ? OFFSET ?");
+            queryBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC LIMIT ? OFFSET ?");
             params.add(limit);
             params.add(offset);
 
@@ -745,69 +745,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private String buildSqlStringFromCriteria(FilterConstraint[] filterConstraints, List<Object> params) {
-        StringBuilder queryBuilder = new StringBuilder();
-        for (int i = 0; i < filterConstraints.length; i++) {
-            FilterConstraint filterConstraint = filterConstraints[i];
-            switch (filterConstraint.getFilterElement()) {
-                case EQUALS:
-                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection())).append(" = ? ");
-                    params.add(filterConstraint.getValue());
-                break;
-                case EQUALS_CASE_SENSITIVE:
-                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection())).append(" COLLATE utf8mb4_bin = ? ");
-                    params.add(filterConstraint.getValue());
-                break;
-
-                case MORE_THAN:
-                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection())).append(" > ? ");
-                    params.add(filterConstraint.getValue());
-                break;
-
-                case LESS_THAN:
-                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection())).append(" < ? ");
-                    params.add(filterConstraint.getValue());
-                break;
-
-                case BETWEEN:
-                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection())).append(" BETWEEN ? AND ? ");
-                    params.add(filterConstraint.getValue());
-                    params.add(filterConstraint.getSecondValue());
-                break;
-
-                case STARTS_WITH:
-                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection())).append(" LIKE ? ");
-                    params.add(filterConstraint.getValue() + "%");
-                break;
-
-                case ON:
-                case TODAY:
-                case THIS_WEEK:
-                case THIS_MONTH:
-                case THIS_YEAR:
-                    DateRange dateRange = DateUtils.getDateRange(LocalDate.now(ZoneId.systemDefault()), filterConstraint.getFilterElement());
-                    if (dateRange != null) {
-                        queryBuilder.append(" AND ").append(filterConstraint.getFilterSelection()).append(" BETWEEN ? AND ? ");
-                        params.add(Date.from(dateRange.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                        params.add(Date.from(dateRange.getEndDate().atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC)));
-                    }
-                break;
-
-                default:
-
-            }
-        }
-        return queryBuilder.toString();
-    }
-
-    private String getFilterSelection(String filterSelection){
-        String correspondingFilterSelection= FilterSelection.SAVINGS_SEARCH_REQUEST_MAP.get(filterSelection);
-        if(correspondingFilterSelection==null){
-            throw new UnsupportedFilterException(filterSelection);
-        }
-       return correspondingFilterSelection;
     }
 
     private static final class SavingAccountMapperForInterestPosting implements ResultSetExtractor<List<SavingsAccountData>> {
@@ -1663,7 +1600,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("fromtran.id as fromTransferId, fromtran.is_reversed as fromTransferReversed,");
             sqlBuilder.append("fromtran.transaction_date as fromTransferDate, fromtran.amount as fromTransferAmount,");
             sqlBuilder.append("fromtran.description as fromTransferDescription,");
-            sqlBuilder.append("totran.id as toTransferId, totran.is_reversed as toTransferReversed,");
+            sqlBuilder.append("totran.id as toTransferId, totran.is_reversed as toTransferReversed,tr.office_id officeId,");
             sqlBuilder.append("totran.transaction_date as toTransferDate, totran.amount as toTransferAmount,");
             sqlBuilder.append("totran.description as toTransferDescription,");
             sqlBuilder.append("sa.id as savingsId, sa.account_no as accountNo,");
@@ -1676,10 +1613,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("pt.value as paymentTypeName, ");
             sqlBuilder.append("tr.is_manual as postInterestAsOn ");
             sqlBuilder.append("from m_savings_account sa ");
-            sqlBuilder.append("join m_savings_account_transaction tr on tr.savings_account_id = sa.id ");
-            sqlBuilder.append("join m_savings_product sp on sp.id = sa.product_id ");
-            sqlBuilder.append("join m_client mc on mc.id = sa.client_id ");
-            sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
+            sqlBuilder.append(" join m_savings_account_transaction tr on tr.savings_account_id = sa.id ");
+            sqlBuilder.append(" left join m_savings_product sp on sp.id = sa.product_id ");
+            sqlBuilder.append(" left join m_office mo on mo.id=tr.office_id ");
+            sqlBuilder.append(" left join m_client mc on mc.id = sa.client_id ");
+            sqlBuilder.append(" left join m_currency curr on curr.code = sa.currency_code ");
             sqlBuilder.append("left join m_account_transfer_transaction fromtran on fromtran.from_savings_transaction_id = tr.id ");
             sqlBuilder.append("left join m_account_transfer_transaction totran on totran.to_savings_transaction_id = tr.id ");
             sqlBuilder.append("left join m_payment_detail pd on tr.payment_detail_id = pd.id ");

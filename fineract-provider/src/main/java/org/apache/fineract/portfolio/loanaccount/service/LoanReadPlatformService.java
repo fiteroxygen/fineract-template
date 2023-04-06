@@ -170,4 +170,6 @@ public interface LoanReadPlatformService {
     List<LoanOverdueReminderData> findLoanOverdueReminderData(Integer numberOfDaysToDueDate);
 
     Collection<PortfolioAccountData> retrieveVendorSavingAccountsForBnplLoans(Long vendorClientId);
+
+    Collection<LoanTransactionData> retrieveLoanTransactions(final String filterConstraintJson, final Integer limit, final Integer offset);
 }

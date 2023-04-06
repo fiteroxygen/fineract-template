@@ -139,7 +139,9 @@ public final class DateUtils {
             case TODAY:
                 return DateRange.of(date, date);
             case THIS_WEEK:
-                LocalDate startOfWeek = date.with(TemporalAdjusters.previousOrSame(LocalDateTime.now(ZoneId.systemDefault()).getDayOfWeek())).with(LocalTime.MIN);
+                LocalDate startOfWeek = date
+                        .with(TemporalAdjusters.previousOrSame(LocalDateTime.now(ZoneId.systemDefault()).getDayOfWeek()))
+                        .with(LocalTime.MIN);
                 LocalDate endOfWeek = startOfWeek.plusDays(6).with(LocalTime.MAX);
                 return DateRange.of(startOfWeek, endOfWeek);
             case THIS_MONTH:

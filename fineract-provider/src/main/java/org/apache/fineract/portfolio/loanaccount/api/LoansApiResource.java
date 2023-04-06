@@ -24,6 +24,7 @@ import com.google.gson.JsonElement;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -266,6 +267,8 @@ public class LoansApiResource {
     private final InterestRateChartReadPlatformService chartReadPlatformService;
     private final ClientReadPlatformService clientReadPlatformService;
 
+    private final DefaultToApiJsonSerializer<LoanTransactionData> loanTransactionApiJsonSerializer;
+
     public LoansApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
             final LoanProductReadPlatformService loanProductReadPlatformService,
             final LoanDropdownReadPlatformService dropdownReadPlatformService, final FundReadPlatformService fundReadPlatformService,
@@ -290,7 +293,8 @@ public class LoansApiResource {
             final DefaultToApiJsonSerializer<GlimRepaymentTemplate> glimTemplateToApiJsonSerializer,
             final GLIMAccountInfoReadPlatformService glimAccountInfoReadPlatformService,
             final LoanCollateralManagementReadPlatformService loanCollateralManagementReadPlatformService,
-            final ClientReadPlatformService clientReadPlatformService, InterestRateChartReadPlatformService chartReadPlatformService) {
+            final ClientReadPlatformService clientReadPlatformService, InterestRateChartReadPlatformService chartReadPlatformService,
+            DefaultToApiJsonSerializer<LoanTransactionData> loanTransactionApiJsonSerializer) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -324,6 +328,7 @@ public class LoansApiResource {
         this.loanCollateralManagementReadPlatformService = loanCollateralManagementReadPlatformService;
         this.chartReadPlatformService = chartReadPlatformService;
         this.clientReadPlatformService = clientReadPlatformService;
+        this.loanTransactionApiJsonSerializer = loanTransactionApiJsonSerializer;
     }
 
     /*
@@ -1094,5 +1099,26 @@ public class LoansApiResource {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.LOAN_TRANSACTIONS.toString(),
                 uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+
+    @POST
+    @Path("transactions/search")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoansApiResourceSwagger.FilterConstraintRequest.class)))
+    @Operation(summary = "Search Loan Account transactions", description = "Retrieves a list of loan transactions based on the provided filter constraints.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = LoanTransactionData.class)))) })
+    public String searchSavingsTransactions(@Context final UriInfo uriInfo, @Parameter(hidden = true) final String filterConstraintJson,
+            @QueryParam("limit") @DefaultValue("15") Integer limit, @QueryParam("offset") @DefaultValue("0") Integer offset) {
+
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
+
+        final Collection<LoanTransactionData> currentTransactions = this.loanReadPlatformService
+                .retrieveLoanTransactions(filterConstraintJson, limit, offset);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+        return this.loanTransactionApiJsonSerializer.serialize(settings, currentTransactions, loanDataParameters);
     }
 }

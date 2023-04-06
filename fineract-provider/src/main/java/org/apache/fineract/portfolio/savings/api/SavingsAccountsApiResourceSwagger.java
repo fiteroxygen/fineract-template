@@ -19,10 +19,9 @@
 package org.apache.fineract.portfolio.savings.api;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.apache.fineract.infrastructure.core.filters.FilterElement;
-
 import java.time.LocalDate;
 import java.util.Set;
+import org.apache.fineract.infrastructure.core.filters.FilterElement;
 
 /**
  * Created by Chirag Gupta on 12/29/17.
@@ -375,9 +374,9 @@ final class SavingsAccountsApiResourceSwagger {
         public Integer resourceId;
     }
 
-
     @Schema(description = "FilterConstraintRequest")
     public static final class FilterConstraintRequest {
+
         @Schema(example = "userId")
         public String filterSelection;
         @Schema(example = "BETWEEN")
@@ -386,6 +385,7 @@ final class SavingsAccountsApiResourceSwagger {
         public String value;
         @Schema(example = "10")
         public String secondValue;
+
         private FilterConstraintRequest() {}
     }
 
