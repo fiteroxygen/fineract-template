@@ -2,7 +2,7 @@ Feature: Test loan account apis
   Background:
     * callonce read('classpath:features/base.feature')
     * url baseUrl
-  @Ignore
+
   @testThatICanCreateLoanAccountWithFlatOverdueChargesAndDisburseByCash
   Scenario: Test That I Can Create Loan Account With Flat Overdue Charges and disburse it by Cash
     * def chargeAmount = 100;
@@ -45,6 +45,10 @@ Feature: Test loan account apis
 
     * assert clientId == loanResponse.loanAccount.clientId
     * assert loanAmount == loanResponse.loanAccount.principal
+    * assert loanProductId == loanResponse.loanAccount.loanProductId
+    * assert loanResponse.loanAccount.summary.penaltyChargesCharged == 1200
+    * assert loanResponse.loanAccount.summary.penaltyChargesOutstanding == 1200
+    * assert loanResponse.loanAccount.summary.penaltyChargesOverdue == 1200
     * assert loanResponse.loanAccount.status.value == 'Active'
     * assert karate.sizeOf(loanResponse.loanAccount.charges) == 12
     * def loanTerm = loanResponse.loanAccount.termFrequency
@@ -104,6 +108,7 @@ Feature: Test loan account apis
 
     # Assert Loan Account Status is Active and check the Disbursed principle is Expected
     * assert savingsId == loanResponse.loanAccount.linkedAccount.id
+    * assert clientId == loanResponse.loanAccount.linkedAccount.clientId
 
     * assert clientId == loanResponse.loanAccount.clientId
     * assert loanAmount == loanResponse.loanAccount.principal
