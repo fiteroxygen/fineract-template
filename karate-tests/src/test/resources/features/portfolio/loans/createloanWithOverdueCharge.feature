@@ -2,7 +2,7 @@ Feature: Test loan account apis
   Background:
     * callonce read('classpath:features/base.feature')
     * url baseUrl
-  @Ignore
+
   @testThatICanCreateLoanAccountWithFlatOverdueChargesAndDisburseByCash
   Scenario: Test That I Can Create Loan Account With Flat Overdue Charges and disburse it by Cash
     * def chargeAmount = 100;
