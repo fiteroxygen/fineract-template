@@ -132,3 +132,4 @@ Feature: Test loan account apis
     * assert loanResponse.loanAccount.status.closedObligationsMet == true
     * assert loanResponse.loanAccount.status.closed == true
     * assert loanResponse.loanAccount.status.overpaid == false
+    * assert karate.sizeOf(loanResponse.loanAccount.transactions) == 2
