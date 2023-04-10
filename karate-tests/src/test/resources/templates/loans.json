@@ -114,6 +114,7 @@
     "dateFormat": "#(format)",
     "loanType": "individual",
     "expectedDisbursementDate": "#(submittedOnDate)",
-    "submittedOnDate": "#(submittedOnDate)"
+    "submittedOnDate": "#(submittedOnDate)",
+    "linkAccountId": "#(savingsAccountId)"
   }
 }
