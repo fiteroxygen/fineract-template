@@ -237,3 +237,20 @@ Feature: Create loan stapes
     Then status 200
     Then match $ contains { resourceId: '#notnull' }
     Then def loanId = response.resourceId
+
+  @ignore
+  @loanRepaymentSteps
+  Scenario: Loan repayment Steps
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans',loanId,'transactions'
+    And params {command:'repayment'}
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.transaction
+    When method POST
+    Then status 200
+    Then match $ contains { loanId: '#notnull' }
+    Then def loanId = response.loanId

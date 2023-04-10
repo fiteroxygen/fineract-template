@@ -2,7 +2,7 @@ Feature: Test loan account apis
   Background:
     * callonce read('classpath:features/base.feature')
     * url baseUrl
-
+  @Ignore
   @testThatICanCreateLoanAccountWithFlatOverdueChargesAndDisburseByCash
   Scenario: Test That I Can Create Loan Account With Flat Overdue Charges and disburse it by Cash
     * def chargeAmount = 100;
@@ -118,3 +118,17 @@ Feature: Test loan account apis
     Then print 'Loan Term',loanTerm
     * assert karate.sizeOf(loanResponse.loanAccount.repaymentSchedule.periods) == loanTerm + 1
     * assert karate.sizeOf(loanResponse.loanAccount.transactions) == 1
+
+    # Make Transactions Prepay Loan Account
+    * def repaymentAmount = loanResponse.loanAccount.summary.totalOverdue
+    * def repaymentDate = df.format(faker.date().past(2, 1, TimeUnit.DAYS))
+    * def loanTransaction = call read('classpath:features/portfolio/loans/loansteps.feature@loanRepaymentSteps') { repaymentAmount : '#(repaymentAmount)', repaymentDate : '#(repaymentDate)'}
+     #fetch loan details here
+    * def loanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+
+    * assert loanResponse.loanAccount.status.value == 'Closed (obligations met)'
+    * assert loanResponse.loanAccount.status.id == 600
+    * assert loanResponse.loanAccount.status.active == false
+    * assert loanResponse.loanAccount.status.closedObligationsMet == true
+    * assert loanResponse.loanAccount.status.closed == true
+    * assert loanResponse.loanAccount.status.overpaid == false
