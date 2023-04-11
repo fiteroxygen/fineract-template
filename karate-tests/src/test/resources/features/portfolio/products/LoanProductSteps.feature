@@ -37,4 +37,20 @@ Feature: Create Loan Product and It's charges Steps
     Then def chargeId = response.resourceId
 
 
+  @ignore
+  @createDisburseToSavingsAccountLoanChargeFeesOnApprovedAmountSteps
+  Scenario: Create Disburse to savings account loan charge fees on approved amount
+    Given configure ssl = true
+    * def chargesData = read('classpath:templates/loansCharges.json')
+    Given path 'charges'
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request chargesData.disburseToSavingsLoanAccountChargeOnPercentageApprovedAmountPayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def chargeId = response.resourceId
+
+
 

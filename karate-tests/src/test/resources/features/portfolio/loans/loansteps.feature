@@ -254,3 +254,21 @@ Feature: Create loan stapes
     Then status 200
     Then match $ contains { loanId: '#notnull' }
     Then def loanId = response.loanId
+
+
+  # This steps create Loan Account with Disburse to savings Charge and Penalty Charge on a loan account
+  @ignore
+  @createLoanAccountWithDisburseToSavingsAccountChargeAndPenaltyChargeSteps
+  Scenario: Create loan account With Configurable Product with Penalty Charge and Disburse to Savings Account
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.loanAccountWithNewProductWithDisburseToSavingsAccountAndPenaltyChargePayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId
