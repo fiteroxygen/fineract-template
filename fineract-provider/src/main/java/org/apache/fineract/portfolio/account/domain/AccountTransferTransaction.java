@@ -26,6 +26,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
@@ -34,7 +35,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 
 @Entity
 @Table(name = "m_account_transfer_transaction")
-public class AccountTransferTransaction extends AbstractPersistableCustom {
+public class AccountTransferTransaction extends AbstractPersistableCustom implements Comparable<AccountTransferTransaction> {
 
     @ManyToOne
     @JoinColumn(name = "account_transfer_details_id", nullable = true)
@@ -145,5 +146,10 @@ public class AccountTransferTransaction extends AbstractPersistableCustom {
             Money transactionMonetaryAmount, String description) {
         return new AccountTransferTransaction(accountTransferDetails, null, null, repaymentTransaction, disburseTransaction,
                 transactionDate, transactionMonetaryAmount, description);
+    }
+
+    @Override
+    public int compareTo(@NotNull AccountTransferTransaction o) {
+        return this.getId().compareTo(o.getId());
     }
 }

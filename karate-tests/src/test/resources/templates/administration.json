@@ -1,0 +1,31 @@
+{
+  "currencies" : {
+    "currencies": [
+      "USD",
+      "UYU",
+      "KES"
+    ]
+  },
+  "funds" : {
+     "name":"#(fundName)"
+  },
+  "office" : {
+    "parentId": "1",
+    "name": "#(officeName)",
+    "externalId": "",
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "openingDate": "#(openingDate)"
+  },
+  "staff": {
+    "isLoanOfficer": true,
+    "officeId": 1,
+    "firstname": "#(firstname)",
+    "lastname": "#(lastname)",
+    "mobileNo": "#(mobileNo)",
+    "joiningDate": "#(joiningDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  }
+
+}

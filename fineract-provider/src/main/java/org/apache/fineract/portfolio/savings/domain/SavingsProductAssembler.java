@@ -53,6 +53,7 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalA
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.numberOfCreditTransactionsParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.numberOfDebitTransactionsParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.postOverdraftInterestOnDepositParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.shortNameParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.taxGroupIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.useFloatingInterestRateParamName;
@@ -266,13 +267,19 @@ public class SavingsProductAssembler {
             }
         }
 
-        return SavingsProduct.createNew(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
-                interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
-                lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, accountingRuleType, charges,
-                allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, lienAllowed, maxAllowedLienLimit,
-                minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, withHoldTax,
-                taxGroup, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat, isInterestPostingConfigUpdate,
-                numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate, withdrawalFrequency, withdrawalFrequencyEnum);
+        SavingsProduct savingsProduct = SavingsProduct.createNew(name, shortName, description, currency, interestRate,
+                interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
+                minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer,
+                accountingRuleType, charges, allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, lienAllowed,
+                maxAllowedLienLimit, minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft,
+                minOverdraftForInterestCalculation, withHoldTax, taxGroup, isDormancyTrackingActive, daysToInactive, daysToDormancy,
+                daysToEscheat, isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate,
+                withdrawalFrequency, withdrawalFrequencyEnum);
+        if (allowOverdraft && command.parameterExists(postOverdraftInterestOnDepositParamName)) {
+            savingsProduct.setPostOverdraftInterestOnDeposit(
+                    command.booleanPrimitiveValueOfParameterNamed(postOverdraftInterestOnDepositParamName));
+        }
+        return savingsProduct;
     }
 
     public Set<SavingsProductFloatingInterestRate> assembleListOfFloatingInterestRates(final JsonCommand command,

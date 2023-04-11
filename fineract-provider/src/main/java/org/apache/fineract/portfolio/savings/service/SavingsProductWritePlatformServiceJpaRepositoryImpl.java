@@ -129,7 +129,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             this.fromApiJsonDataValidator.validateForCreate(command.json());
 
             final SavingsProduct product = this.savingsProductAssembler.assemble(command);
-            CodeValue productCategory = getLoanProductCategory(command);
+            CodeValue productCategory = getProductCategory(command);
             if (productCategory != null) {
                 product.setProductCategory(productCategory);
             }
@@ -178,7 +178,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             final SavingsProduct product = this.savingProductRepository.findById(productId)
                     .orElseThrow(() -> new SavingsProductNotFoundException(productId));
 
-            CodeValue productCategory = getLoanProductCategory(command);
+            CodeValue productCategory = getProductCategory(command);
             if (productCategory != null) {
                 product.setProductCategory(productCategory);
             }
@@ -308,7 +308,7 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
     }
 
     @Nullable
-    private CodeValue getLoanProductCategory(JsonCommand command) {
+    private CodeValue getProductCategory(JsonCommand command) {
         CodeValue productCategory = null;
         final Long productCategoryId = command.longValueOfParameterNamed(SavingsApiConstants.savingsProductCategoryIdParamName);
         if (productCategoryId != null) {

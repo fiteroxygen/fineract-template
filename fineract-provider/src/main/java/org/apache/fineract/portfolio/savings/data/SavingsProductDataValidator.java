@@ -49,6 +49,7 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalA
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.numberOfCreditTransactionsParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.numberOfDebitTransactionsParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.postOverdraftInterestOnDepositParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.shortNameParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.taxGroupIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.useFloatingInterestRateParamName;
@@ -116,7 +117,8 @@ public class SavingsProductDataValidator {
             numberOfCreditTransactionsParamName, numberOfDebitTransactionsParamName, "receivablePenaltyAccountId",
             "receivableInterestAccountId", "receivableFeeAccountId", "interestPayableAccountId", useFloatingInterestRateParamName,
             floatingInterestRatesParamName, SavingsApiConstants.WITHDRAWAL_FREQUENCY_ENUM, SavingsApiConstants.WITHDRAWAL_FREQUENCY,
-            SavingsApiConstants.savingsProductCategoryIdParamName, SavingsApiConstants.savingsProductTypeIdParamName));
+            SavingsApiConstants.savingsProductCategoryIdParamName, SavingsApiConstants.savingsProductTypeIdParamName,
+            postOverdraftInterestOnDepositParamName));
 
     @Autowired
     public SavingsProductDataValidator(final FromJsonHelper fromApiJsonHelper) {

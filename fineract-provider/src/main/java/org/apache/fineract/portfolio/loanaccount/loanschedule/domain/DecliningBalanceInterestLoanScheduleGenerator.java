@@ -162,9 +162,15 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         final Money interestBroughtFowardDueToGrace = cumulatingInterestDueToGrace;
         final Money totalCumulativePrincipalToDate = totalCumulativePrincipal.plus(principalForThisInstallment);
 
-        // adjust if needed
-        principalForThisInstallment = loanApplicationTerms.adjustPrincipalIfLastRepaymentPeriod(principalForThisInstallment,
-                totalCumulativePrincipalToDate, periodNumber);
+        // adjust principal for this installment if needed
+        if (loanApplicationTerms.isFixedDueAmountChange()) {
+            principalForThisInstallment = loanApplicationTerms.adjustPrincipalIfLastRepaymentPeriod(
+                    Money.of(interestForThisInstallment.getCurrency(), loanApplicationTerms.getFixedPrincipalAmount()),
+                    totalCumulativePrincipalToDate, periodNumber);
+        } else {
+            principalForThisInstallment = loanApplicationTerms.adjustPrincipalIfLastRepaymentPeriod(principalForThisInstallment,
+                    totalCumulativePrincipalToDate, periodNumber);
+        }
 
         PrincipalInterest principalInterest = new PrincipalInterest(principalForThisInstallment, interestForThisInstallment,
                 interestBroughtFowardDueToGrace);

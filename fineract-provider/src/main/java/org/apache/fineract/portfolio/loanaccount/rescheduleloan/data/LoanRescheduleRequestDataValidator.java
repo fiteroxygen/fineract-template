@@ -49,16 +49,17 @@ import org.springframework.stereotype.Component;
 public class LoanRescheduleRequestDataValidator {
 
     private final FromJsonHelper fromJsonHelper;
-    private static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList(RescheduleLoansApiConstants.localeParamName, RescheduleLoansApiConstants.dateFormatParamName,
-                    RescheduleLoansApiConstants.graceOnPrincipalParamName,
-                    RescheduleLoansApiConstants.recurringMoratoriumOnPrincipalPeriodsParamName,
-                    RescheduleLoansApiConstants.graceOnInterestParamName, RescheduleLoansApiConstants.extraTermsParamName,
-                    RescheduleLoansApiConstants.rescheduleFromDateParamName, RescheduleLoansApiConstants.newInterestRateParamName,
-                    RescheduleLoansApiConstants.rescheduleReasonIdParamName, RescheduleLoansApiConstants.rescheduleReasonCommentParamName,
-                    RescheduleLoansApiConstants.submittedOnDateParamName, RescheduleLoansApiConstants.loanIdParamName,
-                    RescheduleLoansApiConstants.adjustedDueDateParamName, RescheduleLoansApiConstants.recalculateInterestParamName,
-                    RescheduleLoansApiConstants.endDateParamName, RescheduleLoansApiConstants.emiParamName));
+    private static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
+            RescheduleLoansApiConstants.localeParamName, RescheduleLoansApiConstants.dateFormatParamName,
+            RescheduleLoansApiConstants.graceOnPrincipalParamName,
+            RescheduleLoansApiConstants.recurringMoratoriumOnPrincipalPeriodsParamName,
+            RescheduleLoansApiConstants.graceOnInterestParamName, RescheduleLoansApiConstants.extraTermsParamName,
+            RescheduleLoansApiConstants.rescheduleFromDateParamName, RescheduleLoansApiConstants.newInterestRateParamName,
+            RescheduleLoansApiConstants.rescheduleReasonIdParamName, RescheduleLoansApiConstants.rescheduleReasonCommentParamName,
+            RescheduleLoansApiConstants.submittedOnDateParamName, RescheduleLoansApiConstants.loanIdParamName,
+            RescheduleLoansApiConstants.adjustedDueDateParamName, RescheduleLoansApiConstants.recalculateInterestParamName,
+            RescheduleLoansApiConstants.endDateParamName, RescheduleLoansApiConstants.emiParamName,
+            RescheduleLoansApiConstants.newPrincipalDueFixedAmount, RescheduleLoansApiConstants.newFixedPrincipalPercentagePerInstallment));
 
     private static final Set<String> REJECT_REQUEST_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList(RescheduleLoansApiConstants.localeParamName, RescheduleLoansApiConstants.dateFormatParamName,
@@ -171,17 +172,22 @@ public class LoanRescheduleRequestDataValidator {
         }
 
         // at least one of the following must be provided => graceOnPrincipal,
-        // graceOnInterest, extraTerms, newInterestRate
+        // graceOnInterest, extraTerms,
+        // newInterestRate,newFixedPrincipalPercentagePerInstallment,newPrincipalDueFixedAmount
         if (!this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.graceOnPrincipalParamName, jsonElement)
                 && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.graceOnInterestParamName, jsonElement)
                 && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.extraTermsParamName, jsonElement)
                 && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.newInterestRateParamName, jsonElement)
                 && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.adjustedDueDateParamName, jsonElement)
-                && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.emiParamName, jsonElement)) {
+                && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.emiParamName, jsonElement)
+                && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.newPrincipalDueFixedAmount, jsonElement)
+                && !this.fromJsonHelper.parameterExists(RescheduleLoansApiConstants.newFixedPrincipalPercentagePerInstallment,
+                        jsonElement)) {
             dataValidatorBuilder.reset().parameter(RescheduleLoansApiConstants.graceOnPrincipalParamName).notNull();
         }
         LoanRepaymentScheduleInstallment installment = null;
         if (rescheduleFromDate != null) {
+
             installment = loan.getRepaymentScheduleInstallment(rescheduleFromDate);
 
             if (installment == null) {

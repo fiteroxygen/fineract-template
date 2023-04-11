@@ -862,7 +862,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 loan.adjustNetDisbursalAmount(netDisbursalAmount);
             }
             saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
-            this.accountTransfersWritePlatformService.reverseAllTransactions(loanId, PortfolioAccountType.LOAN);
+            this.accountTransfersWritePlatformService.reverseAllTransactions(loanId, PortfolioAccountType.LOAN, loan);
             String noteText = null;
             if (command.hasParameter("note")) {
                 noteText = command.stringValueOfParameterNamed("note");
@@ -2071,7 +2071,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
 
         // for BNPL loan - transfer to vendor savings account as per bnpl configuration if there are any
-        if (loan.getBnplLoan()) {
+        if (loan.getBnplLoan() != null && loan.getBnplLoan()) {
             // get the vendor savings account
             final PortfolioAccountData vendorPortfolioAccountData = this.accountAssociationsReadPlatformService
                     .retriveLoanLinkedVendorAssociation(loan.getId());
@@ -2813,7 +2813,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         LocalDate startDate = dueDate.plusDays(penaltyWaitPeriodValue.intValue() + 1);
         Loan loanData = this.loanAssembler.assembleFrom(loanId);
         LocalDate endDate = DateUtils.getBusinessLocalDate();
-        if (dueDate.isBefore(loanData.getMaturityDate())) {
+        if (dueDate.isBefore(loanData.getExpectedMaturityDate())) {
             if (chargeDefinition.feeInterval() != null) {
                 endDate = scheduledDateGenerator.getRepaymentPeriodDate(PeriodFrequencyType.fromInt(feeFrequency),
                         chargeDefinition.feeInterval(), startDate);

@@ -1097,4 +1097,10 @@ public final class SavingsAccountTransaction extends AbstractPersistableCustom {
         return EndOfDayBalance.from(balanceStartDate, openingBalance, endOfDayBalance, numberOfDaysOfBalance);
     }
 
+    public void loadLazyCollections() {
+        if (paymentDetail != null) {
+            Long PaymentDetailsId = paymentDetail.getId();
+        }
+    }
+
 }

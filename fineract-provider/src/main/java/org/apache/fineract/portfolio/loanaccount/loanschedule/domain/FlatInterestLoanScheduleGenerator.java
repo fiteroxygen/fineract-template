@@ -51,8 +51,14 @@ public class FlatInterestLoanScheduleGenerator extends AbstractLoanScheduleGener
         final Money totalCumulativeInterestToDate = totalCumulativeInterest.plus(interestForThisInstallment);
 
         // adjust if needed
-        principalForThisInstallment = loanApplicationTerms.adjustPrincipalIfLastRepaymentPeriod(principalForThisInstallment,
-                totalCumulativePrincipalToDate, periodNumber);
+        if (loanApplicationTerms.isFixedDueAmountChange()) {
+            principalForThisInstallment = loanApplicationTerms.adjustPrincipalIfLastRepaymentPeriod(
+                    Money.of(interestForThisInstallment.getCurrency(), loanApplicationTerms.getFixedPrincipalAmount()),
+                    totalCumulativePrincipalToDate, periodNumber);
+        } else {
+            principalForThisInstallment = loanApplicationTerms.adjustPrincipalIfLastRepaymentPeriod(principalForThisInstallment,
+                    totalCumulativePrincipalToDate, periodNumber);
+        }
 
         // totalCumulativeInterest from partial schedule generation for multi
         // rescheduling

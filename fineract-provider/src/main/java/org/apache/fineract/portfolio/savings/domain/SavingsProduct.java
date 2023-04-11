@@ -53,6 +53,7 @@ import static org.apache.fineract.portfolio.savings.SavingsApiConstants.nominalA
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.numberOfCreditTransactionsParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.numberOfDebitTransactionsParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.postOverdraftInterestOnDepositParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.shortNameParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.taxGroupIdParamName;
 import static org.apache.fineract.portfolio.savings.SavingsApiConstants.useFloatingInterestRateParamName;
@@ -185,6 +186,9 @@ public class SavingsProduct extends AbstractPersistableCustom {
 
     @Column(name = "min_overdraft_for_interest_calculation", scale = 6, precision = 19, nullable = true)
     private BigDecimal minOverdraftForInterestCalculation;
+
+    @Column(name = "post_overdraft_interest_on_deposit")
+    private Boolean postOverdraftInterestOnDeposit;
 
     @Column(name = "enforce_min_required_balance")
     private boolean enforceMinRequiredBalance;
@@ -604,6 +608,12 @@ public class SavingsProduct extends AbstractPersistableCustom {
             this.overdraftLimit = newValue;
         }
 
+        if (command.isChangeInBooleanParameterNamed(postOverdraftInterestOnDepositParamName, this.postOverdraftInterestOnDeposit)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(postOverdraftInterestOnDepositParamName);
+            actualChanges.put(postOverdraftInterestOnDepositParamName, newValue);
+            this.postOverdraftInterestOnDeposit = newValue;
+        }
+
         if (command.isChangeInBigDecimalParameterNamedDefaultingZeroToNull(nominalAnnualInterestRateOverdraftParamName,
                 this.nominalAnnualInterestRateOverdraft)) {
             final BigDecimal newValue = command
@@ -626,6 +636,7 @@ public class SavingsProduct extends AbstractPersistableCustom {
             this.overdraftLimit = null;
             this.nominalAnnualInterestRateOverdraft = null;
             this.minOverdraftForInterestCalculation = null;
+            this.postOverdraftInterestOnDeposit = null;
         }
 
         if (command.isChangeInBooleanParameterNamed(enforceMinRequiredBalanceParamName, this.enforceMinRequiredBalance)) {
@@ -945,4 +956,11 @@ public class SavingsProduct extends AbstractPersistableCustom {
         this.productType = productType;
     }
 
+    public Boolean getPostOverdraftInterestOnDeposit() {
+        return postOverdraftInterestOnDeposit;
+    }
+
+    public void setPostOverdraftInterestOnDeposit(Boolean postOverdraftInterestOnDeposit) {
+        this.postOverdraftInterestOnDeposit = postOverdraftInterestOnDeposit;
+    }
 }

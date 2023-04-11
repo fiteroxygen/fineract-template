@@ -468,4 +468,24 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
     public boolean isClientLevelValidationEnabled() {
         return this.ff4j.check(FeatureList.CLIENT_LEVEL_LIMIT_VALIDATION);
     }
+
+    @Override
+    public boolean isPostOverdraftInterestOnDepositEnabled() {
+        return getGlobalConfigurationPropertyData("post-overdraft-interest-on-deposit").isEnabled();
+    }
+
+    @Override
+    public boolean isMaxActiveLoansEnabled() {
+        return getGlobalConfigurationPropertyData("max-active-loans").isEnabled();
+    }
+
+    @Override
+    public Long getMaxActiveLoans() {
+        final String propertyName = "max-active-loans";
+        final GlobalConfigurationPropertyData property = getGlobalConfigurationPropertyData(propertyName);
+        if (property.getValue() == null) {
+            return 0L;
+        }
+        return property.getValue();
+    }
 }

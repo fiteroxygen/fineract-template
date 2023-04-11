@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+    <changeSet author="frank@fiter.io" id="add_global_configuration_for_post_overdraft_interest_on_deposit">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(1) FROM c_configuration WHERE name = 'post-overdraft-interest-on-deposit'
+                </sqlCheck>
+            </not>
+        </preConditions>
+
+        <insert tableName="c_configuration">
+            <column name="name" value="post-overdraft-interest-on-deposit" />
+            <column name="value" value="0" />
+            <column name="enabled" valueBoolean="false" />
+            <column name="description" value="Allows overdraft interest to be posted each time a deposit is made on an account that is in overdraft. When this is turned on the option to enable this on savings products and accounts will be available." />
+        </insert>
+    </changeSet>
+    <changeSet author="frank@fiter.io" id="add_post_over_draft_interest_on_deposit_to_savings_product">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_savings_product" columnName="post_overdraft_interest_on_deposit"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="m_savings_product">
+            <column name="post_overdraft_interest_on_deposit" type="boolean">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="frank@fiter.io" id="add_post_over_draft_interest_on_deposit_to_savings_account">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_savings_account" columnName="post_overdraft_interest_on_deposit"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="m_savings_account">
+            <column name="post_overdraft_interest_on_deposit" type="boolean">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

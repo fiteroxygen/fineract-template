@@ -1,0 +1,103 @@
+{
+  "createClientPayload": {
+    "address": [],
+    "familyMembers": [],
+    "officeId": 1,
+    "legalFormId": 1,
+    "firstname": "#(faker.name().firstName())",
+    "lastname": "#(faker.name().lastName())",
+    "mobileNo": "#(faker.phoneNumber())",
+    "active": true,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "activationDate": "#(clientCreationDate)",
+    "submittedOnDate": "#(clientCreationDate)",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))"
+  },
+  "updateClientPayload": {
+    "legalFormId": 1,
+    "firstname": "#(faker.name().firstName())",
+    "lastname": "#(faker.name().lastName())",
+    "mobileNo": "#(faker.phoneNumber())",
+    "active": true,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "activationDate": "#(df.format(calendar.getTime()))",
+    "submittedOnDate": "#(df.format(calendar.getTime()))",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))"
+  },
+  "activateClientPayload": {
+    "activationDate": "#(df.format(calendar.getTime()))",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "createEntityClient" : {
+    "address": [],
+    "familyMembers": [],
+    "businessOwners": [],
+    "officeId": 1,
+    "legalFormId": 2,
+    "fullname": "Business",
+    "mobileNo": "#(faker.phoneNumber().cellPhone())",
+    "clientNonPersonDetails": {
+      "incorpNumber": "#(faker.number().randomNumber())",
+      "locale": "en",
+      "dateFormat": "dd MMMM yyyy",
+      "incorpValidityTillDate": "#(df.format(calendar.getTime()))"
+    },
+    "active": false,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "activationDate": "#(clientCreationDate)",
+    "submittedOnDate": "#(clientCreationDate)",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))",
+    "savingsProductId": null,
+    "mnemonics": "anything",
+    "initials": "1"
+  },
+  "updateEntityClientPayload": {
+    "active": true,
+    "accountNo": "#(accountNo)",
+    "isStaff": false,
+    "mobileNo": "#(faker.phoneNumber().cellPhone())",
+    "fullname": "Business update",
+    "clientNonPersonDetails": {
+       "incorpNumber": "#(faker.number().randomNumber())",
+       "locale": "en",
+       "dateFormat": "#(format)",
+       "incorpValidityTillDate": "#(df.format(calendar.getTime()))"
+     },
+    "legalFormId": 2,
+    "altMobileNo": "#(faker.phoneNumber().cellPhone())",
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "activationDate": "#(df.format(calendar.getTime()))",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))",
+    "submittedOnDate": "#(df.format(calendar.getTime()))",
+    "externalId": "#(faker.number().randomNumber())",
+    "mnemonics": "anything",
+    "initials": "1"
+  },
+  "createClientWithSavingsPayload" : {
+    "address": [],
+    "familyMembers": [],
+    "businessOwners": [],
+    "officeId": 1,
+    "legalFormId": 1,
+    "firstname": "#(faker.name().firstName())",
+    "lastname": "#(faker.name().lastName())",
+    "mobileNo": "#(faker.phoneNumber().cellPhone())",
+    "altMobileNo": "#(faker.phoneNumber().cellPhone())",
+    "active": true,
+    "dailyWithdrawLimit": "100000",
+    "singleWithdrawLimit": "500000",
+    "mnemonics": "anything",
+    "initials": "1",
+    "savingsProductId": "#(savingsProductId)",
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "activationDate": "#(df.format(calendar.getTime()))",
+    "submittedOnDate": "#(df.format(calendar.getTime()))",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))"
+  }
+}

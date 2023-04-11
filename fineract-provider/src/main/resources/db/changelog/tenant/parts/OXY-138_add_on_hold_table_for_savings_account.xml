@@ -73,7 +73,7 @@
     </createTable>
 </changeSet>
 
-    <changeSet id="add_permission_for_limit_withdrawal" author="naphlin@fiter.io">
+    <changeSet id="fix_add_permission_for_limit_withdrawal_1" author="naphlin@fiter.io">
         <!-- Add permission for limit withdrawal -->
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -85,11 +85,11 @@
             <column name="code" value="WITHDRAWAL_WITH_LIMIT_SAVINGSACCOUNT_CHECKER"/>
             <column name="entity_name" value="SAVINGSACCOUNT"/>
             <column name="action_name" value="WITHDRAWAL_WITH_LIMIT_CHECKER"/>
-            <column name="can_maker_checker" value="0"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
     </changeSet>
 
-    <changeSet id="add_permission_for_limit_withdrawal_2" author="naphlin@fiter.io">
+    <changeSet id="fix_add_permission_for_limit_withdrawal_2" author="naphlin@fiter.io">
         <!-- Add permission for limit withdrawal -->
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -101,7 +101,7 @@
             <column name="code" value="WITHDRAWAL_WITH_LIMIT_SAVINGSACCOUNT"/>
             <column name="entity_name" value="SAVINGSACCOUNT"/>
             <column name="action_name" value="WITHDRAWAL_WITH_LIMIT"/>
-            <column name="can_maker_checker" value="0"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
     </changeSet>
 </databaseChangeLog>

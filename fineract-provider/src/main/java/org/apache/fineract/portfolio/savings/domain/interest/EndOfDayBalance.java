@@ -197,7 +197,7 @@ public class EndOfDayBalance {
         BigDecimal futureValue = presentValue.setScale(9, MoneyHelper.getRoundingMode());
         List<BigDecimal> futureValues = new ArrayList<>();
 
-        if (interestRateAsFraction.compareTo(BigDecimal.ZERO) > 0) {
+        if (interestRateAsFraction.compareTo(BigDecimal.ZERO) > 0 || overdraftInterestRateAsFraction.compareTo(BigDecimal.ZERO) > 0) {
             if (presentValue.compareTo(BigDecimal.ZERO) >= 0) {
                 if (presentValue.compareTo(minBalanceForInterestCalculation) >= 0) {
                     final BigDecimal r = interestRateAsFraction.multiply(multiplicand);

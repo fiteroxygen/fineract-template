@@ -139,7 +139,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder.append("sp.num_of_credit_transaction as numOfCreditTransaction, ");
             sqlBuilder.append("sp.num_of_debit_transaction as numOfDebitTransaction ,");
             sqlBuilder.append("sp.withdrawal_frequency as withdrawalFrequency, ");
-            sqlBuilder.append("sp.withdrawal_frequency_enum as withdrawalFrequencyEnum ");
+            sqlBuilder.append("sp.withdrawal_frequency_enum as withdrawalFrequencyEnum, ");
+            sqlBuilder.append("sp.post_overdraft_interest_on_deposit as postOverdraftInterestOnDeposit ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
             sqlBuilder.append("left join m_tax_group tg on tg.id = sp.tax_group_id  ");
@@ -205,6 +206,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             final BigDecimal overdraftLimit = rs.getBigDecimal("overdraftLimit");
             final BigDecimal nominalAnnualInterestRateOverdraft = rs.getBigDecimal("nominalAnnualInterestRateOverdraft");
             final BigDecimal minOverdraftForInterestCalculation = rs.getBigDecimal("minOverdraftForInterestCalculation");
+            final boolean postOverdraftInterestOnDeposit = rs.getBoolean("postOverdraftInterestOnDeposit");
 
             final BigDecimal minRequiredBalance = rs.getBigDecimal("minRequiredBalance");
             final boolean enforceMinRequiredBalance = rs.getBoolean("enforceMinRequiredBalance");
@@ -238,7 +240,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
                         .withdrawalFrequency(WithdrawalFrequency.fromInt(withdrawalFrequencyEnumValue));
             }
 
-            return SavingsProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
+            SavingsProductData product = SavingsProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     accountingRuleType, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance, maxAllowedLienLimit,
@@ -246,6 +248,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
                     withHoldTax, taxGroupData, isDormancyTrackingActive, daysToInactive, daysToDormancy, daysToEscheat,
                     isInterestPostingConfigUpdate, numOfCreditTransaction, numOfDebitTransaction, useFloatingInterestRate,
                     withdrawalFrequency, withdrawalFrequencyEnum, productCategoryId, productTypeId);
+            product.setPostOverdraftInterestOnDeposit(postOverdraftInterestOnDeposit);
+            return product;
         }
     }
 

@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.account.domain;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,6 +34,11 @@ public interface AccountTransferRepository
 
     @Query("select att from AccountTransferTransaction att where (att.accountTransferDetails.fromLoanAccount.id= :accountNumber or att.accountTransferDetails.toLoanAccount.id=:accountNumber) and att.reversed=false order by att.id desc")
     List<AccountTransferTransaction> findAllByLoanId(@Param("accountNumber") Long accountNumber);
+
+    @Query("select att from AccountTransferTransaction att where (att.accountTransferDetails.fromSavingsAccount.id= :savingAccountNumber and att.accountTransferDetails.toSavingsAccount.id=:vendorSavingsAccountNumber) and att.reversed=false and att.date = :disbursementDate and att.description = :transactionDescription order by att.id desc")
+    List<AccountTransferTransaction> findAllFromSavingsAccountIdToVendorSavingsAccountIdForDateAndDescription(
+            @Param("savingAccountNumber") Long savingAccountNumber, @Param("vendorSavingsAccountNumber") Long vendorSavingsAccountNumber,
+            @Param("disbursementDate") LocalDate disbursementDate, @Param("transactionDescription") String transactionDescription);
 
     @Query("select att from AccountTransferTransaction att where att.toLoanTransaction.id= :loanTransactionId and att.reversed=false")
     AccountTransferTransaction findByToLoanTransactionId(@Param("loanTransactionId") Long loanTransactionId);

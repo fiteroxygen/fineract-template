@@ -82,8 +82,6 @@
     <include file="parts/UC-68-additional-guarantor-information.xml" relativeToChangelogFile="true" />
     <include file="parts/OXY-116_BNPL_loan_product_configuration.xml" relativeToChangelogFile="true" />
     <include file="parts/OXY-118-BNPL_attributes_for_loan.xml" relativeToChangelogFile="true" />
-    <include file="parts/CI18-127_add_product_categories_and_product_type_column.xml" relativeToChangelogFile="true" />
-    <include file="parts/CI18-128_add_product_categories_and_product_type_column.xml" relativeToChangelogFile="true" />
     <include file="parts/OXY-83_flexi_account_withdrawal_window.xml" relativeToChangelogFile="true" />
     <include file="parts/OXY-137_add_max_withdrawal_global_config.xml" relativeToChangelogFile="true" />
     <include file="parts/OXY-138_add_on_hold_table_for_savings_account.xml" relativeToChangelogFile="true" />

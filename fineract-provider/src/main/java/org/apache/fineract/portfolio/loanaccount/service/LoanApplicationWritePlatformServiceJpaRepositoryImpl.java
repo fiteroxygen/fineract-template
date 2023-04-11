@@ -1482,6 +1482,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.loanApplicationTransitionApiJsonValidator.validateApproval(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+        this.validateActiveLoanCount(loan.getClientId());
 
         final JsonArray disbursementDataArray = command.arrayOfParameterNamed(LoanApiConstants.disbursementDataParameterName);
 
@@ -1616,6 +1617,20 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 .withLoanId(loanId) //
                 .with(changes) //
                 .build();
+    }
+
+    private void validateActiveLoanCount(Long clientId) {
+        if (this.configurationDomainService.isMaxActiveLoansEnabled()) {
+            final int activeLoanCount = this.loanReadPlatformService.retrieveNumberOfActiveLoansByClientId(clientId);
+            final int maxActiveLoans = this.configurationDomainService.getMaxActiveLoans().intValue();
+            if (maxActiveLoans > 0 && ((activeLoanCount + 1) > maxActiveLoans)) {
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loanapplication");
+                baseDataValidator.reset().parameter("loanId").value(clientId).failWithCode("max.active.loans.exceeded");
+                throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                        dataValidationErrors);
+            }
+        }
     }
 
     @Transactional

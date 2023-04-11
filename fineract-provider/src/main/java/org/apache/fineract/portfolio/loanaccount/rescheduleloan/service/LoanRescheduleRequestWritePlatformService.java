@@ -28,4 +28,5 @@ public interface LoanRescheduleRequestWritePlatformService {
     CommandProcessingResult approve(JsonCommand jsonCommand);
 
     CommandProcessingResult reject(JsonCommand jsonCommand);
+
 }
