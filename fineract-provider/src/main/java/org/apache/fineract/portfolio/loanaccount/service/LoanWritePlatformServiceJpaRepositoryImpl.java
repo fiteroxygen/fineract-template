@@ -552,7 +552,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         if (!isAccountTransfer) {
             entityId = loan.getLoanTransactions().get(loan.getLoanTransactions().size() - 1).getId();
         }
-        addOverdueChargeToLoanAccountInArrears(loanId);
+        if(this.env.getProperty("fineract.environment").equals("DEV")){
+            addOverdueChargeToLoanAccountInArrears(loanId);
+        }
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
