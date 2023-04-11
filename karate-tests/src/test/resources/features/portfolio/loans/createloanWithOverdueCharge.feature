@@ -43,6 +43,23 @@ Feature: Test loan account apis
      #fetch loan details here
     * def loanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
 
+      # Loop through the Charges Object
+    * def assertAmountsOnCharges =
+      """
+      function(charges,expectedAmountToBeCharged){
+        for(var i = 0; i < charges.length; i++){
+          karate.log(charges[i].amount);
+          expectedAmountToBeCharged = expectedAmountToBeCharged + charges[i].amount;
+        }
+        return expectedAmountToBeCharged;
+      }
+      """
+    * def expectedAmountToBeCharged = 0;
+    * def totalCharges = assertAmountsOnCharges(loanResponse.loanAccount.charges,expectedAmountToBeCharged);
+    * karate.log('Total Charges',totalCharges)
+    * assert totalCharges == loanResponse.loanAccount.summary.penaltyChargesOverdue
+
+
     * assert clientId == loanResponse.loanAccount.clientId
     * assert loanAmount == loanResponse.loanAccount.principal
     * assert loanProductId == loanResponse.loanAccount.loanProductId
@@ -99,6 +116,38 @@ Feature: Test loan account apis
     * def disburseloan = call read('classpath:features/portfolio/loans/loansteps.feature@disburseToSavingsAccountStep') { loanAmount : '#(loanAmount)', disbursementDate : '#(submittedOnDate)', loanId : '#(loanId)'}
      #fetch loan details here
     * def loanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+     # Loop through the Charges Object
+    * def assertAmountsOnCharges =
+      """
+      function(charges,expectedAmountToBeCharged){
+        for(var i = 0; i < charges.length; i++){
+          karate.log(charges[i].amount);
+          expectedAmountToBeCharged = expectedAmountToBeCharged + charges[i].amount;
+        }
+        return expectedAmountToBeCharged;
+      }
+      """
+    * def expectedAmountToBeCharged = 0;
+    * def totalCharges = assertAmountsOnCharges(loanResponse.loanAccount.charges,expectedAmountToBeCharged);
+    * karate.log('Total Charges',totalCharges)
+    * assert totalCharges == loanResponse.loanAccount.summary.penaltyChargesOverdue
+
+
+#         # Loop through the Repayment Schedule Object  --> Double value is failing to be casted as integer - WIP
+#    * def assertRepaymentSchedulePenaltyChargeAmount =
+#      """
+#      function(repaymentSchedules,expectedTotalAmountToBeCharged){
+#        for(var i = 0; i < repaymentSchedules.length; i++){
+#          expectedTotalAmountToBeCharged = expectedTotalAmountToBeCharged + repaymentSchedules[i].penaltyChargesDue;
+#        }
+#        return expectedTotalAmountToBeCharged;
+#      }
+#      """
+#    * def expectedTotalAmountToBeCharged = 0.0;
+#    * def totalChargesApplied = assertRepaymentSchedulePenaltyChargeAmount(loanResponse.loanAccount.repaymentSchedule.periods,expectedTotalAmountToBeCharged);
+#    * karate.log('Total Charges Applied on Repayment Schedule',totalChargesApplied)
+#    * assert totalChargesApplied == loanResponse.loanAccount.summary.penaltyChargesOverdue
+
         #Get Savings Account details and check if money hads been deposited
     * def savingsResponse = call read('classpath:features/portfolio/savingsaccount/savingssteps.feature@findsavingsbyid') { savingsId : '#(savingsId)' }
     * assert loanAmount == savingsResponse.savingsAccount.summary.availableBalance
