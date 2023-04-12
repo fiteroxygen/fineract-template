@@ -220,3 +220,55 @@ Feature: Create loan stapes
     When method POST
     Then status 403
     Then match $ contains { developerMessage: '#notnull' }
+
+    # This steps has no HardCodes Product
+  @ignore
+  @createLoanWithConfigurableProductStep
+  Scenario: Create loan account With Configurable Product
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.loanAccountWithNewProductPayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId
+
+  @ignore
+  @loanRepaymentSteps
+  Scenario: Loan repayment Steps
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans',loanId,'transactions'
+    And params {command:'repayment'}
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.transaction
+    When method POST
+    Then status 200
+    Then match $ contains { loanId: '#notnull' }
+    Then def loanId = response.loanId
+
+
+  # This steps create Loan Account with Disburse to savings Charge and Penalty Charge on a loan account
+  @ignore
+  @createLoanAccountWithDisburseToSavingsAccountChargeAndPenaltyChargeSteps
+  Scenario: Create loan account With Configurable Product with Penalty Charge and Disburse to Savings Account
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.loanAccountWithNewProductWithDisburseToSavingsAccountAndPenaltyChargePayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId
