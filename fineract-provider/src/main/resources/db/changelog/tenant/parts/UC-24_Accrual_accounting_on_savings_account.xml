@@ -162,7 +162,20 @@
             </column>
         </addColumn>
     </changeSet>
-
+    <changeSet author="bosco@fiter.io" id="add_m_permissions_LOAN_RUNCLONEJOBFORLOANPENALTY_1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(1) FROM m_permission WHERE code = 'RUNCLONEJOBFORLOANPENALTY_LOAN'
+            </sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="runCloneJobForLoanPenalty" />
+            <column name="code" value="RUNCLONEJOBFORLOANPENALTY_LOAN" />
+            <column name="entity_name" value="LON" />
+            <column name="action_name" value="RUNCLONEJOBFORLOANPENALTY" />
+            <column name="can_maker_checker" valueBoolean="false" />
+        </insert>
+    </changeSet>
 
 
 </databaseChangeLog>

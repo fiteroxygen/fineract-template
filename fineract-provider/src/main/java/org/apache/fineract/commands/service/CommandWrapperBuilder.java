@@ -3622,6 +3622,14 @@ public class CommandWrapperBuilder {
         this.href = "/loans/" + loanId + "?command=updateArrearsTolerance";
         return this;
     }
+    public CommandWrapperBuilder runCloneJobForLoanPenalty(final Long loanId) {
+        this.actionName = "RUNCLONEJOBFORLOANPENALTY";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "?command=runCloneJobForLoanPenalty";
+        return this;
+    }
 
     public CommandWrapperBuilder nextWithdrawalDateSavingsAccount(final Long accountId) {
         this.actionName = "NEXTWITHDRAWALDATE";

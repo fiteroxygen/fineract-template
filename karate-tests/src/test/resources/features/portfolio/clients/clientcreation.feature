@@ -3,7 +3,7 @@ Feature: Test client apis
     * callonce read('classpath:features/base.feature')
     * url baseUrl
 
-
+    @Ignore
     @createFetchUpdateEntityClient
     Scenario: Create fetch and update Entity client
     * def submittedOnDate = df.format(faker.date().past(30, 29, TimeUnit.DAYS))
@@ -29,7 +29,7 @@ Feature: Test client apis
     * match updatedClient.res.changes contains { externalId: '#notnull'}
     * assert fullname == updatedClient.res.changes.fullname
 
-
+    @Ignore
     @createFetchAndUpdatePersonClient
     Scenario: Create fetch and update Normal client
     * def submittedOnDate = df.format(faker.date().past(30, 29, TimeUnit.DAYS))

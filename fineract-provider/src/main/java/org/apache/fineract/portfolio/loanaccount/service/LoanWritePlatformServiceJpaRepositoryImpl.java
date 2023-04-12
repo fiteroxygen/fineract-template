@@ -552,9 +552,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         if (!isAccountTransfer) {
             entityId = loan.getLoanTransactions().get(loan.getLoanTransactions().size() - 1).getId();
         }
-        if (this.env.getProperty("fineract.environment").equals("DEV")) {
-            addOverdueChargeToLoanAccountInArrears(loanId);
-        }
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -3286,6 +3283,16 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .withCommandId(command.commandId()).with(changes) //
                 .build();
 
+    }
+
+    @Override
+    public CommandProcessingResult runCloneJobForLoanPenalty(Long loanId) {
+        Loan loan = this.loanAssembler.assembleFrom(loanId);
+        addOverdueChargeToLoanAccountInArrears(loan.getId());
+        return new CommandProcessingResultBuilder()
+                .withEntityId(loan.getId()) //
+                .withLoanId(loanId)
+                .build();
     }
 
     @Override

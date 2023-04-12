@@ -233,8 +233,7 @@ public class LoanRepaymentScheduleProcessingWrapper {
                     if (loanChargePerInstallment != null) {
                         cumulative = cumulative.plus(loanChargePerInstallment.getAmountWaived(currency));
                     }
-                } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)
-                        || loanCharge.isDueForCollectionForDisburseToSavingsAndIncluding(periodStart)) {
+                } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)) {
                     cumulative = cumulative.plus(loanCharge.getAmountWaived(currency));
                 }
             }
