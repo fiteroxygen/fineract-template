@@ -3289,10 +3289,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     public CommandProcessingResult runCloneJobForLoanPenalty(Long loanId) {
         Loan loan = this.loanAssembler.assembleFrom(loanId);
         addOverdueChargeToLoanAccountInArrears(loan.getId());
-        return new CommandProcessingResultBuilder()
-                .withEntityId(loan.getId()) //
-                .withLoanId(loanId)
-                .build();
+        return new CommandProcessingResultBuilder().withEntityId(loan.getId()) //
+                .withLoanId(loanId).build();
     }
 
     @Override

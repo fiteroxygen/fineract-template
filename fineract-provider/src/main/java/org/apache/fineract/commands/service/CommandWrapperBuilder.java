@@ -3622,6 +3622,7 @@ public class CommandWrapperBuilder {
         this.href = "/loans/" + loanId + "?command=updateArrearsTolerance";
         return this;
     }
+
     public CommandWrapperBuilder runCloneJobForLoanPenalty(final Long loanId) {
         this.actionName = "RUNCLONEJOBFORLOANPENALTY";
         this.entityName = "LOAN";
