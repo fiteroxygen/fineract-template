@@ -165,7 +165,7 @@ public class ClientsApiResource {
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
         final SearchParameters searchParameters = SearchParameters.forClients(sqlSearch, officeId, externalId, displayName, firstname,
-                lastname, status, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, isSelfUser);
+                lastname, status, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, isSelfUser,clientType);
 
         final Page<ClientData> clientData = this.clientReadPlatformService.retrieveAll(searchParameters);
 
