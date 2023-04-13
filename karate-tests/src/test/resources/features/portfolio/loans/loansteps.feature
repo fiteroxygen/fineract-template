@@ -305,3 +305,19 @@ Feature: Create loan stapes
     Then status 200
     Then match $ contains { resourceId: '#notnull' }
     Then def loanId = response.resourceId
+
+        #Run Clone Job to apply penalties
+  @ignore
+  @accountTransferFromSavingsAccountToLoanAccountSteps
+  Scenario:
+    Given configure ssl = true
+    * def transferAccountData = read('classpath:templates/loans.json')
+    Given path 'accounttransfers'
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request transferAccountData.transferFundsFromSavingsAccountToLoanAccountPayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId

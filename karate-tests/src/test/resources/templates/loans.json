@@ -43,8 +43,7 @@
     "transactionAmount": "#(loanAmount)",
     "actualDisbursementDate": "#(disbursementDate)",
     "locale": "en",
-    "dateFormat": "#(format)",
-    "note": "#(faker.name().firstName)"
+    "dateFormat": "#(format)"
   },
   "transaction": {
     "transactionDate": "#(repaymentDate)",
@@ -150,5 +149,20 @@
     "loanType": "individual",
     "expectedDisbursementDate": "#(submittedOnDate)",
     "submittedOnDate": "#(submittedOnDate)"
+  },
+  "transferFundsFromSavingsAccountToLoanAccountPayLoad": {
+    "dateFormat": "#(format)",
+    "fromAccountId": "#(fromAccountId)",
+    "fromAccountType": 2,
+    "fromClientId": "#(fromClientId)",
+    "fromOfficeId": 1,
+    "locale": "en",
+    "toAccountId": "#(toAccountId)",
+    "toAccountType": 1,
+    "toClientId": "#(toClientId)",
+    "toOfficeId": 1,
+    "transferAmount": "#(transferAmount)",
+    "transferDate": "#(transferDate)",
+    "transferDescription": "DisBurseToSavingsCharges"
   }
 }

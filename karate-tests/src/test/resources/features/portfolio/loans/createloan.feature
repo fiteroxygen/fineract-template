@@ -2,7 +2,7 @@ Feature: Test loan account apis
   Background:
     * callonce read('classpath:features/base.feature')
     * url baseUrl
-  @Ignore
+
   @createanddisburseloan
   Scenario: Create approve and disburse loan
       #to choose an earlier date use faker.date().past(20, TimeUnit.DAYS)
@@ -35,7 +35,7 @@ Feature: Test loan account apis
     * assert loanResponse.loanAccount.status.closed == true
     * assert loanResponse.loanAccount.status.overpaid == false
     * assert loanResponse.loanAccount.status.closedObligationsMet == true
-  @Ignore
+
   @testThatICanCreateAndDisburseLoanToSavingsAccount
   Scenario: Test That I Can Create And Disburse Loan To savings account
 
@@ -100,7 +100,7 @@ Feature: Test loan account apis
     * def rejectedLoanAccountReponse = call read('classpath:features/portfolio/loans/loansteps.feature@rejectedLoanAccountStep') { loanId : '#(loanId)', rejectedOnDate : '#(submittedOnDate)' }
     * def loanAccounteRectedReponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)'}
     * assert loanAccounteRectedReponse.loanAccount.status.value == 'Rejected'
-  @Ignore
+
   @testThatLoanAccountCreationCannotViolateProductSettingsConfiguration
   Scenario: Test That Loan Account Creation Can not Violate Product Settings Configuration
 
