@@ -189,6 +189,11 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             }
             final List<Note> relatedNotes = this.noteRepository.findByClient(client);
             this.noteRepository.deleteAllInBatch(relatedNotes);
+            Optional<ClientAdditionalInfo> clientAdditionalInfoOptional = clientAdditionalInfoRepository.findByClient(client);
+
+            if (clientAdditionalInfoOptional.isPresent()) {
+                clientAdditionalInfoRepository.delete(clientAdditionalInfoOptional.get());
+            }
 
             final ClientNonPerson clientNonPerson = this.clientNonPersonRepository.findOneByClientId(clientId);
             if (clientNonPerson != null) {

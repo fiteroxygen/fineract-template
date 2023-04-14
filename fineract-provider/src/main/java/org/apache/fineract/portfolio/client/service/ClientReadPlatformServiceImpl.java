@@ -31,6 +31,8 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
+import org.apache.fineract.infrastructure.codes.domain.CodeValue;
+import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.apache.fineract.infrastructure.configuration.data.GlobalConfigurationPropertyData;
 import org.apache.fineract.infrastructure.configuration.service.ConfigurationReadPlatformService;
@@ -97,6 +99,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
     private final ClientMembersOfGroupMapper membersOfGroupMapper = new ClientMembersOfGroupMapper();
     private final ParentGroupsMapper clientGroupsMapper = new ParentGroupsMapper();
 
+    private final CodeValueRepositoryWrapper codeValueRepository;
     private final AddressReadPlatformService addressReadPlatformService;
     private final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService;
     private final ConfigurationReadPlatformService configurationReadPlatformService;
@@ -246,6 +249,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String firstname = searchParameters.getFirstname();
         final String lastname = searchParameters.getLastname();
         final String status = searchParameters.getStatus();
+        final String clientType = searchParameters.getClientType();
 
         String extraCriteria = "";
         if (sqlSearch != null) {
@@ -275,6 +279,12 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         if (status != null) {
             ClientStatus clientStatus = ClientStatus.fromString(status);
             extraCriteria += " and c.status_enum = " + clientStatus.getValue().toString() + " ";
+        }
+
+        if (clientType != null) {
+            CodeValue codeValue = codeValueRepository.findOneByCodeNameAndLabelWithNotFoundDetection(ClientApiConstants.CLIENT_TYPE,
+                    clientType);
+            extraCriteria += " and c.client_type_cv_id = " + codeValue.getId() + " ";
         }
 
         if (firstname != null) {
