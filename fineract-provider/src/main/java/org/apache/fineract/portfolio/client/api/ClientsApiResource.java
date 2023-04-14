@@ -154,7 +154,7 @@ public class ClientsApiResource {
             @QueryParam("orphansOnly") @Parameter(description = "orphansOnly") final Boolean orphansOnly) {
 
         return this.retrieveAll(uriInfo, sqlSearch, officeId, externalId, displayName, firstname, lastname, status, hierarchy, offset,
-                limit, orderBy, sortOrder, orphansOnly, false,clientType);
+                limit, orderBy, sortOrder, orphansOnly, false, clientType);
     }
 
     public String retrieveAll(final UriInfo uriInfo, final String sqlSearch, final Long officeId, final String externalId,
@@ -165,7 +165,7 @@ public class ClientsApiResource {
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
         final SearchParameters searchParameters = SearchParameters.forClients(sqlSearch, officeId, externalId, displayName, firstname,
-                lastname, status, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, isSelfUser,clientType);
+                lastname, status, hierarchy, offset, limit, orderBy, sortOrder, orphansOnly, isSelfUser, clientType);
 
         final Page<ClientData> clientData = this.clientReadPlatformService.retrieveAll(searchParameters);
 

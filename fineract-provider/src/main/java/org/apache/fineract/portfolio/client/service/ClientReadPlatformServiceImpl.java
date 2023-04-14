@@ -249,7 +249,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         final String firstname = searchParameters.getFirstname();
         final String lastname = searchParameters.getLastname();
         final String status = searchParameters.getStatus();
-        final String clientType=searchParameters.getClientType();
+        final String clientType = searchParameters.getClientType();
 
         String extraCriteria = "";
         if (sqlSearch != null) {
@@ -282,8 +282,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         }
 
         if (clientType != null) {
-            CodeValue codeValue = codeValueRepository.findOneByCodeNameAndLabelWithNotFoundDetection(ClientApiConstants.CLIENT_TYPE,clientType);
-            extraCriteria += " and c.client_type_cv_id = " + codeValue.getId()+ " ";
+            CodeValue codeValue = codeValueRepository.findOneByCodeNameAndLabelWithNotFoundDetection(ClientApiConstants.CLIENT_TYPE,
+                    clientType);
+            extraCriteria += " and c.client_type_cv_id = " + codeValue.getId() + " ";
         }
 
         if (firstname != null) {

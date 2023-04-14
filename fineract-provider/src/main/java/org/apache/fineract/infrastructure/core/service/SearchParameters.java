@@ -76,7 +76,7 @@ public final class SearchParameters {
         final Long savingsId = null;
 
         return new SearchParameters(sqlSearch, officeId, externalId, displayName, hierarchy, firstname, lastname, status, offset,
-                maxLimitAllowed, orderBy, sortOrder, staffId, accountNo, loanId, savingsId, orphansOnly, isSelfUser,clientType);
+                maxLimitAllowed, orderBy, sortOrder, staffId, accountNo, loanId, savingsId, orphansOnly, isSelfUser, clientType);
     }
 
     public static SearchParameters forGroups(final Long officeId, final Long staffId, final String externalId, final String name,
@@ -271,7 +271,7 @@ public final class SearchParameters {
         this.categoryId = null;
         this.isSelfUser = isSelfUser;
         this.status = null;
-        this.clientType=null;
+        this.clientType = null;
 
     }
 
@@ -301,7 +301,7 @@ public final class SearchParameters {
         this.categoryId = null;
         this.isSelfUser = isSelfUser;
         this.status = status;
-        this.clientType=clientType;
+        this.clientType = clientType;
 
     }
 
@@ -331,7 +331,7 @@ public final class SearchParameters {
         this.categoryId = null;
         this.isSelfUser = isSelfUser;
         this.status = null;
-        this.clientType=null;
+        this.clientType = null;
     }
 
     private SearchParameters(final Long provisioningEntryId, final Long officeId, final Long productId, final Long categoryId,
@@ -358,7 +358,7 @@ public final class SearchParameters {
         this.categoryId = categoryId;
         this.isSelfUser = false;
         this.status = null;
-       this. clientType = null;
+        this.clientType = null;
     }
 
     public SearchParameters(final String sqlSearch, final Long officeId, final String externalId, final String name, final String hierarchy,
@@ -387,7 +387,7 @@ public final class SearchParameters {
         this.categoryId = null;
         this.isSelfUser = false;
         this.status = null;
-        this.clientType=null;
+        this.clientType = null;
 
     }
 
