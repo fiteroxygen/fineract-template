@@ -164,5 +164,12 @@
     "transferAmount": "#(transferAmount)",
     "transferDate": "#(transferDate)",
     "transferDescription": "DisBurseToSavingsCharges"
+  },
+  "waiveInterestOnLoanAccountPayLoad": {
+    "transactionAmount": "#(transactionAmount)",
+    "transactionDate": "#(transactionDate)",
+    "note": "#(note)",
+    "locale": "en",
+    "dateFormat": "#(format)"
   }
 }

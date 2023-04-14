@@ -592,4 +592,81 @@ Feature: Test loan account apis
     # Expecting Two Transactions Disbursement Transaction and Disbursement charge
     * assert karate.sizeOf(loanResponse.loanAccount.transactions) == 3
 
+  @testThatICanCreateLoanAccountWithFlatOverdueChargesAndWaiveInterest
+  Scenario: Test That I Can Create Loan Account With Flat Overdue Charges and waive interest
+    * def chargeAmount = 100;
+    # Create Flat Overdue Charge
+    * def charges = call read('classpath:features/portfolio/products/LoanProductSteps.feature@createFlatOverdueChargeWithOutFrequencySteps') { chargeAmount : '#(chargeAmount)' }
+    * def chargeId = charges.chargeId
+
+        # Create Loan Product With Flat Overdue Charge
+    * def loanProduct = call read('classpath:features/portfolio/products/LoanProductSteps.feature@createLoanProductWithOverdueChargeSteps') { chargeId : '#(chargeId)' }
+    * def loanProductId = loanProduct.loanProductId
+
+    #create savings account with clientCreationDate
+    * def submittedOnDate = df.format(faker.date().past(425, 421, TimeUnit.DAYS))
+
+    * def result = call read('classpath:features/portfolio/clients/clientsteps.feature@create') { clientCreationDate : '#(submittedOnDate)' }
+    * def clientId = result.response.resourceId
+
+        #Create Savings Account Product and Savings Account
+    * def savingsAccount = call read('classpath:features/portfolio/savingsaccount/savingssteps.feature@createSavingsAccountStep') { submittedOnDate : '#(submittedOnDate)', clientId : '#(clientId)'}
+    * def savingsId = savingsAccount.savingsId
+    #approve savings account step setup approval Date
+
+    * call read('classpath:features/portfolio/savingsaccount/savingssteps.feature@approve') { savingsId : '#(savingsId)', approvalDate : '#(submittedOnDate)' }
+    #activate savings account step activation Date
+    * def activateSavings = call read('classpath:features/portfolio/savingsaccount/savingssteps.feature@activate') { savingsId : '#(savingsId)', activationDate : '#(submittedOnDate)' }
+    Then def activeSavingsId = activateSavings.activeSavingsId
+
+
+    * def loanAmount = 8500
+    * def loan = call read('classpath:features/portfolio/loans/loansteps.feature@createLoanWithConfigurableProductStep') { submittedOnDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', clientCreationDate : '#(submittedOnDate)', loanProductId : '#(loanProductId)', clientId : '#(clientId)', chargeId : '#(chargeId)', savingsAccountId : '#(savingsId)'}
+    * def loanId = loan.loanId
+
+      #approval
+    * call read('classpath:features/portfolio/loans/loansteps.feature@approveloan') { approvalDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanId : '#(loanId)' }
+
+      #disbursal
+    * def disburseloan = call read('classpath:features/portfolio/loans/loansteps.feature@disburse') { loanAmount : '#(loanAmount)', disbursementDate : '#(submittedOnDate)', loanId : '#(loanId)'}
+        # Run Clone Job
+    * def applyPenaltyCharge = call read('classpath:features/portfolio/loans/loansteps.feature@runCloneJobForLoanPenalty') { loanId : '#(loanId)'}
+     #fetch loan details here
+    * def loanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+
+      # Loop through the Charges Object
+    * def assertAmountsOnCharges =
+      """
+      function(charges,expectedAmountToBeCharged){
+        for(var i = 0; i < charges.length; i++){
+          karate.log(charges[i].amount);
+          expectedAmountToBeCharged = expectedAmountToBeCharged + charges[i].amount;
+        }
+        return expectedAmountToBeCharged;
+      }
+      """
+    * def expectedAmountToBeCharged = 0;
+    * def totalCharges = assertAmountsOnCharges(loanResponse.loanAccount.charges,expectedAmountToBeCharged);
+    * karate.log('Total Charges',totalCharges)
+    * assert totalCharges == loanResponse.loanAccount.summary.penaltyChargesOverdue
+
+
+    * assert clientId == loanResponse.loanAccount.clientId
+    * assert loanAmount == loanResponse.loanAccount.principal
+    * assert loanProductId == loanResponse.loanAccount.loanProductId
+    * assert loanResponse.loanAccount.summary.penaltyChargesCharged == 1200
+    * assert loanResponse.loanAccount.summary.penaltyChargesOutstanding == 1200
+    * assert loanResponse.loanAccount.summary.penaltyChargesOverdue == 1200
+    * assert loanResponse.loanAccount.status.value == 'Active'
+    * assert karate.sizeOf(loanResponse.loanAccount.charges) == 12
+    * def loanTerm = loanResponse.loanAccount.termFrequency
+    Then print 'Loan Term',loanTerm
+    * assert karate.sizeOf(loanResponse.loanAccount.repaymentSchedule.periods) == loanTerm + 1
+    * assert karate.sizeOf(loanResponse.loanAccount.transactions) == 1
+    # Waive Interest
+    * def transactionAmount = loanResponse.loanAccount.summary.interestOutstanding;
+    * def waiveInterestResponse = call read('classpath:features/portfolio/loans/loansteps.feature@waiveInterestOnLoanAccountSteps') { transactionDate : '#(submittedOnDate)', transactionAmount : '#(transactionAmount)', loanId : '#(loanId)'}
+
+
+
 
