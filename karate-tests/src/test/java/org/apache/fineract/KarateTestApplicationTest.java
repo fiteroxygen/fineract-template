@@ -37,7 +37,7 @@ class KarateTestApplicationTest implements BaseKarate {
         System.setProperty("tenantId", tenantId.orElse("default"));
 
         Karate karate = new Karate().path(
-                "classpath:features/portfolio/loans/createloanWithOverdueCharge.feature@testThatICanCreateLoanAccountWithFlatOverdueChargesAndWaiveInterest");
+                "classpath:features/portfolio/loans/createloanWithOverdueCharge.feature@testThatICanCreateLoanAccountWithFlatOverduePenaltyWithFeesAndMakeRepayment");
         karate.outputHtmlReport(true);
         return karate;
     }
