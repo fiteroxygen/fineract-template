@@ -666,7 +666,26 @@ Feature: Test loan account apis
     # Waive Interest
     * def transactionAmount = loanResponse.loanAccount.summary.interestOutstanding;
     * def waiveInterestResponse = call read('classpath:features/portfolio/loans/loansteps.feature@waiveInterestOnLoanAccountSteps') { transactionDate : '#(submittedOnDate)', transactionAmount : '#(transactionAmount)', loanId : '#(loanId)'}
+    #fetch loan details here
+    * def waivedLoanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+    * assert waivedLoanResponse.loanAccount.summary.interestOutstanding == 0
+    * assert waivedLoanResponse.loanAccount.summary.interestOverdue == 0
+    * assert waivedLoanResponse.loanAccount.summary.interestWaived == transactionAmount
+    * assert karate.sizeOf(waivedLoanResponse.loanAccount.transactions) == 2
+    * assert loanResponse.loanAccount.status.value == 'Active'
+    # WriteOff Loan Account
+    * def writeOffLoanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@writeOffOnLoanAccountSteps') { transactionDate : '#(submittedOnDate)', loanId : '#(loanId)'}
 
+       #fetch loan details here
+    * def writeOffResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
 
-
+    * assert writeOffResponse.loanAccount.status.value == 'Closed (written off)'
+    * assert writeOffResponse.loanAccount.summary.principalOverdue == 8500
+    * assert writeOffResponse.loanAccount.summary.principalOutstanding == 0
+    * assert writeOffResponse.loanAccount.summary.interestOverdue == 0
+    * assert writeOffResponse.loanAccount.summary.interestOutstanding == 0
+    * assert writeOffResponse.loanAccount.summary.feeChargesOutstanding == 0
+    * assert writeOffResponse.loanAccount.summary.feeChargesOverdue == 0
+    * assert writeOffResponse.loanAccount.summary.penaltyChargesOutstanding == 0
+    * assert writeOffResponse.loanAccount.summary.penaltyChargesOverdue == 1200
 

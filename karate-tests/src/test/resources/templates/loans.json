@@ -168,7 +168,11 @@
   "waiveInterestOnLoanAccountPayLoad": {
     "transactionAmount": "#(transactionAmount)",
     "transactionDate": "#(transactionDate)",
-    "note": "#(note)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "writeOffOnLoanAccountPayLoad": {
+    "transactionDate": "#(transactionDate)",
     "locale": "en",
     "dateFormat": "#(format)"
   }
