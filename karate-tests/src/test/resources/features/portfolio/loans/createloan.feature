@@ -36,8 +36,6 @@ Feature: Test loan account apis
     * assert loanResponse.loanAccount.status.overpaid == false
     * assert loanResponse.loanAccount.status.closedObligationsMet == true
 
-
-
   @testThatICanCreateAndDisburseLoanToSavingsAccount
   Scenario: Test That I Can Create And Disburse Loan To savings account
 
@@ -102,7 +100,6 @@ Feature: Test loan account apis
     * def rejectedLoanAccountReponse = call read('classpath:features/portfolio/loans/loansteps.feature@rejectedLoanAccountStep') { loanId : '#(loanId)', rejectedOnDate : '#(submittedOnDate)' }
     * def loanAccounteRectedReponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)'}
     * assert loanAccounteRectedReponse.loanAccount.status.value == 'Rejected'
-
 
   @testThatLoanAccountCreationCannotViolateProductSettingsConfiguration
   Scenario: Test That Loan Account Creation Can not Violate Product Settings Configuration

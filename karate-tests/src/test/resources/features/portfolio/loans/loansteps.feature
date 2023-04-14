@@ -272,3 +272,52 @@ Feature: Create loan stapes
     Then status 200
     Then match $ contains { resourceId: '#notnull' }
     Then def loanId = response.resourceId
+
+      # This steps create Loan Account with Disburse to savings Charge and Penalty Charge on a loan account
+  @ignore
+  @waiveLoanAccountChargesAndFeesSteps
+  Scenario: Waive Loan Account Overdue Charges and Fees
+    Given configure ssl = true
+    * def chargesData = read('classpath:templates/loansCharges.json')
+    Given path 'loans',loanId,'charges',chargeId
+    And params {command:'waive'}
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request chargesData.waiveLoanAccountCharges
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId
+
+    #Run Clone Job to apply penalties
+  @ignore
+  @runCloneJobForLoanPenalty
+  Scenario:
+    Given configure ssl = true
+    Given path 'loans',loanId
+    And params {command:'runCloneJobForLoanPenalty'}
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId
+
+        #Run Clone Job to apply penalties
+  @ignore
+  @accountTransferFromSavingsAccountToLoanAccountSteps
+  Scenario:
+    Given configure ssl = true
+    * def transferAccountData = read('classpath:templates/loans.json')
+    Given path 'accounttransfers'
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request transferAccountData.transferFundsFromSavingsAccountToLoanAccountPayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { resourceId: '#notnull' }
+    Then def loanId = response.resourceId

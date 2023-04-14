@@ -26,5 +26,7 @@
   "enablePaymentType": false,
   "locale": "en",
   "monthDayFormat": "dd MMM"
-  }
+  },
+  "waiveLoanAccountCharges":
+  {"locale":"en","dateFormat":"dd MMMM yyyy"}
 }
