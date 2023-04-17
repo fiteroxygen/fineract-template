@@ -164,5 +164,23 @@
     "transferAmount": "#(transferAmount)",
     "transferDate": "#(transferDate)",
     "transferDescription": "DisBurseToSavingsCharges"
+  },
+  "waiveInterestOnLoanAccountPayLoad": {
+    "transactionAmount": "#(transactionAmount)",
+    "transactionDate": "#(transactionDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "writeOffOnLoanAccountPayLoad": {
+    "transactionDate": "#(transactionDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "recoveryPaymentOnLoanAccountPayLoad": {
+    "paymentTypeId": 1,
+    "transactionAmount": "#(transactionAmount)",
+    "transactionDate": "#(transactionDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
   }
 }

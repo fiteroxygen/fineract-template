@@ -321,3 +321,54 @@ Feature: Create loan stapes
     Then status 200
     Then match $ contains { resourceId: '#notnull' }
     Then def loanId = response.resourceId
+
+   #Waive Interest on Loan Account
+  @ignore
+  @waiveInterestOnLoanAccountSteps
+  Scenario: Waive Interest on Loan Account
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans',loanId,'transactions'
+    And params {command:'waiveinterest'}
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.waiveInterestOnLoanAccountPayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { loanId: '#notnull' }
+    Then def loanId = response.loanId
+
+   # WriteOff
+  @ignore
+  @writeOffOnLoanAccountSteps
+  Scenario: WriteOff on Loan Account
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans',loanId,'transactions'
+    And params {command:'writeoff'}
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.writeOffOnLoanAccountPayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { loanId: '#notnull' }
+    Then def loanId = response.loanId
+
+   # Recovery Payment
+  @ignore
+  @recoveryPaymentLoanAccountSteps
+  Scenario: recovery Payment on Loan Account
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans',loanId,'transactions'
+    And params {command:'recoverypayment'}
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.recoveryPaymentOnLoanAccountPayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { loanId: '#notnull' }
+    Then def loanId = response.loanId
