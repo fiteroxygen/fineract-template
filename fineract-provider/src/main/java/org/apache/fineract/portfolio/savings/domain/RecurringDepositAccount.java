@@ -240,9 +240,10 @@ public class RecurringDepositAccount extends SavingsAccount {
             applicableInterestRate = applicableInterestRate.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : applicableInterestRate;
         }
 
-        this.nominalAnnualInterestRate = applicableInterestRate;
+        this.nominalAnnualInterestRate = BigDecimal.ZERO.compareTo(nominalAnnualInterestRate) == 0 ? applicableInterestRate
+                : nominalAnnualInterestRate;
 
-        return applicableInterestRate.divide(BigDecimal.valueOf(100L), mc);
+        return nominalAnnualInterestRate.divide(BigDecimal.valueOf(100L), mc);
     }
 
     public void updateMaturityDateAndAmount(final MathContext mc, final boolean isPreMatureClosure,
