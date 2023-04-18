@@ -312,7 +312,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         // for bnpl, fetch vendor transaction which is transferred
         // from client to vendor during disbursement
         List<AccountTransferTransaction> bnplAcccountTransfers = null;
-        if (loan.getBnplLoan()) {
+        if (loan.getBnplLoan() != null && loan.getBnplLoan()) {
             // fetch the account transfer details between client and vendor accounts
             // on disbursement day
             final PortfolioAccountData portfolioAccountData = this.accountAssociationsReadPlatformService

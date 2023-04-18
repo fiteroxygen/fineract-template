@@ -120,4 +120,6 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult creditBalanceRefund(Long loanId, JsonCommand command);
 
+    CommandProcessingResult runCloneJobForLoanPenalty(Long loanId);
+
 }

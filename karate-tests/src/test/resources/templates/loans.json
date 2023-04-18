@@ -39,10 +39,147 @@
     "locale": "en",
     "dateFormat": "#(format)"
   },
+  "disburseToSavingsAccount": {
+    "transactionAmount": "#(loanAmount)",
+    "actualDisbursementDate": "#(disbursementDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
   "transaction": {
     "transactionDate": "#(repaymentDate)",
     "paymentTypeId": 1,
     "transactionAmount": "#(repaymentAmount)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "loanWithSavingsAccount": {
+    "clientId": "#(clientId)",
+    "productId": "#(loanProductId)",
+    "disbursementData": [],
+    "principal": "#(loanAmount)",
+    "loanTermFrequency": 12,
+    "loanTermFrequencyType": 2,
+    "numberOfRepayments": 12,
+    "repaymentEvery": 1,
+    "repaymentFrequencyType": 2,
+    "interestRatePerPeriod": 3,
+    "amortizationType": 1,
+    "isEqualAmortization": false,
+    "interestType": 0,
+    "interestCalculationPeriodType": 1,
+    "allowPartialPeriodInterestCalcualtion": false,
+    "transactionProcessingStrategyId": 1,
+    "rates": [],
+    "linkAccountId": "#(savingsAccountId)",
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "loanType": "individual",
+    "expectedDisbursementDate": "#(submittedOnDate)",
+    "submittedOnDate": "#(submittedOnDate)"
+  },
+  "unDisburseLoanAccountPayload": {
+    "note": "Un-disburse this Loan Account"
+  },
+  "unApproveLoanAccountPayload": {
+    "note": "Un-Approve this Loan Account"
+  },
+  "rejectLoanApplicationPayLoad": {
+    "rejectedOnDate": "#(submittedOnDate)",
+    "note": "Reject this Loan Account",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "loanAccountWithNewProductPayLoad": {
+    "clientId": "#(clientId)",
+    "interestRatePerPeriod": 6,
+    "productId": "#(loanProductId)",
+    "disbursementData": [],
+    "principal": "#(loanAmount)",
+    "loanTermFrequency": 12,
+    "loanTermFrequencyType": 2,
+    "numberOfRepayments": 12,
+    "repaymentEvery": 1,
+    "repaymentFrequencyType": 2,
+    "amortizationType": 1,
+    "isEqualAmortization": false,
+    "interestType": 0,
+    "interestCalculationPeriodType": 1,
+    "allowPartialPeriodInterestCalcualtion": false,
+    "transactionProcessingStrategyId": 1,
+    "rates": [],
+    "isBnplLoan": false,
+    "requiresEquityContribution": false,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "loanType": "individual",
+    "expectedDisbursementDate": "#(submittedOnDate)",
+    "submittedOnDate": "#(submittedOnDate)",
+    "linkAccountId": "#(savingsAccountId)"
+  },
+  "loanAccountWithNewProductWithDisburseToSavingsAccountAndPenaltyChargePayLoad": {
+    "clientId": "#(clientId)",
+    "interestRatePerPeriod": 6,
+    "productId": "#(loanProductId)",
+    "disbursementData": [],
+    "principal": "#(loanAmount)",
+    "loanTermFrequency": 12,
+    "loanTermFrequencyType": 2,
+    "numberOfRepayments": 12,
+    "repaymentEvery": 1,
+    "repaymentFrequencyType": 2,
+    "amortizationType": 1,
+    "isEqualAmortization": false,
+    "interestType": 0,
+    "interestCalculationPeriodType": 1,
+    "allowPartialPeriodInterestCalcualtion": false,
+    "transactionProcessingStrategyId": 1,
+    "rates": [],
+    "isBnplLoan": false,
+    "requiresEquityContribution": false,
+    "linkAccountId": "#(savingsAccountId)",
+    "charges": [
+      {
+        "chargeId": "#(disburseSavingsAccountChargeId)",
+        "amount": "#(disburseToSavingsChargeAmount)",
+        "dueDate": "#(submittedOnDate)"
+      }
+    ],
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "loanType": "individual",
+    "expectedDisbursementDate": "#(submittedOnDate)",
+    "submittedOnDate": "#(submittedOnDate)"
+  },
+  "transferFundsFromSavingsAccountToLoanAccountPayLoad": {
+    "dateFormat": "#(format)",
+    "fromAccountId": "#(fromAccountId)",
+    "fromAccountType": 2,
+    "fromClientId": "#(fromClientId)",
+    "fromOfficeId": 1,
+    "locale": "en",
+    "toAccountId": "#(toAccountId)",
+    "toAccountType": 1,
+    "toClientId": "#(toClientId)",
+    "toOfficeId": 1,
+    "transferAmount": "#(transferAmount)",
+    "transferDate": "#(transferDate)",
+    "transferDescription": "DisBurseToSavingsCharges"
+  },
+  "waiveInterestOnLoanAccountPayLoad": {
+    "transactionAmount": "#(transactionAmount)",
+    "transactionDate": "#(transactionDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "writeOffOnLoanAccountPayLoad": {
+    "transactionDate": "#(transactionDate)",
+    "locale": "en",
+    "dateFormat": "#(format)"
+  },
+  "recoveryPaymentOnLoanAccountPayLoad": {
+    "paymentTypeId": 1,
+    "transactionAmount": "#(transactionAmount)",
+    "transactionDate": "#(transactionDate)",
     "locale": "en",
     "dateFormat": "#(format)"
   }

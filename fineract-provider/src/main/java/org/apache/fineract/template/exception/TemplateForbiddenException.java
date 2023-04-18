@@ -16,19 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.loanschedule.service;
+package org.apache.fineract.template.exception;
 
-import java.util.Collection;
-import org.apache.fineract.portfolio.loanaccount.data.DisbursementData;
-import org.apache.fineract.portfolio.loanaccount.data.RepaymentScheduleRelatedLoanData;
-import org.apache.fineract.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformException;
 
-public interface LoanScheduleHistoryReadPlatformService {
+public class TemplateForbiddenException extends AbstractPlatformException {
 
-    Integer fetchCurrentVersionNumber(Long loanId);
-
-    LoanScheduleData retrieveRepaymentArchiveSchedule(Long loanId, RepaymentScheduleRelatedLoanData repaymentScheduleRelatedLoanData,
-            Collection<DisbursementData> disbursementData);
-
-    Integer totalInstallmentsFromOriginalSchedule(Long loanId);
+    public TemplateForbiddenException(final String url) {
+        super("error.msg.template.url.forbidden", "Template with url " + url + " not allowed");
+    }
 }

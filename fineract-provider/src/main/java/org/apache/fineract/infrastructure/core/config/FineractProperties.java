@@ -39,6 +39,8 @@ public class FineractProperties {
 
     private FineractContentProperties content;
 
+    private FineractTemplateProperties template;
+
     @Getter
     @Setter
     public static class FineractTenantProperties {
@@ -105,5 +107,13 @@ public class FineractProperties {
         private String accessKey;
         private String secretKey;
         private String region;
+    }
+
+    @Getter
+    @Setter
+    public static class FineractTemplateProperties {
+
+        private boolean regexWhitelistEnabled;
+        private List<String> regexWhitelist;
     }
 }
