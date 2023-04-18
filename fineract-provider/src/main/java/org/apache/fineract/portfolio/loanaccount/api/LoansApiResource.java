@@ -982,6 +982,10 @@ public class LoansApiResource {
             final CommandWrapper commandRequest = builder.updateArrearsTolerance(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
+        if (is(commandParam, "runCloneJobForLoanPenalty")) {
+            final CommandWrapper commandRequest = builder.runCloneJobForLoanPenalty(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
 
         if (result == null) {
             throw new UnrecognizedQueryParamException("command", commandParam);

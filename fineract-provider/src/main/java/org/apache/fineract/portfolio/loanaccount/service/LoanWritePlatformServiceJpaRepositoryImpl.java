@@ -564,6 +564,18 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .build();
     }
 
+    private void addOverdueChargeToLoanAccountInArrears(Long loanId) {
+        final Long penaltyWaitPeriodValue = configurationDomainService.retrievePenaltyWaitPeriod();
+        final Boolean backdatePenalties = configurationDomainService.isBackdatePenaltiesEnabled();
+        final Collection<OverdueLoanScheduleData> overdueLoanScheduledInstallments = loanReadPlatformService
+                .retrieveLoanAccountWithOverdueInstallments(penaltyWaitPeriodValue, backdatePenalties, loanId);
+
+        if (!CollectionUtils.isEmpty(overdueLoanScheduledInstallments)) {
+            applyOverdueChargesForLoan(loanId, overdueLoanScheduledInstallments);
+        }
+
+    }
+
     private void updatePostDatedChecks(Set<PostDatedChecks> postDatedChecks) {
         this.postDatedChecksRepository.saveAll(postDatedChecks);
     }
@@ -1646,9 +1658,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         /**
          * we want to apply charge transactions only for those loans charges that are applied when a loan is active and
-         * the loan product uses Upfront Accruals
+         * the loan product uses Upfront Accruals Bug fixed under https://fiterio.atlassian.net/browse/OXY-219
          **/
-        if (loan.status().isActive() && loan.isNoneOrCashOrUpfrontAccrualAccountingEnabledOnLoanProduct()) {
+        if (loan.status().isActive() && loan.isUpfrontAccrualAccountingEnabledOnLoanProduct()) {
             final LoanTransaction applyLoanChargeTransaction = loan.handleChargeAppliedTransaction(loanCharge, null);
             this.loanTransactionRepository.saveAndFlush(applyLoanChargeTransaction);
         }
@@ -3271,6 +3283,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .withCommandId(command.commandId()).with(changes) //
                 .build();
 
+    }
+
+    @Override
+    public CommandProcessingResult runCloneJobForLoanPenalty(Long loanId) {
+        Loan loan = this.loanAssembler.assembleFrom(loanId);
+        addOverdueChargeToLoanAccountInArrears(loan.getId());
+        return new CommandProcessingResultBuilder().withEntityId(loan.getId()) //
+                .withLoanId(loanId).build();
     }
 
     @Override

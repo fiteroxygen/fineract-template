@@ -1,0 +1,32 @@
+{
+  "penaltyFlatChargeWithNoFrequencyPayLoad": {
+    "chargeAppliesTo": 1,
+    "name": "#(faker.lorem().characters(50))",
+    "currencyCode": "USD",
+    "chargeTimeType": 9,
+    "chargeCalculationType": 1,
+    "chargePaymentMode": 0,
+    "amount": "#(chargeAmount)",
+    "active": true,
+    "penalty": true,
+    "enableFreeWithdrawalCharge": false,
+    "enablePaymentType": false,
+    "locale": "en"
+  },
+  "disburseToSavingsLoanAccountChargeOnPercentageApprovedAmountPayLoad": {
+  "chargeAppliesTo": 1,
+  "currencyCode": "USD",
+  "chargeTimeType": 17,
+  "chargeCalculationType": 2,
+  "chargePaymentMode": 0,
+  "amount": "#(chargeAmount)",
+  "active": true,
+  "name": "#(faker.lorem().characters(50))",
+  "enableFreeWithdrawalCharge": false,
+  "enablePaymentType": false,
+  "locale": "en",
+  "monthDayFormat": "dd MMM"
+  },
+  "waiveLoanAccountCharges":
+  {"locale":"en","dateFormat":"dd MMMM yyyy"}
+}
