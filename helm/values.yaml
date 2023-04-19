@@ -41,7 +41,8 @@ fineract-rest:
 
     spring.profiles.active: activeMqEnabled
     FINERACT_MODE_READ_ENABLED: false
-    FINERACT_MODE_BATCH_ENABLED: false 
+    FINERACT_MODE_BATCH_ENABLED: false
+    PENTAHO_FOLDER_NAME: pentahoReportsPostgres
 
 
   awsSecrets:
