@@ -823,4 +823,28 @@ Feature: Test loan account apis
     * def loanResponse_3 = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
     * assert karate.sizeOf(loanResponse_3.loanAccount.transactions) == 5
     * assert loanResponse_3.loanAccount.summary.totalOutstanding == (totalOutstanding_3 - repaymentSchedule_3)
+  @OXY-163-test
+  Scenario: OXY-163 Loan Schedule with interest recalculation enabled is only 3 periods long regardless of the number of repayments set
+        # Create Loan Product
+    * def loanProduct = call read('classpath:features/portfolio/products/LoanProductSteps.feature@OXY163loanScheduleWithInterestRecalculationEnabledIsOnly3PeriodsLongRegardlessOfTheNumberOfRepaymentsSetSteps')
+    * def loanProductId = loanProduct.loanProductId
+
+    #Loan and client creation date
+    * def submittedOnDate = df.format(faker.date().past(425, 421, TimeUnit.DAYS))
+
+    * def result = call read('classpath:features/portfolio/clients/clientsteps.feature@create') { clientCreationDate : '#(submittedOnDate)' }
+    * def clientId = result.response.resourceId
+
+
+    * def loanAmount = 8500
+    * def loan = call read('classpath:features/portfolio/loans/loansteps.feature@OXY163loanScheduleWithInterestRecalculationEnabledIsOnly3PeriodsLongRegardlessOfTheNumberOfRepaymentsSetSteps') { submittedOnDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanProductId : '#(loanProductId)', clientId : '#(clientId)'}
+    * def loanId = loan.loanId
+
+      #approval
+    * call read('classpath:features/portfolio/loans/loansteps.feature@approveloan') { approvalDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanId : '#(loanId)' }
+
+      #disbursal
+    * def disburseloan = call read('classpath:features/portfolio/loans/loansteps.feature@disburse') { loanAmount : '#(loanAmount)', disbursementDate : '#(submittedOnDate)', loanId : '#(loanId)'}
+
+
 

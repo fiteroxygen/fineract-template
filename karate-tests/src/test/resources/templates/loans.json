@@ -182,5 +182,31 @@
     "transactionDate": "#(transactionDate)",
     "locale": "en",
     "dateFormat": "#(format)"
+  },
+  "OXY163loanaccountPayLoad": {
+    "clientId": "#(clientId)",
+    "interestRatePerPeriod": 15,
+    "productId": "#(loanProductId)",
+    "disbursementData": [],
+    "principal": "#(loanAmount)",
+    "loanTermFrequency": 12,
+    "loanTermFrequencyType": 2,
+    "numberOfRepayments": 12,
+    "repaymentEvery": 1,
+    "repaymentFrequencyType": 2,
+    "amortizationType": 1,
+    "isEqualAmortization": false,
+    "interestType": 0,
+    "interestCalculationPeriodType": 0,
+    "allowPartialPeriodInterestCalcualtion": false,
+    "transactionProcessingStrategyId": 1,
+    "rates": [],
+    "isBnplLoan": false,
+    "requiresEquityContribution": false,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "loanType": "individual",
+    "expectedDisbursementDate": "#(submittedOnDate)",
+    "submittedOnDate": "#(submittedOnDate)"
   }
 }
