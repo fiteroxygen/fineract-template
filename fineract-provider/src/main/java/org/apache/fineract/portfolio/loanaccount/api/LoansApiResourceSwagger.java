@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import org.apache.fineract.infrastructure.core.filters.FilterElement;
 
 /**
  * Created by Chirag Gupta on 12/09/17.
@@ -921,5 +922,20 @@ final class LoansApiResourceSwagger {
         public Integer resourceId;
         @Schema(description = "PostLoansLoanIdChanges")
         public PostLoansLoanIdChanges changes;
+    }
+
+    @Schema(description = "FilterConstraintRequest")
+    public static final class FilterConstraintRequest {
+
+        @Schema(example = "userId")
+        public String filterSelection;
+        @Schema(example = "BETWEEN")
+        public FilterElement filterElement;
+        @Schema(example = "1")
+        public String value;
+        @Schema(example = "10")
+        public String secondValue;
+
+        private FilterConstraintRequest() {}
     }
 }

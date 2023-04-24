@@ -20,12 +20,14 @@ package org.apache.fineract.infrastructure.core.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,6 +35,8 @@ import java.util.TimeZone;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.filters.FilterElement;
+import org.apache.fineract.organisation.teller.util.DateRange;
 
 public final class DateUtils {
 
@@ -127,5 +131,41 @@ public final class DateUtils {
 
     public static boolean isSameLocalDate(LocalDate firstDate, LocalDate secondDate) {
         return org.apache.commons.lang3.time.DateUtils.isSameDay(asDate(firstDate), asDate(secondDate));
+    }
+
+    public static DateRange getDateRange(LocalDate today, FilterElement filterElement, String days) {
+        switch (filterElement) {
+            case ON:
+            case TODAY:
+                return DateRange.of(today, today);
+            case THIS_WEEK:
+                LocalDate startOfWeek = today
+                        .with(TemporalAdjusters.previousOrSame(LocalDateTime.now(ZoneId.systemDefault()).getDayOfWeek()))
+                        .with(LocalTime.MIN);
+                LocalDate endOfWeek = startOfWeek.plusDays(6).with(LocalTime.MAX);
+                return DateRange.of(startOfWeek, endOfWeek);
+            case LAST_DAYS:
+                LocalDate endOfDays = today;
+                LocalDate startOfDay = endOfDays.minusDays(Integer.parseInt(days));
+                return DateRange.of(startOfDay, endOfDays);
+            case THIS_MONTH:
+                LocalDate startOfMonth = today.withDayOfMonth(1).with(LocalTime.MIN);
+                LocalDate endOfMonth = startOfMonth.plusMonths(1).minusDays(1).with(LocalTime.MAX);
+                return DateRange.of(startOfMonth, endOfMonth);
+            case THIS_YEAR:
+                LocalDate startOfYear = today.withDayOfYear(1).with(LocalTime.MIN);
+                LocalDate endOfYear = startOfYear.plusYears(1).minusDays(1).with(LocalTime.MAX);
+                return DateRange.of(startOfYear, endOfYear);
+            default:
+                return null;
+        }
+    }
+
+    public static LocalDate convertToLocalDate(Date date) {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    public static LocalDateTime convertToLocalDateTime(Date date) {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 }

@@ -1,0 +1,7 @@
+{
+  "savingsTodaySearchPayload": [{"filterSelection":"TRANSACTION_DATE","filterElement":"TODAY"}],
+  "savingsPreviousSearchPayload": [{"filterSelection":"TRANSACTION_AMOUNT","filterElement":"MORE_THAN","value":"500"}],
+  "loanTodaySearchPayload": [{"filterSelection":"TRANSACTION_DATE","filterElement":"TODAY"}],
+  "loanPreviousSearchPayload": [{"filterSelection":"TRANSACTION_AMOUNT","filterElement":"EQUALS","value":"10000"}]
+
+}

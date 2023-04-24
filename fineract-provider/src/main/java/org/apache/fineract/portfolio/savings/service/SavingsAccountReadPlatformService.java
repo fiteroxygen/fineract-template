@@ -82,4 +82,6 @@ public interface SavingsAccountReadPlatformService {
 
     RecurringMissedTargetData findRecurringDepositAccountWithMissedTarget(Long savingsAccountId);
 
+    Collection<SavingsAccountTransactionData> retrieveSavingsTransactions(final String filterConstraintJson, final Integer limit,
+            final Integer offset);
 }

@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.savings.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -99,6 +100,8 @@ public class SavingsAccountsApiResource {
     private final CodeValueReadPlatformService codeValueReadPlatformService;
     private final SavingsAccountFloatingInterestRateReadPlatformService savingsAccountFloatingInterestRateReadPlatformService;
 
+    private final DefaultToApiJsonSerializer<SavingsAccountTransactionData> savingsTransactionApiJsonSerializer;
+
     @Autowired
     public SavingsAccountsApiResource(final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
             final PlatformSecurityContext context, final DefaultToApiJsonSerializer<SavingsAccountData> toApiJsonSerializer,
@@ -108,7 +111,8 @@ public class SavingsAccountsApiResource {
             final BulkImportWorkbookService bulkImportWorkbookService,
             final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
             final CodeValueReadPlatformService codeValueReadPlatformService,
-            final SavingsAccountFloatingInterestRateReadPlatformService savingsAccountFloatingInterestRateReadPlatformService) {
+            final SavingsAccountFloatingInterestRateReadPlatformService savingsAccountFloatingInterestRateReadPlatformService,
+            DefaultToApiJsonSerializer<SavingsAccountTransactionData> savingsTransactionApiJsonSerializer) {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
@@ -119,6 +123,7 @@ public class SavingsAccountsApiResource {
         this.bulkImportWorkbookPopulatorService = bulkImportWorkbookPopulatorService;
         this.codeValueReadPlatformService = codeValueReadPlatformService;
         this.savingsAccountFloatingInterestRateReadPlatformService = savingsAccountFloatingInterestRateReadPlatformService;
+        this.savingsTransactionApiJsonSerializer = savingsTransactionApiJsonSerializer;
     }
 
     @GET
@@ -628,6 +633,37 @@ public class SavingsAccountsApiResource {
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
         return this.toApiJsonSerializer.serialize(result);
+    }
+
+    @POST
+    @Path("transactions/search")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = SavingsAccountsApiResourceSwagger.FilterConstraintRequest.class)))
+    @Operation(summary = "Search Savings Account transactions", description = "Retrieves a list of savings transactions based on the provided filter constraints. \n"
+            + "filterElement: Mandatory field with the following values: EQUALS, EQUALS_CASE_SENSITIVE, DIFFERENT_THAN, "
+            + "MORE_THAN, LESS_THAN, BETWEEN, ON, AFTER, AFTER_INCLUSIVE, BEFORE, BEFORE_INCLUSIVE, STARTS_WITH, "
+            + "STARTS_WITH_CASE_SENSITIVE, IN, TODAY, THIS_WEEK, THIS_MONTH, THIS_YEAR, LAST_DAYS\n\n "
+            + "filterSelection: Can have one of the following fields: USER_ID,PRODUCT_ID,ACCOUNT_OWNER_ID,TRANSACTION_TYPE,CURRENCY_CODE\n"
+            + "WAS_REVERSED,TRANSACTION_ID,AVAILABLE_BALANCE,INTEREST_PAID,FEES_PAID,\n"
+            + "AMOUNT,TRANSACTION_DATE,OFFICE_ID,PRINCIPAL_BALANCE,PENALTY_PAID\n\n"
+            + "Example Payload: [{\"filterSelection\":\"TRANSACTION_AMOUNT\",\"filterElement\":\"EQUALS\",\"value\":\"10000\"},\n"
+            + "{\"filterSelection\":\"TRANSACTION_AMOUNT\",\"filterElement\":\"MORE_THAN\",\"value\":\"500\"},\n"
+            + "{\"filterSelection\":\"TRANSACTION_DATE\",\"filterElement\":\"TODAY\"}\n" + "]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = SavingsAccountTransactionData.class)))) })
+    public String searchSavingsTransactions(@Context final UriInfo uriInfo, @Parameter(hidden = true) final String filterConstraintJson,
+            @QueryParam("limit") @DefaultValue("15") Integer limit, @QueryParam("offset") @DefaultValue("0") Integer offset) {
+
+        this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME);
+
+        final Collection<SavingsAccountTransactionData> currentTransactions = this.savingsAccountReadPlatformService
+                .retrieveSavingsTransactions(filterConstraintJson, limit, offset);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+        return this.savingsTransactionApiJsonSerializer.serialize(settings, currentTransactions,
+                SavingsApiSetConstants.SAVINGS_ACCOUNT_RESPONSE_DATA_PARAMETERS);
     }
 
 }
