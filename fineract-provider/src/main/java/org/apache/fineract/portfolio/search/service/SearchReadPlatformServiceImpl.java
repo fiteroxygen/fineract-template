@@ -27,6 +27,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -233,6 +234,12 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                     params.add(filterConstraint.getValue());
                 break;
 
+                case DIFFERENT_THAN:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" <> ? ");
+                    params.add(filterConstraint.getValue());
+                break;
+
                 case MORE_THAN:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" > ? ");
@@ -245,11 +252,42 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                     params.add(filterConstraint.getValue());
                 break;
 
+                case AFTER:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") > DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case AFTER_INCLUSIVE:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") >= DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case BEFORE:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") < DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case BEFORE_INCLUSIVE:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") <= DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
                 case BETWEEN:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" BETWEEN ? AND ? ");
                     params.add(filterConstraint.getValue());
                     params.add(filterConstraint.getSecondValue());
+                break;
+
+                case IN:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" IN (").append(String.join(",", Collections.nCopies(filterConstraint.getValues().size(), "?")))
+                            .append(") ");
+                    params.addAll(filterConstraint.getValues());
                 break;
 
                 case STARTS_WITH:
@@ -263,8 +301,9 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 case THIS_WEEK:
                 case THIS_MONTH:
                 case THIS_YEAR:
-                    DateRange dateRange = DateUtils.getDateRange(LocalDate.now(ZoneId.systemDefault()),
-                            filterConstraint.getFilterElement());
+                case LAST_DAYS:
+                    DateRange dateRange = DateUtils.getDateRange(LocalDate.now(ZoneId.systemDefault()), filterConstraint.getFilterElement(),
+                            filterConstraint.getValue());
                     if (dateRange != null) {
                         queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                                 .append(" BETWEEN ? AND ? ");

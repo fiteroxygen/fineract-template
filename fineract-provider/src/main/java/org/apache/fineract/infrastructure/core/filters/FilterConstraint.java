@@ -18,12 +18,16 @@
  */
 package org.apache.fineract.infrastructure.core.filters;
 
+import java.util.List;
+
 public class FilterConstraint {
 
     private String filterSelection;
     private FilterElement filterElement;
     private String value;
     private String secondValue;
+
+    private List<String> values;
 
     public FilterConstraint() {}
 
@@ -57,5 +61,13 @@ public class FilterConstraint {
 
     public void setSecondValue(String secondValue) {
         this.secondValue = secondValue;
+    }
+
+    public List<String> getValues() {
+        return values;
+    }
+
+    public void setValues(List<String> values) {
+        this.values = values;
     }
 }

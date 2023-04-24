@@ -133,23 +133,27 @@ public final class DateUtils {
         return org.apache.commons.lang3.time.DateUtils.isSameDay(asDate(firstDate), asDate(secondDate));
     }
 
-    public static DateRange getDateRange(LocalDate date, FilterElement filterElement) {
+    public static DateRange getDateRange(LocalDate today, FilterElement filterElement, String days) {
         switch (filterElement) {
             case ON:
             case TODAY:
-                return DateRange.of(date, date);
+                return DateRange.of(today, today);
             case THIS_WEEK:
-                LocalDate startOfWeek = date
+                LocalDate startOfWeek = today
                         .with(TemporalAdjusters.previousOrSame(LocalDateTime.now(ZoneId.systemDefault()).getDayOfWeek()))
                         .with(LocalTime.MIN);
                 LocalDate endOfWeek = startOfWeek.plusDays(6).with(LocalTime.MAX);
                 return DateRange.of(startOfWeek, endOfWeek);
+            case LAST_DAYS:
+                LocalDate endOfDays = today;
+                LocalDate startOfDay = endOfDays.minusDays(Integer.parseInt(days));
+                return DateRange.of(startOfDay, endOfDays);
             case THIS_MONTH:
-                LocalDate startOfMonth = date.withDayOfMonth(1).with(LocalTime.MIN);
+                LocalDate startOfMonth = today.withDayOfMonth(1).with(LocalTime.MIN);
                 LocalDate endOfMonth = startOfMonth.plusMonths(1).minusDays(1).with(LocalTime.MAX);
                 return DateRange.of(startOfMonth, endOfMonth);
             case THIS_YEAR:
-                LocalDate startOfYear = date.withDayOfYear(1).with(LocalTime.MIN);
+                LocalDate startOfYear = today.withDayOfYear(1).with(LocalTime.MIN);
                 LocalDate endOfYear = startOfYear.plusYears(1).minusDays(1).with(LocalTime.MAX);
                 return DateRange.of(startOfYear, endOfYear);
             default:

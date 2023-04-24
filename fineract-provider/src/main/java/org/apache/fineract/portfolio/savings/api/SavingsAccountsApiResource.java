@@ -640,7 +640,16 @@ public class SavingsAccountsApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = SavingsAccountsApiResourceSwagger.FilterConstraintRequest.class)))
-    @Operation(summary = "Search Savings Account transactions", description = "Retrieves a list of savings transactions based on the provided filter constraints.")
+    @Operation(summary = "Search Savings Account transactions", description = "Retrieves a list of savings transactions based on the provided filter constraints. \n"
+            + "filterElement: Mandatory field with the following values: EQUALS, EQUALS_CASE_SENSITIVE, DIFFERENT_THAN, "
+            + "MORE_THAN, LESS_THAN, BETWEEN, ON, AFTER, AFTER_INCLUSIVE, BEFORE, BEFORE_INCLUSIVE, STARTS_WITH, "
+            + "STARTS_WITH_CASE_SENSITIVE, IN, TODAY, THIS_WEEK, THIS_MONTH, THIS_YEAR, LAST_DAYS\n\n "
+            + "filterSelection: Can have one of the following fields: USER_ID,PRODUCT_ID,ACCOUNT_OWNER_ID,TRANSACTION_TYPE,CURRENCY_CODE\n"
+            + "WAS_REVERSED,TRANSACTION_ID,AVAILABLE_BALANCE,INTEREST_PAID,FEES_PAID,\n"
+            + "AMOUNT,TRANSACTION_DATE,OFFICE_ID,PRINCIPAL_BALANCE,PENALTY_PAID\n\n"
+            + "Example Payload: [{\"filterSelection\":\"TRANSACTION_AMOUNT\",\"filterElement\":\"EQUALS\",\"value\":\"10000\"},\n"
+            + "{\"filterSelection\":\"TRANSACTION_AMOUNT\",\"filterElement\":\"MORE_THAN\",\"value\":\"500\"},\n"
+            + "{\"filterSelection\":\"TRANSACTION_DATE\",\"filterElement\":\"TODAY\"}\n" + "]")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = SavingsAccountTransactionData.class)))) })
     public String searchSavingsTransactions(@Context final UriInfo uriInfo, @Parameter(hidden = true) final String filterConstraintJson,
