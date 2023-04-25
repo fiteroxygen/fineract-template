@@ -28,7 +28,7 @@ public enum PeriodFrequencyType {
     MONTHS(2, "periodFrequencyType.months"), //
     YEARS(3, "periodFrequencyType.years"), //
     WHOLE_TERM(4, "periodFrequencyType.whole_term"), //
-    INVALID(5, "periodFrequencyType.invalid");
+    INVALID(5, "periodFrequencyType.invalid"), DAYS_28(6, "periodFrequencyType.days28");
 
     private final Integer value;
     private final String code;
@@ -64,6 +64,9 @@ public enum PeriodFrequencyType {
                 break;
                 case 4:
                     repaymentFrequencyType = PeriodFrequencyType.WHOLE_TERM;
+                break;
+                case 6:
+                    repaymentFrequencyType = PeriodFrequencyType.DAYS_28;
                 break;
             }
         }

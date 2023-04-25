@@ -508,7 +508,8 @@ public final class LoanProductDataValidator {
 
             final Integer interestRateFrequencyType = this.fromApiJsonHelper.extractIntegerNamed("interestRateFrequencyType", element,
                     Locale.getDefault());
-            baseDataValidator.reset().parameter("interestRateFrequencyType").value(interestRateFrequencyType).notNull().inMinMaxRange(0, 4);
+            baseDataValidator.reset().parameter("interestRateFrequencyType").value(interestRateFrequencyType).notNull()
+                    .isOneOfTheseValues(0, 1, 2, 3, 4, 6);
         }
 
         // Guarantee Funds
@@ -1414,7 +1415,8 @@ public final class LoanProductDataValidator {
                 interestRateFrequencyType = this.fromApiJsonHelper.extractIntegerNamed("interestRateFrequencyType", element,
                         Locale.getDefault());
             }
-            baseDataValidator.reset().parameter("interestRateFrequencyType").value(interestRateFrequencyType).notNull().inMinMaxRange(0, 4);
+            baseDataValidator.reset().parameter("interestRateFrequencyType").value(interestRateFrequencyType).notNull()
+                    .isOneOfTheseValues(0, 1, 2, 3, 4, 6);
         }
 
         // Guarantee Funds

@@ -687,6 +687,7 @@ public final class LoanApplicationTerms {
             break;
             case INVALID:
             break;
+            case DAYS_28:
             case WHOLE_TERM:
                 log.error("TODO Implement getPeriodEndDate for WHOLE_TERM");
             break;
@@ -1092,6 +1093,7 @@ public final class LoanApplicationTerms {
                         }
                         periodicInterestRate = oneDayOfYearInterestRate.multiply(numberOfDaysInPeriod, mc);
                     break;
+                    case DAYS_28:
                     case WHOLE_TERM:
                         log.error("TODO Implement periodicInterestRate for WHOLE_TERM");
                     break;
