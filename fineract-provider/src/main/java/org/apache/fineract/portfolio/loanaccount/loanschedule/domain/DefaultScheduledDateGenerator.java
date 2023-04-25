@@ -248,6 +248,7 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
             break;
             case INVALID:
             break;
+            case DAYS_28:
             case WHOLE_TERM:
                 LOG.error("TODO Implement getRepaymentPeriodDate for WHOLE_TERM");
             break;
@@ -290,6 +291,7 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
             break;
             case INVALID:
             break;
+            case DAYS_28:
             case WHOLE_TERM:
                 LOG.error("TODO Implement isDateFallsInSchedule for WHOLE_TERM");
             break;
@@ -327,6 +329,7 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
             break;
             case INVALID:
             break;
+            case DAYS_28:
             case WHOLE_TERM:
                 LOG.error("TODO Implement repaymentPeriodFrequencyType for WHOLE_TERM");
             break;

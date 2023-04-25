@@ -24,6 +24,7 @@ import com.google.gson.JsonElement;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -266,6 +267,8 @@ public class LoansApiResource {
     private final InterestRateChartReadPlatformService chartReadPlatformService;
     private final ClientReadPlatformService clientReadPlatformService;
 
+    private final DefaultToApiJsonSerializer<LoanTransactionData> loanTransactionApiJsonSerializer;
+
     public LoansApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
             final LoanProductReadPlatformService loanProductReadPlatformService,
             final LoanDropdownReadPlatformService dropdownReadPlatformService, final FundReadPlatformService fundReadPlatformService,
@@ -290,7 +293,8 @@ public class LoansApiResource {
             final DefaultToApiJsonSerializer<GlimRepaymentTemplate> glimTemplateToApiJsonSerializer,
             final GLIMAccountInfoReadPlatformService glimAccountInfoReadPlatformService,
             final LoanCollateralManagementReadPlatformService loanCollateralManagementReadPlatformService,
-            final ClientReadPlatformService clientReadPlatformService, InterestRateChartReadPlatformService chartReadPlatformService) {
+            final ClientReadPlatformService clientReadPlatformService, InterestRateChartReadPlatformService chartReadPlatformService,
+            DefaultToApiJsonSerializer<LoanTransactionData> loanTransactionApiJsonSerializer) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -324,6 +328,7 @@ public class LoansApiResource {
         this.loanCollateralManagementReadPlatformService = loanCollateralManagementReadPlatformService;
         this.chartReadPlatformService = chartReadPlatformService;
         this.clientReadPlatformService = clientReadPlatformService;
+        this.loanTransactionApiJsonSerializer = loanTransactionApiJsonSerializer;
     }
 
     /*
@@ -1098,5 +1103,36 @@ public class LoansApiResource {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.LOAN_TRANSACTIONS.toString(),
                 uploadedInputStream, fileDetail, locale, dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+
+    @POST
+    @Path("transactions/search")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoansApiResourceSwagger.FilterConstraintRequest.class)))
+    @Operation(summary = "Search Loan Account transactions", description = "Retrieves a list of loan transactions based "
+            + "on the provided filter constraints.\n"
+            + "filterElement: Mandatory field with the following values: EQUALS, EQUALS_CASE_SENSITIVE, DIFFERENT_THAN, "
+            + "MORE_THAN, LESS_THAN, BETWEEN, ON, AFTER, AFTER_INCLUSIVE, BEFORE, BEFORE_INCLUSIVE, STARTS_WITH, "
+            + "STARTS_WITH_CASE_SENSITIVE, IN, TODAY, THIS_WEEK, THIS_MONTH, THIS_YEAR, LAST_DAYS\n\n "
+            + "filterSelection: Can have one of the following fields: USER_ID,PRODUCT_ID,ACCOUNT_OWNER_ID,TRANSACTION_TYPE,CURRENCY_CODE\n"
+            + "WAS_REVERSED,TRANSACTION_ID,AVAILABLE_BALANCE,INTEREST_PAID,FEES_PAID,\n"
+            + "AMOUNT,TRANSACTION_DATE,OFFICE_ID,PRINCIPAL_BALANCE,PENALTY_PAID\n\n"
+            + "Example Payload: [{\"filterSelection\":\"TRANSACTION_AMOUNT\",\"filterElement\":\"EQUALS\",\"value\":\"10000\"},\n"
+            + "{\"filterSelection\":\"TRANSACTION_AMOUNT\",\"filterElement\":\"MORE_THAN\",\"value\":\"500\"},\n"
+            + "{\"filterSelection\":\"TRANSACTION_DATE\",\"filterElement\":\"TODAY\"}\n" + "]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = LoanTransactionData.class)))) })
+    public String searchSavingsTransactions(@Context final UriInfo uriInfo, @Parameter(hidden = true) final String filterConstraintJson,
+            @QueryParam("limit") @DefaultValue("15") Integer limit, @QueryParam("offset") @DefaultValue("0") Integer offset) {
+
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
+
+        final Collection<LoanTransactionData> currentTransactions = this.loanReadPlatformService
+                .retrieveLoanTransactions(filterConstraintJson, limit, offset);
+
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+
+        return this.loanTransactionApiJsonSerializer.serialize(settings, currentTransactions, loanDataParameters);
     }
 }

@@ -54,6 +54,7 @@ public final class DepositAccountUtils {
             break;
             case INVALID:
             break;
+            case DAYS_28:
             case WHOLE_TERM:
                 LOG.error("TODO Implement calculateNextDepositDate for WHOLE_TERM");
             break;
