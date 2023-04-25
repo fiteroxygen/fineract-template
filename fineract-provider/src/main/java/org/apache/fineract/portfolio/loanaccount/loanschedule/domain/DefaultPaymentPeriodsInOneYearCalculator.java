@@ -49,6 +49,7 @@ public class DefaultPaymentPeriodsInOneYearCalculator implements PaymentPeriodsI
             case INVALID:
                 paymentPeriodsInOneYear = Integer.valueOf(0);
             break;
+            case DAYS_28:
             case WHOLE_TERM:
                 LOG.error("TODO Implement repaymentFrequencyType for WHOLE_TERM");
             break;
@@ -98,6 +99,7 @@ public class DefaultPaymentPeriodsInOneYearCalculator implements PaymentPeriodsI
             case INVALID:
                 fraction = Double.valueOf("0");
             break;
+            case DAYS_28:
             case WHOLE_TERM:
                 LOG.error("TODO Implement repaymentPeriodFrequencyType for WHOLE_TERM");
             break;
