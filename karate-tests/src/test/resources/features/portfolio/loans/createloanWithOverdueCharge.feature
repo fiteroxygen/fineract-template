@@ -836,7 +836,7 @@ Feature: Test loan account apis
     * def clientId = result.response.resourceId
 
 
-    * def loanAmount = 8500
+    * def loanAmount = 10000
     * def loan = call read('classpath:features/portfolio/loans/loansteps.feature@OXY163loanScheduleWithInterestRecalculationEnabledIsOnly3PeriodsLongRegardlessOfTheNumberOfRepaymentsSetSteps') { submittedOnDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanProductId : '#(loanProductId)', clientId : '#(clientId)'}
     * def loanId = loan.loanId
 
@@ -846,5 +846,24 @@ Feature: Test loan account apis
       #disbursal
     * def disburseloan = call read('classpath:features/portfolio/loans/loansteps.feature@disburse') { loanAmount : '#(loanAmount)', disbursementDate : '#(submittedOnDate)', loanId : '#(loanId)'}
 
+    #fetch loan details here
+    * def loanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+    * assert karate.sizeOf(loanResponse.loanAccount.transactions) == 1
+      #Loan Repayment Date
+    * def repaymentDate = df.format(faker.date().past(385, 381, TimeUnit.DAYS))
 
 
+    # Make Repayments for  each schedule period
+    * def totalOutstanding_1 = (loanResponse.loanAccount.repaymentSchedule.periods[2].interestDue + (loanResponse.loanAccount.repaymentSchedule.periods[2].interestDue/2))
+
+    Then print 'repaymentDate',repaymentDate
+    Then print 'totalOutstanding_1',totalOutstanding_1
+
+    * call read('classpath:features/portfolio/loans/loansteps.feature@loanRepaymentSteps') { repaymentAmount : '#(totalOutstanding_1)', repaymentDate : '#(repaymentDate)'}
+    * call read('classpath:features/portfolio/loans/loansteps.feature@loanRepaymentSteps') { repaymentAmount : '#(totalOutstanding_1)', repaymentDate : '#(repaymentDate)'}
+    * call read('classpath:features/portfolio/loans/loansteps.feature@loanRepaymentSteps') { repaymentAmount : '#(totalOutstanding_1)', repaymentDate : '#(repaymentDate)'}
+        #fetch loan details here
+    * def loanResponseAfterRepayment = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+
+    * assert karate.sizeOf(loanResponseAfterRepayment.loanAccount.repaymentSchedule.periods) == 13
+    * assert karate.sizeOf(loanResponseAfterRepayment.loanAccount.transactions) == 4

@@ -1843,7 +1843,7 @@ public final class LoanApplicationTerms {
     }
 
     public boolean isAdvancePaymentInterestForExactDaysInPeriodEnabled() {
-        return this.advancePaymentInterestForExactDaysInPeriod;
+        return this.advancePaymentInterestForExactDaysInPeriod && numberOfRepayments == 1;
     }
 
     public boolean isFixedDueAmountChange() {
