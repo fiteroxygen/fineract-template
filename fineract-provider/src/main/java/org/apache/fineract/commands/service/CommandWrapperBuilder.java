@@ -3640,4 +3640,12 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?command=nextWithdrawalDate";
         return this;
     }
+
+    public CommandWrapperBuilder undoLoanReschedule(String entityName, Long loanId) {
+        this.actionName = "UNDO";
+        this.entityName = entityName;
+        this.entityId = loanId;
+        this.href = "/rescheduleloans/" + loanId;
+        return this;
+    }
 }

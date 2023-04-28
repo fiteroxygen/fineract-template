@@ -372,3 +372,21 @@ Feature: Create loan stapes
     Then status 200
     Then match $ contains { loanId: '#notnull' }
     Then def loanId = response.loanId
+
+
+  @ignore
+  @loanRescheduleSteps
+  Scenario: Loan reschedule Steps
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'rescheduleloans'
+    And params {command:'reschedule'}
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.loanReschedulePayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { loanId: '#notnull' }
+    Then def loanId = response.loanId
