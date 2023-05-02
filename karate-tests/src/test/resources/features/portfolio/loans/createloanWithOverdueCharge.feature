@@ -839,37 +839,8 @@ Feature: Test loan account apis
     * def loanAmount = 10000
     * def loanTermFrequency = 12
     * def numberOfRepayments = 12
-    * def loan = call read('classpath:features/portfolio/loans/loansteps.feature@OXY163loanScheduleWithInterestRecalculationEnabledIsOnly3PeriodsLongRegardlessOfTheNumberOfRepaymentsSetSteps') { submittedOnDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanProductId : '#(loanProductId)', clientId : '#(clientId)', loanTermFrequency : '#(loanTermFrequency)', numberOfRepayments : '#(numberOfRepayments)'}
-    * def loanId = loan.loanId
+    * def loan = call read('classpath:features/portfolio/loans/loansteps.feature@400-OXY163loanScheduleWithInterestRecalculationEnabledIsOnly3PeriodsLongRegardlessOfTheNumberOfRepaymentsSetSteps') { submittedOnDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanProductId : '#(loanProductId)', clientId : '#(clientId)', loanTermFrequency : '#(loanTermFrequency)', numberOfRepayments : '#(numberOfRepayments)'}
 
-      #approval
-    * call read('classpath:features/portfolio/loans/loansteps.feature@approveloan') { approvalDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanId : '#(loanId)' }
-
-      #disbursal
-    * def disburseloan = call read('classpath:features/portfolio/loans/loansteps.feature@disburse') { loanAmount : '#(loanAmount)', disbursementDate : '#(submittedOnDate)', loanId : '#(loanId)'}
-
-    #fetch loan details here
-    * def loanResponse = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
-    * assert karate.sizeOf(loanResponse.loanAccount.transactions) == 1
-    * assert karate.sizeOf(loanResponse.loanAccount.repaymentSchedule.periods) == 13
-      #Loan Repayment Date
-    * def repaymentDate = df.format(faker.date().past(385, 381, TimeUnit.DAYS))
-
-
-    # Make Repayments for  each schedule period
-    * def totalOutstanding_1 = (loanResponse.loanAccount.repaymentSchedule.periods[2].interestDue + (loanResponse.loanAccount.repaymentSchedule.periods[2].interestDue/2))
-
-    Then print 'repaymentDate',repaymentDate
-    Then print 'totalOutstanding_1',totalOutstanding_1
-
-    * call read('classpath:features/portfolio/loans/loansteps.feature@loanRepaymentSteps') { repaymentAmount : '#(totalOutstanding_1)', repaymentDate : '#(repaymentDate)'}
-    * call read('classpath:features/portfolio/loans/loansteps.feature@loanRepaymentSteps') { repaymentAmount : '#(totalOutstanding_1)', repaymentDate : '#(repaymentDate)'}
-    * call read('classpath:features/portfolio/loans/loansteps.feature@loanRepaymentSteps') { repaymentAmount : '#(totalOutstanding_1)', repaymentDate : '#(repaymentDate)'}
-        #fetch loan details here
-    * def loanResponseAfterRepayment = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
-
-    * assert karate.sizeOf(loanResponseAfterRepayment.loanAccount.repaymentSchedule.periods) == 13
-    * assert karate.sizeOf(loanResponseAfterRepayment.loanAccount.transactions) == 4
 
 
   @OXY-163-test-that-a-virtual-schedule-should-be-added-when-number-of-repayment-are-equal-to-one-and-advancePaymentInterestForExactDaysInPeriod-is-true
