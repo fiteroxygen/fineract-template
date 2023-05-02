@@ -37,7 +37,7 @@ class KarateTestApplicationTest implements BaseKarate {
         System.setProperty("tenantId", tenantId.orElse("default"));
 
         Karate karate = new Karate().path(
-                "classpath:features/portfolio/loans/createloanWithOverdueCharge.feature@OXY-163-test-that-a-virtual-schedule-should-be-added-when-number-of-repayment-are-equal-to-one-and-advancePaymentInterestForExactDaysInPeriod-is-true");
+                "classpath:features/");
         karate.outputHtmlReport(true);
         return karate;
     }
