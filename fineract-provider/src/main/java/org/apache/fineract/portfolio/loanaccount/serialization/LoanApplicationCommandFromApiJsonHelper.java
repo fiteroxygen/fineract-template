@@ -726,6 +726,13 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                     element);
             baseDataValidator.reset().parameter(numberOfRepaymentsParameterName).value(numberOfRepayments).notNull()
                     .integerGreaterThanZero();
+
+            if (numberOfRepayments > 1 && (loanProduct.getProductInterestRecalculationDetails() != null
+                    && loanProduct.getProductInterestRecalculationDetails().isAdvancePaymentInterestForExactDaysInPeriod())) {
+                baseDataValidator.reset().parameter("numberOfRepayments").failWithCode(
+                        "not.supported.numberOfRepayments.greater.than.one.when.advancePaymentInterestForExactDaysInPeriod.is.set.to.true",
+                        "Number of repayment should be equal to one when advancePaymentInterestForExactDaysInPeriod is set to True");
+            }
         }
 
         final String repaymentEveryParameterName = "repaymentEvery";

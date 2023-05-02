@@ -403,3 +403,18 @@ Feature: Create loan stapes
     When method POST
     Then status 400
     Then match $ contains { developerMessage: '#notnull' }
+
+  @ignore
+  @Update-400-OXY163loanScheduleWithInterestRecalculationEnabledIsOnly3PeriodsLongRegardlessOfTheNumberOfRepaymentsSetSteps
+  Scenario: Update OXY-163 Loan Schedule with interest recalculation enabled is only 3 periods long regardless of the number of repayments set.
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'loans',loanId
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request loansData.OXY163loanaccountPayLoad
+    When method PUT
+    Then status 400
+    Then match $ contains { developerMessage: '#notnull' }
