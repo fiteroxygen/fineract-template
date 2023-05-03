@@ -779,12 +779,11 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             length = mapColumnNameDefinition.get(name).getColumnLength().intValue();
         }
 
-        if(databaseTypeResolver.isPostgreSQL()){
-            sqlBuilder = sqlBuilder
-                    .append(", RENAME COLUMN " + sqlGenerator.escape(name) + " TO " + sqlGenerator.escape(newName))
-                    .append("; ALTER TABLE "+ sqlGenerator.escape(datatableName) + " ALTER COLUMN " + sqlGenerator.escape(newName) + " TYPE " + type);
-        }
-        else {
+        if (databaseTypeResolver.isPostgreSQL()) {
+            sqlBuilder = sqlBuilder.append(", RENAME COLUMN " + sqlGenerator.escape(name) + " TO " + sqlGenerator.escape(newName))
+                    .append("; ALTER TABLE " + sqlGenerator.escape(datatableName) + " ALTER COLUMN " + sqlGenerator.escape(newName)
+                            + " TYPE " + type);
+        } else {
             sqlBuilder = sqlBuilder.append(", CHANGE " + sqlGenerator.escape(name) + " " + sqlGenerator.escape(newName) + " " + type);
         }
         if (length != null && length > 0) {
@@ -795,15 +794,17 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             }
         }
 
-        if(databaseTypeResolver.isPostgreSQL()){
+        if (databaseTypeResolver.isPostgreSQL()) {
             if (mandatory) {
-                sqlBuilder = sqlBuilder.append("; ALTER TABLE "+ sqlGenerator.escape(datatableName) + " ALTER COLUMN " + sqlGenerator.escape(newName) + " SET NOT NULL ");
+                sqlBuilder = sqlBuilder.append("; ALTER TABLE " + sqlGenerator.escape(datatableName) + " ALTER COLUMN "
+                        + sqlGenerator.escape(newName) + " SET NOT NULL ");
             } else {
-                sqlBuilder = sqlBuilder.append("; ALTER TABLE "+ sqlGenerator.escape(datatableName) + " ALTER COLUMN " + sqlGenerator.escape(newName) + " DROP NOT NULL ");
+                sqlBuilder = sqlBuilder.append("; ALTER TABLE " + sqlGenerator.escape(datatableName) + " ALTER COLUMN "
+                        + sqlGenerator.escape(newName) + " DROP NOT NULL ");
             }
         }
 
-        else{
+        else {
             if (mandatory) {
                 sqlBuilder = sqlBuilder.append(" NOT NULL");
             } else {
