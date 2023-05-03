@@ -183,7 +183,7 @@
     "locale": "en",
     "dateFormat": "#(format)"
   },
-  
+
   "loanReschedulePayLoad": {
     "submittedOnDate": "#(submittedOnDate)",
     "rescheduleFromDate": "#(rescheduledFrom)",
@@ -194,7 +194,7 @@
 
   "undoLoanReschedulePayLoad": {
     "notes": "Test undo loan reschedule"
-  }
+  },
   "OXY163loanaccountPayLoad": {
     "clientId": "#(clientId)",
     "interestRatePerPeriod": 15,
