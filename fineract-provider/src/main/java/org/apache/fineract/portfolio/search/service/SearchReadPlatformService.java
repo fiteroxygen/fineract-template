@@ -19,6 +19,9 @@
 package org.apache.fineract.portfolio.search.service;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import org.apache.fineract.infrastructure.core.filters.FilterConstraint;
 import org.apache.fineract.portfolio.search.data.AdHocQuerySearchConditions;
 import org.apache.fineract.portfolio.search.data.AdHocSearchQueryData;
 import org.apache.fineract.portfolio.search.data.SearchConditions;
@@ -31,4 +34,7 @@ public interface SearchReadPlatformService {
     AdHocSearchQueryData retrieveAdHocQueryTemplate();
 
     Collection<AdHocSearchQueryData> retrieveAdHocQueryMatchingData(AdHocQuerySearchConditions searchConditions);
+
+    String buildSqlStringFromFilterConstraints(final FilterConstraint[] filterConstraints, final List<Object> params,
+            final Map<String, String> searchRequestMap);
 }

@@ -18,6 +18,8 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,6 +39,7 @@ import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
+import org.apache.fineract.infrastructure.core.filters.FilterConstraint;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.PaginationHelper;
@@ -87,6 +90,9 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargesPaidByD
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountSearchParameterNotProvidedException;
+import org.apache.fineract.portfolio.savings.request.FilterSelection;
+import org.apache.fineract.portfolio.search.service.SearchReadPlatformService;
 import org.apache.fineract.portfolio.tax.data.TaxComponentData;
 import org.apache.fineract.portfolio.tax.data.TaxDetailsData;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
@@ -132,6 +138,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
     private final SavingsAccountBlockNarrationHistoryMapper savingsAccountBlockNarrationHistoryMapper;
     private final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService;
 
+    private final SearchReadPlatformService searchReadPlatformService;
+
     @Autowired
     public SavingsAccountReadPlatformServiceImpl(final PlatformSecurityContext context, final JdbcTemplate jdbcTemplate,
             final ClientReadPlatformService clientReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
@@ -141,7 +149,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator,
             final SavingsAccountAssembler savingAccountAssembler, PaginationHelper paginationHelper,
             DatabaseSpecificSQLGenerator sqlGenerator, final CodeValueReadPlatformService codeValueReadPlatformService,
-            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService) {
+            final SavingsProductFloatingInterestRateReadPlatformService savingsProductFloatingInterestRateReadPlatformService,
+            SearchReadPlatformService searchReadPlatformService) {
         this.context = context;
         this.jdbcTemplate = jdbcTemplate;
         this.clientReadPlatformService = clientReadPlatformService;
@@ -150,6 +159,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         this.staffReadPlatformService = staffReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.sqlGenerator = sqlGenerator;
+        this.searchReadPlatformService = searchReadPlatformService;
         this.transactionTemplateMapper = new SavingsAccountTransactionTemplateMapper();
         this.transactionsMapper = new SavingsAccountTransactionsMapper();
         this.savingsAccountTransactionsForBatchMapper = new SavingsAccountTransactionsForBatchMapper();
@@ -300,6 +310,441 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             this.savingAccountAssembler.assembleSavings(savingsAccountData);
         }
         return savingsAccountDataList;
+    }
+
+    @Override
+    public SavingsAccountData retrieveTemplate(final Long clientId, final Long groupId, final Long productId,
+            final boolean staffInSelectedOfficeOnly) {
+
+        final AppUser loggedInUser = this.context.authenticatedUser();
+        Long officeId = loggedInUser.getOffice().getId();
+
+        ClientData client = null;
+        if (clientId != null) {
+            client = this.clientReadPlatformService.retrieveOne(clientId);
+            officeId = client.officeId();
+        }
+
+        GroupGeneralData group = null;
+        if (groupId != null) {
+            group = this.groupReadPlatformService.retrieveOne(groupId);
+            officeId = group.officeId();
+        }
+
+        final Collection<SavingsProductData> productOptions = this.savingsProductReadPlatformService.retrieveAllForLookup();
+        SavingsAccountData template = null;
+        if (productId != null) {
+
+            final SavingAccountTemplateMapper mapper = new SavingAccountTemplateMapper(client, group);
+
+            final String sql = "select " + mapper.schema() + " where sp.id = ?";
+            template = this.jdbcTemplate.queryForObject(sql, mapper, new Object[] { productId }); // NOSONAR
+            boolean useFloatingInterestRateFromProduct = template.getUseFloatingInterestRate();
+
+            final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions = this.dropdownReadPlatformService
+                    .retrieveCompoundingInterestPeriodTypeOptions();
+
+            final Collection<EnumOptionData> interestPostingPeriodTypeOptions = this.dropdownReadPlatformService
+                    .retrieveInterestPostingPeriodTypeOptions();
+
+            final Collection<EnumOptionData> interestCalculationTypeOptions = this.dropdownReadPlatformService
+                    .retrieveInterestCalculationTypeOptions();
+
+            final Collection<EnumOptionData> interestCalculationDaysInYearTypeOptions = this.dropdownReadPlatformService
+                    .retrieveInterestCalculationDaysInYearTypeOptions();
+
+            final Collection<EnumOptionData> lockinPeriodFrequencyTypeOptions = this.dropdownReadPlatformService
+                    .retrieveLockinPeriodFrequencyTypeOptions();
+
+            final Collection<EnumOptionData> withdrawalFeeTypeOptions = this.dropdownReadPlatformService.retrievewithdrawalFeeTypeOptions();
+            final Collection<EnumOptionData> withdrawalFrequencyOptions = this.dropdownReadPlatformService
+                    .retrieveWithdrawalFrequencyOptions();
+
+            final Collection<SavingsAccountTransactionData> transactions = null;
+            final Collection<ChargeData> productCharges = this.chargeReadPlatformService.retrieveSavingsProductCharges(productId);
+            // update charges from Product charges
+            final Collection<SavingsAccountChargeData> charges = fromChargesToSavingsCharges(productCharges);
+
+            // retrieve floating interest rates from saving product
+            final Collection<SavingsProductFloatingInterestRateData> productFloatingInterestRates = this.savingsProductFloatingInterestRateReadPlatformService
+                    .getSavingsProductFloatingInterestRateForSavingsProduct(productId);
+            final Collection<SavingsAccountFloatingInterestRateData> accountFloatingInterestRates = fromSavingsProductFloatingInterestRatesToSavingsAccountFloatingInterestRates(
+                    productFloatingInterestRates);
+
+            final boolean feeChargesOnly = false;
+            final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService
+                    .retrieveSavingsProductApplicableCharges(feeChargesOnly);
+
+            Collection<StaffData> fieldOfficerOptions = null;
+
+            if (officeId != null) {
+
+                if (staffInSelectedOfficeOnly) {
+                    // only bring back loan officers in selected branch/office
+                    final Collection<StaffData> fieldOfficersInBranch = this.staffReadPlatformService
+                            .retrieveAllLoanOfficersInOfficeById(officeId);
+
+                    if (!CollectionUtils.isEmpty(fieldOfficersInBranch)) {
+                        fieldOfficerOptions = new ArrayList<>(fieldOfficersInBranch);
+                    }
+                } else {
+                    // by default bring back all officers in selected
+                    // branch/office as well as officers in office above
+                    // this office
+                    final boolean restrictToLoanOfficersOnly = true;
+                    final Collection<StaffData> loanOfficersInHierarchy = this.staffReadPlatformService
+                            .retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeId, restrictToLoanOfficersOnly);
+
+                    if (!CollectionUtils.isEmpty(loanOfficersInHierarchy)) {
+                        fieldOfficerOptions = new ArrayList<>(loanOfficersInHierarchy);
+                    }
+                }
+            }
+            boolean postOverdraftInterestOnDeposit = template.isPostOverdraftInterestOnDeposit();
+            template = SavingsAccountData.withTemplateOptions(template, productOptions, fieldOfficerOptions,
+                    interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
+                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, transactions,
+                    charges, chargeOptions, null, null);
+            template.setFloatingInterestRates(accountFloatingInterestRates);
+            template.setUseFloatingInterestRate(useFloatingInterestRateFromProduct);
+            template.setWithdrawalFrequencyOptions(withdrawalFrequencyOptions);
+            template.setPostOverdraftInterestOnDeposit(postOverdraftInterestOnDeposit);
+        } else {
+
+            String clientName = null;
+            if (client != null) {
+                clientName = client.displayName();
+            }
+
+            String groupName = null;
+            if (group != null) {
+                groupName = group.getName();
+            }
+
+            template = SavingsAccountData.withClientTemplate(clientId, clientName, groupId, groupName);
+
+            final Collection<StaffData> fieldOfficerOptions = null;
+            final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions = null;
+            final Collection<EnumOptionData> interestPostingPeriodTypeOptions = null;
+            final Collection<EnumOptionData> interestCalculationTypeOptions = null;
+            final Collection<EnumOptionData> interestCalculationDaysInYearTypeOptions = null;
+            final Collection<EnumOptionData> lockinPeriodFrequencyTypeOptions = null;
+            final Collection<EnumOptionData> withdrawalFeeTypeOptions = null;
+
+            final Collection<SavingsAccountTransactionData> transactions = null;
+            final Collection<SavingsAccountChargeData> charges = null;
+
+            final boolean feeChargesOnly = false;
+            final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService
+                    .retrieveSavingsProductApplicableCharges(feeChargesOnly);
+
+            template = SavingsAccountData.withTemplateOptions(template, productOptions, fieldOfficerOptions,
+                    interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
+                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, transactions,
+                    charges, chargeOptions, null, null);
+        }
+
+        final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
+                .retrieveTemplates(StatusEnum.CREATE.getCode().longValue(), EntityTables.SAVING.getName(), productId);
+        template.setDatatables(datatableTemplates);
+
+        return template;
+    }
+
+    private Collection<SavingsAccountChargeData> fromChargesToSavingsCharges(final Collection<ChargeData> productCharges) {
+        final Collection<SavingsAccountChargeData> savingsCharges = new ArrayList<>();
+        for (final ChargeData chargeData : productCharges) {
+            final SavingsAccountChargeData savingsCharge = chargeData.toSavingsAccountChargeData();
+            savingsCharges.add(savingsCharge);
+        }
+        return savingsCharges;
+    }
+
+    private Collection<SavingsAccountFloatingInterestRateData> fromSavingsProductFloatingInterestRatesToSavingsAccountFloatingInterestRates(
+            final Collection<SavingsProductFloatingInterestRateData> productFloatingInterestRates) {
+        final Collection<SavingsAccountFloatingInterestRateData> savingsAccountFloatingInterestRates = new ArrayList<>();
+        for (final SavingsProductFloatingInterestRateData productData : productFloatingInterestRates) {
+            final SavingsAccountFloatingInterestRateData savingsAccountFloatingInterestRateData = productData
+                    .toSavingsAccountFloatingInterestRateData();
+            savingsAccountFloatingInterestRates.add(savingsAccountFloatingInterestRateData);
+        }
+        return savingsAccountFloatingInterestRates;
+    }
+
+    @Override
+    public SavingsAccountTransactionData retrieveDepositTransactionTemplate(final Long savingsId,
+            final DepositAccountType depositAccountType) {
+
+        try {
+            final String sql = "select " + this.transactionTemplateMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ?";
+
+            return this.jdbcTemplate.queryForObject(sql, this.transactionTemplateMapper, // NOSONAR
+                    new Object[] { savingsId, depositAccountType.getValue() });
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(savingsId, e);
+        }
+    }
+
+    @Override
+    public Collection<SavingsAccountTransactionData> retrieveAllTransactions(final Long savingsId, DepositAccountType depositAccountType,
+            Integer offset, Integer limit) {
+        if (offset == null) {
+            offset = 0;
+        }
+        if (limit == null) {
+            limit = 15;
+        }
+        final String sql = "select " + this.transactionsMapper.schema()
+                + " where sa.id = ? and sa.deposit_type_enum = ? AND transaction_type_enum not in (22,25)  order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC LIMIT ? OFFSET ?  ";
+
+        return this.jdbcTemplate.query(sql, this.transactionsMapper,
+                new Object[] { savingsId, depositAccountType.getValue(), limit, offset }); // NOSONAR
+    }
+
+    @Override
+    public Collection<SavingsAccountTransactionData> retrieveAccrualTransactions(final Long savingsId,
+            DepositAccountType depositAccountType, Integer offset, Integer limit) {
+        if (offset == null) {
+            offset = 0;
+        }
+        if (limit == null) {
+            limit = 15;
+        }
+
+        final String sql = "select " + this.transactionsMapper.schema()
+                + " where sa.id = ? and sa.deposit_type_enum = ? AND transaction_type_enum in (22,25)  order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC LIMIT ? OFFSET ?   ";
+
+        return this.jdbcTemplate.query(sql, this.transactionsMapper,
+                new Object[] { savingsId, depositAccountType.getValue(), limit, offset });
+    }
+
+    @Override
+    public SavingsAccountTransactionData retrieveSavingsTransaction(final Long savingsId, final Long transactionId,
+            DepositAccountType depositAccountType) {
+
+        final String sql = "select " + this.transactionsMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ? and tr.id= ?";
+
+        return this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, // NOSONAR
+                new Object[] { savingsId, depositAccountType.getValue(), transactionId });
+    }
+
+    @Override
+    public Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft) {
+
+        SavingAccountMapperForLookup accountMapperForLookup = new SavingAccountMapperForLookup();
+        final StringBuilder sqlBuilder = new StringBuilder("select " + accountMapperForLookup.schema());
+        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300");
+        Object[] queryParameters = null;
+        if (overdraft == null) {
+            queryParameters = new Object[] { clientId };
+        } else {
+            sqlBuilder.append(" and sa.allow_overdraft = ?");
+            queryParameters = new Object[] { clientId, overdraft };
+        }
+        return this.jdbcTemplate.query(sqlBuilder.toString(), accountMapperForLookup, queryParameters);
+
+    }
+
+    @Override
+    public List<Long> retrieveSavingsIdsPendingInactive(LocalDate tenantLocalDate) {
+        List<Long> ret = null;
+        StringBuilder sql = new StringBuilder("select sa.id ");
+        sql.append(" from m_savings_account as sa ");
+        sql.append(" inner join m_savings_product as sp on (sa.product_id = sp.id and sp.is_dormancy_tracking_active = true) ");
+        sql.append(" where sa.status_enum = 300 ");
+        sql.append(" and sa.sub_status_enum = 0 ");
+        String compareDate = "(select COALESCE(max(sat.transaction_date), sa.activatedon_date) "
+                + "from m_savings_account_transaction as sat where sat.is_reversed = false and sat.is_reversal = false"
+                + " and sat.transaction_type_enum in (1,2) and sat.savings_account_id = sa.id)";
+        sql.append(" and ").append(sqlGenerator.dateDiff("?", compareDate)).append(" >= sp.days_to_inactive ");
+
+        try {
+            ret = this.jdbcTemplate.queryForList(sql.toString(), new Object[] { tenantLocalDate }, Long.class);
+        } catch (EmptyResultDataAccessException e) {
+            // ignore empty result scenario
+        } catch (DataAccessException e) {
+            throw e;
+        }
+
+        return ret;
+    }
+
+    @Override
+    public List<Long> retrieveSavingsIdsPendingDormant(LocalDate tenantLocalDate) {
+        List<Long> ret = null;
+        StringBuilder sql = new StringBuilder("select sa.id ");
+        sql.append(" from m_savings_account as sa ");
+        sql.append(" inner join m_savings_product as sp on (sa.product_id = sp.id and sp.is_dormancy_tracking_active = true) ");
+        sql.append(" where sa.status_enum = 300 ");
+        sql.append(" and sa.sub_status_enum = 100 ");
+        sql.append(" and " + sqlGenerator.dateDiff("?",
+                "(select COALESCE(max(sat.transaction_date),sa.activatedon_date) from m_savings_account_transaction as sat where sat.is_reversed = false and sat.is_reversal = false and sat.transaction_type_enum in (1,2) and sat.savings_account_id = sa.id)")
+                + " ");
+        sql.append(" >= sp.days_to_dormancy ");
+
+        try {
+            ret = this.jdbcTemplate.queryForList(sql.toString(), new Object[] { tenantLocalDate }, Long.class);
+        } catch (EmptyResultDataAccessException e) {
+            // ignore empty result scenario
+        } catch (DataAccessException e) {
+            throw e;
+        }
+
+        return ret;
+    }
+
+    @Override
+    public List<Long> retrieveSavingsIdsPendingEscheat(LocalDate tenantLocalDate) {
+        List<Long> ret = null;
+        StringBuilder sql = new StringBuilder("select sa.id ");
+        sql.append(" from m_savings_account as sa ");
+        sql.append(" inner join m_savings_product as sp on (sa.product_id = sp.id and sp.is_dormancy_tracking_active = true) ");
+        sql.append(" where sa.status_enum = 300 ");
+        sql.append(" and sa.sub_status_enum = 200 ");
+        sql.append(" and " + sqlGenerator.dateDiff("?",
+                "(select COALESCE(max(sat.transaction_date),sa.activatedon_date) from m_savings_account_transaction as sat where sat.is_reversed = false and sat.is_reversal = false and sat.transaction_type_enum in (1,2) and sat.savings_account_id = sa.id)")
+                + " ");
+        sql.append(" >= sp.days_to_escheat ");
+
+        try {
+            ret = this.jdbcTemplate.queryForList(sql.toString(), Long.class, new Object[] { tenantLocalDate });
+        } catch (EmptyResultDataAccessException e) {
+            // ignore empty result scenario
+        } catch (DataAccessException e) {
+            throw e;
+        }
+
+        return ret;
+    }
+
+    /*
+     * @Override public Collection<SavingsAccountAnnualFeeData> retrieveAccountsWithAnnualFeeDue() { final String sql =
+     * "select " + this.annualFeeMapper.schema() +
+     * " where sa.annual_fee_next_due_date is not null and sa.annual_fee_next_due_date <= NOW()" ;
+     *
+     * return this.jdbcTemplate.query(sql, this.annualFeeMapper, new Object[] {}); }
+     */
+
+    @Override
+    public boolean isAccountBelongsToClient(final Long clientId, final Long accountId, final DepositAccountType depositAccountType,
+            final String currencyCode) {
+        try {
+            final StringBuilder buff = new StringBuilder("select count(*) from m_savings_account sa ");
+            buff.append(
+                    " where sa.id = ? and sa.client_id = ? and sa.deposit_type_enum = ? and sa.currency_code = ? and sa.status_enum = 300");
+            return this.jdbcTemplate.queryForObject(buff.toString(), Integer.class, accountId, clientId, depositAccountType.getValue(),
+                    currencyCode) > 0;
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(accountId, e);
+        }
+    }
+
+    @Override
+    public String retrieveAccountNumberByAccountId(Long accountId) {
+        try {
+            final String sql = "select s.account_no from m_savings_account s where s.id = ?";
+            return this.jdbcTemplate.queryForObject(sql, String.class, accountId);
+        } catch (final EmptyResultDataAccessException e) {
+            throw new SavingsAccountNotFoundException(accountId, e);
+        }
+    }
+
+    @Override
+    public Long getSavingsAccountTransactionTotalFiltered(final Long savingsId, DepositAccountType depositAccountType,
+            Boolean hideAccrualTransactions) {
+        StringBuilder sqlBuilder = new StringBuilder().append(
+                " SELECT COUNT(tr.id) FROM m_savings_account sa  JOIN m_savings_account_transaction tr ON tr.savings_account_id = sa.id ")
+                .append(" where sa.id = ? and sa.deposit_type_enum = ? ");
+        if (hideAccrualTransactions) {
+            sqlBuilder.append(" AND transaction_type_enum not in (?,?) ");
+        } else {
+            sqlBuilder.append(" AND transaction_type_enum in (?,?) ");
+        }
+
+        try {
+            return this.jdbcTemplate.queryForObject(sqlBuilder.toString(), Long.class,
+                    new Object[] { savingsId, depositAccountType.getValue(),
+                            SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue(),
+                            SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue() });
+        } catch (EmptyResultDataAccessException e) {
+            return 0L;
+        }
+    }
+
+    @Override
+    public Collection<SavingsAccountBlockNarrationHistoryData> retrieveSavingsAccountBlockNarrationHistory(Long savingsId) {
+
+        String sql = "select " + this.savingsAccountBlockNarrationHistoryMapper.schema()
+                + " where sa.id = ? order by blockNarrationHistory.start_date DESC";
+        return this.jdbcTemplate.query(sql, this.savingsAccountBlockNarrationHistoryMapper, new Object[] { savingsId });
+    }
+
+    @Override
+    public List<Long> retrieveActiveSavingsAccrualAccounts(Long accountType) {
+        StringBuilder sql = new StringBuilder(" SELECT distinct msa.id ");
+        sql.append(" FROM m_savings_account msa ");
+        sql.append(" JOIN m_savings_product msp ON msp.id = msa.product_id ");
+        sql.append(" WHERE msa.status_enum = 300 AND msp.accounting_type = 3 ");
+        sql.append(" and (msa.nominal_annual_interest_rate != 0 or msa.allow_overdraft = true or msa.account_balance_derived <= 0) ");
+        sql.append(" AND msa.deposit_type_enum = ? ");
+
+        return this.jdbcTemplate.queryForList(sql.toString(), Long.class, accountType);
+    }
+
+    @Override
+    public List<Long> retrieveActiveSavingAccountsWithZeroInterest() {
+        String sql = "select id from m_savings_account where status_enum = 300 and nominal_annual_interest_rate != 0 and deposit_type_enum != 200";
+        return this.jdbcTemplate.queryForList(sql, Long.class, true);
+    }
+
+    @Override
+    public List<Long> retrieveActiveOverdraftSavingAccounts() {
+        String sql = "select id from m_savings_account where status_enum = 300 and (allow_overdraft = true or account_balance_derived <= 0) and deposit_type_enum != 200";
+        return this.jdbcTemplate.queryForList(sql, Long.class, true);
+    }
+
+    @Override
+    public RecurringMissedTargetData findRecurringDepositAccountWithMissedTarget(Long savingsAccountId) {
+        RecurringMissedTargetData result = null;
+        final String sql = "select " + this.recurringMissedTargetTemplateMapper.schema();
+        try {
+            result = this.jdbcTemplate.queryForObject(sql, this.recurringMissedTargetTemplateMapper, new Object[] { savingsAccountId });
+        } catch (EmptyResultDataAccessException e) {
+            // ignore empty result scenario
+        } catch (DataAccessException e) {
+            throw e;
+        }
+
+        return result;
+    }
+
+    @Override
+    public Collection<SavingsAccountTransactionData> retrieveSavingsTransactions(String filterConstraintJson, Integer limit,
+            Integer offset) {
+
+        ObjectMapper mapper = new ObjectMapper();
+        if (StringUtils.isEmpty(filterConstraintJson)) {
+            throw new SavingsAccountSearchParameterNotProvidedException();
+        }
+
+        try {
+
+            List<Object> params = new ArrayList<>();
+            StringBuilder queryBuilder = new StringBuilder(
+                    "select " + this.transactionsMapper.schema() + " where transaction_type_enum not in (22,25) ");
+            FilterConstraint[] filterConstraints = mapper.readValue(filterConstraintJson, FilterConstraint[].class);
+            final String extraCriteria = searchReadPlatformService.buildSqlStringFromFilterConstraints(filterConstraints, params,
+                    FilterSelection.SAVINGS_SEARCH_REQUEST_MAP);
+            queryBuilder.append(extraCriteria);
+            queryBuilder.append(" order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC LIMIT ? OFFSET ?");
+            params.add(limit);
+            params.add(offset);
+
+            return this.jdbcTemplate.query(queryBuilder.toString(), this.transactionsMapper, params.toArray());
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final class SavingAccountMapperForInterestPosting implements ResultSetExtractor<List<SavingsAccountData>> {
@@ -1105,222 +1550,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         }
     }
 
-    @Override
-    public SavingsAccountData retrieveTemplate(final Long clientId, final Long groupId, final Long productId,
-            final boolean staffInSelectedOfficeOnly) {
-
-        final AppUser loggedInUser = this.context.authenticatedUser();
-        Long officeId = loggedInUser.getOffice().getId();
-
-        ClientData client = null;
-        if (clientId != null) {
-            client = this.clientReadPlatformService.retrieveOne(clientId);
-            officeId = client.officeId();
-        }
-
-        GroupGeneralData group = null;
-        if (groupId != null) {
-            group = this.groupReadPlatformService.retrieveOne(groupId);
-            officeId = group.officeId();
-        }
-
-        final Collection<SavingsProductData> productOptions = this.savingsProductReadPlatformService.retrieveAllForLookup();
-        SavingsAccountData template = null;
-        if (productId != null) {
-
-            final SavingAccountTemplateMapper mapper = new SavingAccountTemplateMapper(client, group);
-
-            final String sql = "select " + mapper.schema() + " where sp.id = ?";
-            template = this.jdbcTemplate.queryForObject(sql, mapper, new Object[] { productId }); // NOSONAR
-            boolean useFloatingInterestRateFromProduct = template.getUseFloatingInterestRate();
-
-            final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions = this.dropdownReadPlatformService
-                    .retrieveCompoundingInterestPeriodTypeOptions();
-
-            final Collection<EnumOptionData> interestPostingPeriodTypeOptions = this.dropdownReadPlatformService
-                    .retrieveInterestPostingPeriodTypeOptions();
-
-            final Collection<EnumOptionData> interestCalculationTypeOptions = this.dropdownReadPlatformService
-                    .retrieveInterestCalculationTypeOptions();
-
-            final Collection<EnumOptionData> interestCalculationDaysInYearTypeOptions = this.dropdownReadPlatformService
-                    .retrieveInterestCalculationDaysInYearTypeOptions();
-
-            final Collection<EnumOptionData> lockinPeriodFrequencyTypeOptions = this.dropdownReadPlatformService
-                    .retrieveLockinPeriodFrequencyTypeOptions();
-
-            final Collection<EnumOptionData> withdrawalFeeTypeOptions = this.dropdownReadPlatformService.retrievewithdrawalFeeTypeOptions();
-            final Collection<EnumOptionData> withdrawalFrequencyOptions = this.dropdownReadPlatformService
-                    .retrieveWithdrawalFrequencyOptions();
-
-            final Collection<SavingsAccountTransactionData> transactions = null;
-            final Collection<ChargeData> productCharges = this.chargeReadPlatformService.retrieveSavingsProductCharges(productId);
-            // update charges from Product charges
-            final Collection<SavingsAccountChargeData> charges = fromChargesToSavingsCharges(productCharges);
-
-            // retrieve floating interest rates from saving product
-            final Collection<SavingsProductFloatingInterestRateData> productFloatingInterestRates = this.savingsProductFloatingInterestRateReadPlatformService
-                    .getSavingsProductFloatingInterestRateForSavingsProduct(productId);
-            final Collection<SavingsAccountFloatingInterestRateData> accountFloatingInterestRates = fromSavingsProductFloatingInterestRatesToSavingsAccountFloatingInterestRates(
-                    productFloatingInterestRates);
-
-            final boolean feeChargesOnly = false;
-            final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService
-                    .retrieveSavingsProductApplicableCharges(feeChargesOnly);
-
-            Collection<StaffData> fieldOfficerOptions = null;
-
-            if (officeId != null) {
-
-                if (staffInSelectedOfficeOnly) {
-                    // only bring back loan officers in selected branch/office
-                    final Collection<StaffData> fieldOfficersInBranch = this.staffReadPlatformService
-                            .retrieveAllLoanOfficersInOfficeById(officeId);
-
-                    if (!CollectionUtils.isEmpty(fieldOfficersInBranch)) {
-                        fieldOfficerOptions = new ArrayList<>(fieldOfficersInBranch);
-                    }
-                } else {
-                    // by default bring back all officers in selected
-                    // branch/office as well as officers in office above
-                    // this office
-                    final boolean restrictToLoanOfficersOnly = true;
-                    final Collection<StaffData> loanOfficersInHierarchy = this.staffReadPlatformService
-                            .retrieveAllStaffInOfficeAndItsParentOfficeHierarchy(officeId, restrictToLoanOfficersOnly);
-
-                    if (!CollectionUtils.isEmpty(loanOfficersInHierarchy)) {
-                        fieldOfficerOptions = new ArrayList<>(loanOfficersInHierarchy);
-                    }
-                }
-            }
-            boolean postOverdraftInterestOnDeposit = template.isPostOverdraftInterestOnDeposit();
-            template = SavingsAccountData.withTemplateOptions(template, productOptions, fieldOfficerOptions,
-                    interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
-                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, transactions,
-                    charges, chargeOptions, null, null);
-            template.setFloatingInterestRates(accountFloatingInterestRates);
-            template.setUseFloatingInterestRate(useFloatingInterestRateFromProduct);
-            template.setWithdrawalFrequencyOptions(withdrawalFrequencyOptions);
-            template.setPostOverdraftInterestOnDeposit(postOverdraftInterestOnDeposit);
-        } else {
-
-            String clientName = null;
-            if (client != null) {
-                clientName = client.displayName();
-            }
-
-            String groupName = null;
-            if (group != null) {
-                groupName = group.getName();
-            }
-
-            template = SavingsAccountData.withClientTemplate(clientId, clientName, groupId, groupName);
-
-            final Collection<StaffData> fieldOfficerOptions = null;
-            final Collection<EnumOptionData> interestCompoundingPeriodTypeOptions = null;
-            final Collection<EnumOptionData> interestPostingPeriodTypeOptions = null;
-            final Collection<EnumOptionData> interestCalculationTypeOptions = null;
-            final Collection<EnumOptionData> interestCalculationDaysInYearTypeOptions = null;
-            final Collection<EnumOptionData> lockinPeriodFrequencyTypeOptions = null;
-            final Collection<EnumOptionData> withdrawalFeeTypeOptions = null;
-
-            final Collection<SavingsAccountTransactionData> transactions = null;
-            final Collection<SavingsAccountChargeData> charges = null;
-
-            final boolean feeChargesOnly = false;
-            final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService
-                    .retrieveSavingsProductApplicableCharges(feeChargesOnly);
-
-            template = SavingsAccountData.withTemplateOptions(template, productOptions, fieldOfficerOptions,
-                    interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
-                    interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions, transactions,
-                    charges, chargeOptions, null, null);
-        }
-
-        final List<DatatableData> datatableTemplates = this.entityDatatableChecksReadService
-                .retrieveTemplates(StatusEnum.CREATE.getCode().longValue(), EntityTables.SAVING.getName(), productId);
-        template.setDatatables(datatableTemplates);
-
-        return template;
-    }
-
-    private Collection<SavingsAccountChargeData> fromChargesToSavingsCharges(final Collection<ChargeData> productCharges) {
-        final Collection<SavingsAccountChargeData> savingsCharges = new ArrayList<>();
-        for (final ChargeData chargeData : productCharges) {
-            final SavingsAccountChargeData savingsCharge = chargeData.toSavingsAccountChargeData();
-            savingsCharges.add(savingsCharge);
-        }
-        return savingsCharges;
-    }
-
-    private Collection<SavingsAccountFloatingInterestRateData> fromSavingsProductFloatingInterestRatesToSavingsAccountFloatingInterestRates(
-            final Collection<SavingsProductFloatingInterestRateData> productFloatingInterestRates) {
-        final Collection<SavingsAccountFloatingInterestRateData> savingsAccountFloatingInterestRates = new ArrayList<>();
-        for (final SavingsProductFloatingInterestRateData productData : productFloatingInterestRates) {
-            final SavingsAccountFloatingInterestRateData savingsAccountFloatingInterestRateData = productData
-                    .toSavingsAccountFloatingInterestRateData();
-            savingsAccountFloatingInterestRates.add(savingsAccountFloatingInterestRateData);
-        }
-        return savingsAccountFloatingInterestRates;
-    }
-
-    @Override
-    public SavingsAccountTransactionData retrieveDepositTransactionTemplate(final Long savingsId,
-            final DepositAccountType depositAccountType) {
-
-        try {
-            final String sql = "select " + this.transactionTemplateMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ?";
-
-            return this.jdbcTemplate.queryForObject(sql, this.transactionTemplateMapper, // NOSONAR
-                    new Object[] { savingsId, depositAccountType.getValue() });
-        } catch (final EmptyResultDataAccessException e) {
-            throw new SavingsAccountNotFoundException(savingsId, e);
-        }
-    }
-
-    @Override
-    public Collection<SavingsAccountTransactionData> retrieveAllTransactions(final Long savingsId, DepositAccountType depositAccountType,
-            Integer offset, Integer limit) {
-        if (offset == null) {
-            offset = 0;
-        }
-        if (limit == null) {
-            limit = 15;
-        }
-        final String sql = "select " + this.transactionsMapper.schema()
-                + " where sa.id = ? and sa.deposit_type_enum = ? AND transaction_type_enum not in (22,25)  order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC LIMIT ? OFFSET ?  ";
-
-        return this.jdbcTemplate.query(sql, this.transactionsMapper,
-                new Object[] { savingsId, depositAccountType.getValue(), limit, offset }); // NOSONAR
-    }
-
-    @Override
-    public Collection<SavingsAccountTransactionData> retrieveAccrualTransactions(final Long savingsId,
-            DepositAccountType depositAccountType, Integer offset, Integer limit) {
-        if (offset == null) {
-            offset = 0;
-        }
-        if (limit == null) {
-            limit = 15;
-        }
-
-        final String sql = "select " + this.transactionsMapper.schema()
-                + " where sa.id = ? and sa.deposit_type_enum = ? AND transaction_type_enum in (22,25)  order by tr.transaction_date DESC, tr.created_date DESC, tr.id DESC LIMIT ? OFFSET ?   ";
-
-        return this.jdbcTemplate.query(sql, this.transactionsMapper,
-                new Object[] { savingsId, depositAccountType.getValue(), limit, offset });
-    }
-
-    @Override
-    public SavingsAccountTransactionData retrieveSavingsTransaction(final Long savingsId, final Long transactionId,
-            DepositAccountType depositAccountType) {
-
-        final String sql = "select " + this.transactionsMapper.schema() + " where sa.id = ? and sa.deposit_type_enum = ? and tr.id= ?";
-
-        return this.jdbcTemplate.queryForObject(sql, this.transactionsMapper, // NOSONAR
-                new Object[] { savingsId, depositAccountType.getValue(), transactionId });
-    }
-
     private static final class SavingsAccountTransactionsForBatchMapper implements RowMapper<SavingsAccountTransactionData> {
 
         private final String schemaSql;
@@ -1348,14 +1577,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         }
     }
 
-    /*
-     * @Override public Collection<SavingsAccountAnnualFeeData> retrieveAccountsWithAnnualFeeDue() { final String sql =
-     * "select " + this.annualFeeMapper.schema() +
-     * " where sa.annual_fee_next_due_date is not null and sa.annual_fee_next_due_date <= NOW()" ;
-     *
-     * return this.jdbcTemplate.query(sql, this.annualFeeMapper, new Object[] {}); }
-     */
-
     private static final class SavingsAccountTransactionsMapper implements RowMapper<SavingsAccountTransactionData> {
 
         private final String schemaSql;
@@ -1367,18 +1588,19 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append(
                     "CASE WHEN tr.transaction_type_enum = 2 AND  pd.actual_transaction_type = 'REVOKED_INTEREST' THEN 72  ELSE tr.transaction_type_enum END as transactionType, ");
             sqlBuilder.append("tr.transaction_date as transactionDate, tr.amount as transactionAmount,");
-            sqlBuilder.append(" tr.release_id_of_hold_amount as releaseTransactionId,");
-            sqlBuilder.append(" tr.reason_for_block as reasonForBlock,");
-            sqlBuilder.append("tr.created_date as submittedOnDate,");
-            sqlBuilder.append(" au.username as submittedByUsername, ");
-            sqlBuilder.append(" nt.note as transactionNote, ");
+            sqlBuilder.append(" tr.release_id_of_hold_amount as releaseTransactionId,sp.id productId,mc.office_id officeId,");
+            sqlBuilder.append(" tr.reason_for_block as reasonForBlock,sp.nominal_annual_interest_rate interestRate,");
+            sqlBuilder.append("tr.created_date as submittedOnDate,sp.overdraft_limit overdraftInterestLimit,");
+            sqlBuilder.append("sp.nominal_annual_interest_rate_overdraft overdraftInterestRate,");
+            sqlBuilder.append(" au.username as submittedByUsername,au.id userId, ");
+            sqlBuilder.append(" nt.note as transactionNote, tr.overdraft_amount_derived overdraftAmount, ");
             sqlBuilder.append("tr.running_balance_derived as runningBalance, tr.is_reversed as reversed,");
             sqlBuilder.append(
                     "tr.is_reversal as isReversal, tr.original_transaction_id as originalTransactionId, tr.is_lien_transaction as lienTransaction, ");
             sqlBuilder.append("fromtran.id as fromTransferId, fromtran.is_reversed as fromTransferReversed,");
             sqlBuilder.append("fromtran.transaction_date as fromTransferDate, fromtran.amount as fromTransferAmount,");
             sqlBuilder.append("fromtran.description as fromTransferDescription,");
-            sqlBuilder.append("totran.id as toTransferId, totran.is_reversed as toTransferReversed,");
+            sqlBuilder.append("totran.id as toTransferId, totran.is_reversed as toTransferReversed,tr.office_id officeId,");
             sqlBuilder.append("totran.transaction_date as toTransferDate, totran.amount as toTransferAmount,");
             sqlBuilder.append("totran.description as toTransferDescription,");
             sqlBuilder.append("sa.id as savingsId, sa.account_no as accountNo,");
@@ -1391,8 +1613,11 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("pt.value as paymentTypeName, ");
             sqlBuilder.append("tr.is_manual as postInterestAsOn ");
             sqlBuilder.append("from m_savings_account sa ");
-            sqlBuilder.append("join m_savings_account_transaction tr on tr.savings_account_id = sa.id ");
-            sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
+            sqlBuilder.append(" join m_savings_account_transaction tr on tr.savings_account_id = sa.id ");
+            sqlBuilder.append(" left join m_savings_product sp on sp.id = sa.product_id ");
+            sqlBuilder.append(" left join m_office mo on mo.id=tr.office_id ");
+            sqlBuilder.append(" left join m_client mc on mc.id = sa.client_id ");
+            sqlBuilder.append(" left join m_currency curr on curr.code = sa.currency_code ");
             sqlBuilder.append("left join m_account_transfer_transaction fromtran on fromtran.from_savings_transaction_id = tr.id ");
             sqlBuilder.append("left join m_account_transfer_transaction totran on totran.to_savings_transaction_id = tr.id ");
             sqlBuilder.append("left join m_payment_detail pd on tr.payment_detail_id = pd.id ");
@@ -1703,141 +1928,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
         }
     }
 
-    @Override
-    public Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft) {
-
-        SavingAccountMapperForLookup accountMapperForLookup = new SavingAccountMapperForLookup();
-        final StringBuilder sqlBuilder = new StringBuilder("select " + accountMapperForLookup.schema());
-        sqlBuilder.append(" where sa.client_id = ? and sa.status_enum = 300");
-        Object[] queryParameters = null;
-        if (overdraft == null) {
-            queryParameters = new Object[] { clientId };
-        } else {
-            sqlBuilder.append(" and sa.allow_overdraft = ?");
-            queryParameters = new Object[] { clientId, overdraft };
-        }
-        return this.jdbcTemplate.query(sqlBuilder.toString(), accountMapperForLookup, queryParameters);
-
-    }
-
-    @Override
-    public List<Long> retrieveSavingsIdsPendingInactive(LocalDate tenantLocalDate) {
-        List<Long> ret = null;
-        StringBuilder sql = new StringBuilder("select sa.id ");
-        sql.append(" from m_savings_account as sa ");
-        sql.append(" inner join m_savings_product as sp on (sa.product_id = sp.id and sp.is_dormancy_tracking_active = true) ");
-        sql.append(" where sa.status_enum = 300 ");
-        sql.append(" and sa.sub_status_enum = 0 ");
-        String compareDate = "(select COALESCE(max(sat.transaction_date), sa.activatedon_date) "
-                + "from m_savings_account_transaction as sat where sat.is_reversed = false and sat.is_reversal = false"
-                + " and sat.transaction_type_enum in (1,2) and sat.savings_account_id = sa.id)";
-        sql.append(" and ").append(sqlGenerator.dateDiff("?", compareDate)).append(" >= sp.days_to_inactive ");
-
-        try {
-            ret = this.jdbcTemplate.queryForList(sql.toString(), new Object[] { tenantLocalDate }, Long.class);
-        } catch (EmptyResultDataAccessException e) {
-            // ignore empty result scenario
-        } catch (DataAccessException e) {
-            throw e;
-        }
-
-        return ret;
-    }
-
-    @Override
-    public List<Long> retrieveSavingsIdsPendingDormant(LocalDate tenantLocalDate) {
-        List<Long> ret = null;
-        StringBuilder sql = new StringBuilder("select sa.id ");
-        sql.append(" from m_savings_account as sa ");
-        sql.append(" inner join m_savings_product as sp on (sa.product_id = sp.id and sp.is_dormancy_tracking_active = true) ");
-        sql.append(" where sa.status_enum = 300 ");
-        sql.append(" and sa.sub_status_enum = 100 ");
-        sql.append(" and " + sqlGenerator.dateDiff("?",
-                "(select COALESCE(max(sat.transaction_date),sa.activatedon_date) from m_savings_account_transaction as sat where sat.is_reversed = false and sat.is_reversal = false and sat.transaction_type_enum in (1,2) and sat.savings_account_id = sa.id)")
-                + " ");
-        sql.append(" >= sp.days_to_dormancy ");
-
-        try {
-            ret = this.jdbcTemplate.queryForList(sql.toString(), new Object[] { tenantLocalDate }, Long.class);
-        } catch (EmptyResultDataAccessException e) {
-            // ignore empty result scenario
-        } catch (DataAccessException e) {
-            throw e;
-        }
-
-        return ret;
-    }
-
-    @Override
-    public List<Long> retrieveSavingsIdsPendingEscheat(LocalDate tenantLocalDate) {
-        List<Long> ret = null;
-        StringBuilder sql = new StringBuilder("select sa.id ");
-        sql.append(" from m_savings_account as sa ");
-        sql.append(" inner join m_savings_product as sp on (sa.product_id = sp.id and sp.is_dormancy_tracking_active = true) ");
-        sql.append(" where sa.status_enum = 300 ");
-        sql.append(" and sa.sub_status_enum = 200 ");
-        sql.append(" and " + sqlGenerator.dateDiff("?",
-                "(select COALESCE(max(sat.transaction_date),sa.activatedon_date) from m_savings_account_transaction as sat where sat.is_reversed = false and sat.is_reversal = false and sat.transaction_type_enum in (1,2) and sat.savings_account_id = sa.id)")
-                + " ");
-        sql.append(" >= sp.days_to_escheat ");
-
-        try {
-            ret = this.jdbcTemplate.queryForList(sql.toString(), Long.class, new Object[] { tenantLocalDate });
-        } catch (EmptyResultDataAccessException e) {
-            // ignore empty result scenario
-        } catch (DataAccessException e) {
-            throw e;
-        }
-
-        return ret;
-    }
-
-    @Override
-    public boolean isAccountBelongsToClient(final Long clientId, final Long accountId, final DepositAccountType depositAccountType,
-            final String currencyCode) {
-        try {
-            final StringBuilder buff = new StringBuilder("select count(*) from m_savings_account sa ");
-            buff.append(
-                    " where sa.id = ? and sa.client_id = ? and sa.deposit_type_enum = ? and sa.currency_code = ? and sa.status_enum = 300");
-            return this.jdbcTemplate.queryForObject(buff.toString(), Integer.class, accountId, clientId, depositAccountType.getValue(),
-                    currencyCode) > 0;
-        } catch (final EmptyResultDataAccessException e) {
-            throw new SavingsAccountNotFoundException(accountId, e);
-        }
-    }
-
-    @Override
-    public String retrieveAccountNumberByAccountId(Long accountId) {
-        try {
-            final String sql = "select s.account_no from m_savings_account s where s.id = ?";
-            return this.jdbcTemplate.queryForObject(sql, String.class, accountId);
-        } catch (final EmptyResultDataAccessException e) {
-            throw new SavingsAccountNotFoundException(accountId, e);
-        }
-    }
-
-    @Override
-    public Long getSavingsAccountTransactionTotalFiltered(final Long savingsId, DepositAccountType depositAccountType,
-            Boolean hideAccrualTransactions) {
-        StringBuilder sqlBuilder = new StringBuilder().append(
-                " SELECT COUNT(tr.id) FROM m_savings_account sa  JOIN m_savings_account_transaction tr ON tr.savings_account_id = sa.id ")
-                .append(" where sa.id = ? and sa.deposit_type_enum = ? ");
-        if (hideAccrualTransactions) {
-            sqlBuilder.append(" AND transaction_type_enum not in (?,?) ");
-        } else {
-            sqlBuilder.append(" AND transaction_type_enum in (?,?) ");
-        }
-
-        try {
-            return this.jdbcTemplate.queryForObject(sqlBuilder.toString(), Long.class,
-                    new Object[] { savingsId, depositAccountType.getValue(),
-                            SavingsAccountTransactionType.ACCRUAL_INTEREST_POSTING.getValue(),
-                            SavingsAccountTransactionType.OVERDRAFT_ACCRUAL_INTEREST.getValue() });
-        } catch (EmptyResultDataAccessException e) {
-            return 0L;
-        }
-    }
-
     private static final class SavingsAccountBlockNarrationHistoryMapper implements RowMapper<SavingsAccountBlockNarrationHistoryData> {
 
         private final String schemaSql;
@@ -1880,53 +1970,6 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     blockNarrationValue, subStatus, submittedByUsername);
 
         }
-    }
-
-    @Override
-    public Collection<SavingsAccountBlockNarrationHistoryData> retrieveSavingsAccountBlockNarrationHistory(Long savingsId) {
-
-        String sql = "select " + this.savingsAccountBlockNarrationHistoryMapper.schema()
-                + " where sa.id = ? order by blockNarrationHistory.start_date DESC";
-        return this.jdbcTemplate.query(sql, this.savingsAccountBlockNarrationHistoryMapper, new Object[] { savingsId });
-    }
-
-    @Override
-    public List<Long> retrieveActiveSavingsAccrualAccounts(Long accountType) {
-        StringBuilder sql = new StringBuilder(" SELECT distinct msa.id ");
-        sql.append(" FROM m_savings_account msa ");
-        sql.append(" JOIN m_savings_product msp ON msp.id = msa.product_id ");
-        sql.append(" WHERE msa.status_enum = 300 AND msp.accounting_type = 3 ");
-        sql.append(" and (msa.nominal_annual_interest_rate != 0 or msa.allow_overdraft = true or msa.account_balance_derived <= 0) ");
-        sql.append(" AND msa.deposit_type_enum = ? ");
-
-        return this.jdbcTemplate.queryForList(sql.toString(), Long.class, accountType);
-    }
-
-    @Override
-    public List<Long> retrieveActiveSavingAccountsWithZeroInterest() {
-        String sql = "select id from m_savings_account where status_enum = 300 and nominal_annual_interest_rate != 0 and deposit_type_enum != 200";
-        return this.jdbcTemplate.queryForList(sql, Long.class, true);
-    }
-
-    @Override
-    public List<Long> retrieveActiveOverdraftSavingAccounts() {
-        String sql = "select id from m_savings_account where status_enum = 300 and (allow_overdraft = true or account_balance_derived <= 0) and deposit_type_enum != 200";
-        return this.jdbcTemplate.queryForList(sql, Long.class, true);
-    }
-
-    @Override
-    public RecurringMissedTargetData findRecurringDepositAccountWithMissedTarget(Long savingsAccountId) {
-        RecurringMissedTargetData result = null;
-        final String sql = "select " + this.recurringMissedTargetTemplateMapper.schema();
-        try {
-            result = this.jdbcTemplate.queryForObject(sql, this.recurringMissedTargetTemplateMapper, new Object[] { savingsAccountId });
-        } catch (EmptyResultDataAccessException e) {
-            // ignore empty result scenario
-        } catch (DataAccessException e) {
-            throw e;
-        }
-
-        return result;
     }
 
     private static final class RecurringMissedTargetTemplateMapper implements RowMapper<RecurringMissedTargetData> {

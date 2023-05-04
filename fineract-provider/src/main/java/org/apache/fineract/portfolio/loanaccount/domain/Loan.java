@@ -4681,6 +4681,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
             break;
             case INVALID:
             break;
+            case DAYS_28:
             case WHOLE_TERM:
             break;
         }

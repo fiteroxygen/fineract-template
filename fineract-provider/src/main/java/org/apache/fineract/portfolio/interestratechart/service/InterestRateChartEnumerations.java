@@ -42,6 +42,7 @@ public final class InterestRateChartEnumerations {
                 PeriodFrequencyType.INVALID.getCode(), "Invalid");
 
         switch (type) {
+            case DAYS_28:
             case INVALID:
             break;
             case DAYS:
