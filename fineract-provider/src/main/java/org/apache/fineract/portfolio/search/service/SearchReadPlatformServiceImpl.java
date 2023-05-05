@@ -22,19 +22,31 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
+import org.apache.fineract.infrastructure.core.filters.FilterConstraint;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
+import org.apache.fineract.organisation.teller.util.DateRange;
 import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
 import org.apache.fineract.portfolio.group.domain.GroupingTypeEnumerations;
 import org.apache.fineract.portfolio.loanaccount.data.LoanStatusEnumData;
 import org.apache.fineract.portfolio.loanproduct.data.LoanProductData;
 import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
 import org.apache.fineract.portfolio.loanproduct.service.LoanProductReadPlatformService;
+import org.apache.fineract.portfolio.savings.exception.UnsupportedFilterException;
 import org.apache.fineract.portfolio.savings.service.SavingsEnumerations;
 import org.apache.fineract.portfolio.search.SearchConstants;
 import org.apache.fineract.portfolio.search.data.AdHocQuerySearchConditions;
@@ -202,6 +214,117 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
         final MapSqlParameterSource params = new MapSqlParameterSource();
 
         return this.namedParameterJdbcTemplate.query(rm.schema(searchConditions, params), params, rm);
+    }
+
+    @Override
+    public String buildSqlStringFromFilterConstraints(final FilterConstraint[] filterConstraints, final List<Object> params,
+            final Map<String, String> searchRequestMap) {
+        StringBuilder queryBuilder = new StringBuilder();
+        for (int i = 0; i < filterConstraints.length; i++) {
+            FilterConstraint filterConstraint = filterConstraints[i];
+            switch (filterConstraint.getFilterElement()) {
+                case EQUALS:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" = ? ");
+                    params.add(filterConstraint.getValue());
+                break;
+                case EQUALS_CASE_SENSITIVE:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" COLLATE utf8mb4_bin = ? ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case DIFFERENT_THAN:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" <> ? ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case MORE_THAN:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" > ? ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case LESS_THAN:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" < ? ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case AFTER:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") > DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case AFTER_INCLUSIVE:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") >= DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case BEFORE:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") < DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case BEFORE_INCLUSIVE:
+                    queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(") <= DATE(?) ");
+                    params.add(filterConstraint.getValue());
+                break;
+
+                case BETWEEN:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" BETWEEN ? AND ? ");
+                    params.add(filterConstraint.getValue());
+                    params.add(filterConstraint.getSecondValue());
+                break;
+
+                case IN:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" IN (").append(String.join(",", Collections.nCopies(filterConstraint.getValues().size(), "?")))
+                            .append(") ");
+                    params.addAll(filterConstraint.getValues());
+                break;
+
+                case STARTS_WITH:
+                    queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                            .append(" LIKE ? ");
+                    params.add(filterConstraint.getValue() + "%");
+                break;
+
+                case ON:
+                case TODAY:
+                case THIS_WEEK:
+                case THIS_MONTH:
+                case THIS_YEAR:
+                case LAST_DAYS:
+                    DateRange dateRange = DateUtils.getDateRange(LocalDate.now(ZoneId.systemDefault()), filterConstraint.getFilterElement(),
+                            filterConstraint.getValue());
+                    if (dateRange != null) {
+                        queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
+                                .append(" BETWEEN ? AND ? ");
+                        params.add(Date.from(dateRange.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                        params.add(Date.from(dateRange.getEndDate().atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC)));
+                    }
+                break;
+
+                default:
+
+            }
+        }
+        return queryBuilder.toString();
+    }
+
+    private String getFilterSelection(String filterSelection, Map<String, String> searchRequestMap) {
+        String correspondingFilterSelection = searchRequestMap.get(filterSelection);
+        if (correspondingFilterSelection == null) {
+            throw new UnsupportedFilterException(filterSelection);
+        }
+        return correspondingFilterSelection;
     }
 
     private static final class AdHocQuerySearchMapper implements RowMapper<AdHocSearchQueryData> {
