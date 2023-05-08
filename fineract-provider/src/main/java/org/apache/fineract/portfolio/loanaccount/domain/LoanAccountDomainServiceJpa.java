@@ -149,6 +149,36 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
         this.loanCollateralManagementRepository.saveAll(loanCollateralManagementSet);
     }
 
+    @Override
+    public LoanTransaction withdrawFromRedraw(Long accountId, CommandProcessingResultBuilder builderResult, LocalDate transactionDate, BigDecimal transactionAmount, PaymentDetail paymentDetail, String noteText, String txnExternalId) {
+        boolean isAccountTransfer = true;
+        final Loan loan = this.loanAccountAssembler.assembleFrom(accountId);
+        checkClientOrGroupActive(loan);
+        businessEventNotifierService.notifyPreBusinessEvent(new LoanRefundPreBusinessEvent(loan));
+        final List<Long> existingTransactionIds = new ArrayList<>();
+        final List<Long> existingReversedTransactionIds = new ArrayList<>();
+        final Money withdrawAmount = Money.of(loan.getCurrency(), transactionAmount);
+        final LoanTransaction withdrawFromRedraw = LoanTransaction.withdrawFromRedraw(loan.getOffice(), withdrawAmount, paymentDetail, transactionDate,
+                txnExternalId);
+
+        loan.withdrawFromRedraw(withdrawFromRedraw, defaultLoanLifecycleStateMachine(), existingTransactionIds, existingReversedTransactionIds);
+
+        saveLoanTransactionWithDataIntegrityViolationChecks(withdrawFromRedraw);
+        this.loanRepositoryWrapper.saveAndFlush(loan);
+
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.loanTransactionNote(loan, withdrawFromRedraw, noteText);
+            this.noteRepository.save(note);
+        }
+
+        postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+        businessEventNotifierService.notifyPostBusinessEvent(new LoanRefundPostBusinessEvent(withdrawFromRedraw));
+        builderResult.withEntityId(withdrawFromRedraw.getId()).withOfficeId(loan.getOfficeId()).withClientId(loan.getClientId())
+                .withGroupId(loan.getGroupId());
+
+        return withdrawFromRedraw;
+    }
+
     @Transactional
     @Override
     public LoanTransaction makeRepayment(final LoanTransactionType repaymentTransactionType, final Loan loan,

@@ -1022,6 +1022,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder withdrawalFromRedraw(final Long loanId) {
+        this.actionName = "WITHDRAWAL_REDRAW";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId;
+        return this;
+    }
+
     public CommandWrapperBuilder approveLoanApplication(final Long loanId) {
         this.actionName = "APPROVE";
         this.entityName = "LOAN";

@@ -3222,6 +3222,33 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         doPostLoanTransactionChecks(loanTransaction.getTransactionDate(), loanLifecycleStateMachine);
     }
 
+
+    public void withdrawFromRedraw(final LoanTransaction loanTransaction, final LoanLifecycleStateMachine loanLifecycleStateMachine,
+            final List<Long> existingTransactionIds, final List<Long> existingReversedTransactionIds) {
+
+        existingTransactionIds.addAll(findExistingTransactionIds());
+        existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
+
+        if (status().isOverpaid()) {
+            if (this.totalOverpaid.compareTo(loanTransaction.getAmount(getCurrency()).getAmount()) < 0) {
+                final String errorMessage = "The withdraw amount must be less than or equal to overpaid amount ";
+                throw new InvalidLoanStateTransitionException("transaction", "is.exceeding.overpaid.amount", errorMessage,
+                        this.totalOverpaid, loanTransaction.getAmount(getCurrency()).getAmount());
+            }
+        } else {
+            final String errorMessage = "Withdraw from redraw is allowed only for loan accounts with overpaid status ";
+            throw new InvalidLoanStateTransitionException("transaction", "is.not.a.overpaid.loan", errorMessage);
+        }
+
+        loanTransaction.updateLoan(this);
+
+        if (loanTransaction.isNotZero(loanCurrency())) {
+            addLoanTransaction(loanTransaction);
+        }
+        updateLoanSummaryDerivedFields();
+        doPostLoanTransactionChecks(loanTransaction.getTransactionDate(), loanLifecycleStateMachine);
+    }
+
     private ChangedTransactionDetail handleRepaymentOrRecoveryOrWaiverTransaction(final LoanTransaction loanTransaction,
             final LoanLifecycleStateMachine loanLifecycleStateMachine, final LoanTransaction adjustedTransaction,
             final ScheduleGeneratorDTO scheduleGeneratorDTO) {

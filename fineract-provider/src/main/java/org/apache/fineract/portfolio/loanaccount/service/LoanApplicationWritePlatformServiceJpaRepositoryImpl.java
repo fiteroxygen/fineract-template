@@ -69,11 +69,13 @@ import org.apache.fineract.infrastructure.security.service.PlatformSecurityConte
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.organisation.staff.domain.Staff;
+import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
 import org.apache.fineract.portfolio.account.domain.AccountAssociationType;
 import org.apache.fineract.portfolio.account.domain.AccountAssociations;
 import org.apache.fineract.portfolio.account.domain.AccountAssociationsRepository;
 import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
+import org.apache.fineract.portfolio.account.service.PortfolioAccountReadPlatformService;
 import org.apache.fineract.portfolio.accountdetails.domain.AccountType;
 import org.apache.fineract.portfolio.businessevent.domain.loan.LoanApprovedBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.LoanCreatedBusinessEvent;
@@ -110,6 +112,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.DefaultLoanLifecycleStat
 import org.apache.fineract.portfolio.loanaccount.domain.GLIMAccountInfoRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.GroupLoanIndividualMonitoringAccount;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanAccountDomainService;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagement;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCollateralManagementRepository;
@@ -123,6 +126,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanSummaryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTopupDetails;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanApplicationDateException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeDeleted;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeModified;
@@ -146,6 +150,7 @@ import org.apache.fineract.portfolio.loanproduct.serialization.LoanProductDataVa
 import org.apache.fineract.portfolio.loanproduct.service.LoanProductReadPlatformService;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.rate.service.RateAssembler;
 import org.apache.fineract.portfolio.savings.data.GroupSavingsIndividualMonitoringAccountData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
@@ -211,6 +216,10 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
     private final ClientCollateralManagementRepository clientCollateralManagementRepository;
     private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
 
+    private final PortfolioAccountReadPlatformService portfolioAccountReadPlatformService;
+
+    private final LoanAccountDomainService loanAccountDomainService;
+
     @Autowired
     public LoanApplicationWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
             final LoanApplicationTransitionApiJsonValidator loanApplicationTransitionApiJsonValidator,
@@ -239,7 +248,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             final LoanProductReadPlatformService loanProductReadPlatformService,
             final LoanCollateralManagementRepository loanCollateralManagementRepository,
             final ClientCollateralManagementRepository clientCollateralManagementRepository,
-            final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService) {
+            final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService, PortfolioAccountReadPlatformService portfolioAccountReadPlatformService, LoanAccountDomainService loanAccountDomainService) {
         this.context = context;
         this.fromJsonHelper = fromJsonHelper;
         this.loanApplicationTransitionApiJsonValidator = loanApplicationTransitionApiJsonValidator;
@@ -283,6 +292,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.loanCollateralManagementRepository = loanCollateralManagementRepository;
         this.clientCollateralManagementRepository = clientCollateralManagementRepository;
         this.accountAssociationsReadPlatformService = accountAssociationsReadPlatformService;
+        this.portfolioAccountReadPlatformService = portfolioAccountReadPlatformService;
+        this.loanAccountDomainService = loanAccountDomainService;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -1980,6 +1991,22 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             handleDataIntegrityIssues(command, throwable, dve);
             return CommandProcessingResult.empty();
         }
+    }
+
+    @Override
+    public CommandProcessingResult withdrawalFromRedraw(Long loanId, JsonCommand command) {
+        this.loanApplicationTransitionApiJsonValidator.validateWithdrawalFromRedraw(command.json());
+        final var transactionDate = command.localDateValueOfParameterNamed(LoanApiConstants.transactionDateParamName);
+        final var transactionAmount = command.bigDecimalValueOfParameterNamed(LoanApiConstants.principalDisbursedParameterName);
+        final var notes = command.stringValueOfParameterNamed(LoanApiConstants.noteParameterName);
+        final PaymentDetail paymentDetail = null;
+        final var commandProcessingResultBuilder=new CommandProcessingResultBuilder();
+      this.loanAccountDomainService.withdrawFromRedraw(loanId,
+                commandProcessingResultBuilder, transactionDate, transactionAmount, paymentDetail, notes, null);
+
+        return commandProcessingResultBuilder
+                .withEntityId(loanId)
+                .withLoanId(loanId) .build();
     }
 
 }
