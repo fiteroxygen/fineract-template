@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ArrayList;
 import javax.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -42,8 +43,11 @@ import org.apache.fineract.infrastructure.configuration.data.GlobalConfiguration
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.configuration.service.ConfigurationReadPlatformService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
@@ -91,12 +95,17 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrap
 import org.apache.fineract.portfolio.savings.domain.SavingsProductRepository;
 import org.apache.fineract.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.apache.fineract.portfolio.savings.service.SavingsApplicationProcessWritePlatformService;
+import org.apache.fineract.portfolio.validationlimit.domain.ValidationLimit;
+import org.apache.fineract.portfolio.validationlimit.domain.ValidationLimitRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.apache.fineract.portfolio.client.api.ClientApiConstants.CLIENT_RESOURCE_NAME;
+
 
 @Service
 @Slf4j
@@ -131,25 +140,27 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final ClientTransactionLimitRepository clientTransactionLimitRepository;
     private ClientAdditionalInfoRepository clientAdditionalInfoRepository;
 
+    private final ValidationLimitRepository validationLimitRepository;
+
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-            final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
-            final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
-            final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
-            final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
-            final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
-            final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
-            final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
-            final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
-            final ConfigurationReadPlatformService configurationReadPlatformService,
-            final AddressWritePlatformService addressWritePlatformService,
-            final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
-            final BusinessEventNotifierService businessEventNotifierService,
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-            BusinessOwnerWritePlatformService businessOwnerWritePlatformService,
-            final ClientTransactionLimitRepository clientTransactionLimitRepository,
-            ClientAdditionalInfoRepository clientAdditionalInfoRepository) {
+                                                       final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
+                                                       final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
+                                                       final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
+                                                       final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
+                                                       final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
+                                                       final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
+                                                       final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
+                                                       final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
+                                                       final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
+                                                       final ConfigurationReadPlatformService configurationReadPlatformService,
+                                                       final AddressWritePlatformService addressWritePlatformService,
+                                                       final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
+                                                       final BusinessEventNotifierService businessEventNotifierService,
+                                                       final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
+                                                       BusinessOwnerWritePlatformService businessOwnerWritePlatformService,
+                                                       final ClientTransactionLimitRepository clientTransactionLimitRepository,
+                                                       ClientAdditionalInfoRepository clientAdditionalInfoRepository, ValidationLimitRepository validationLimitRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -176,6 +187,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.businessOwnerWritePlatformService = businessOwnerWritePlatformService;
         this.clientTransactionLimitRepository = clientTransactionLimitRepository;
         this.clientAdditionalInfoRepository = clientAdditionalInfoRepository;
+        this.validationLimitRepository = validationLimitRepository;
     }
 
     @Transactional
@@ -691,6 +703,8 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private void updateClientTransactionLimits(JsonCommand command, Optional<ClientTransactionLimit> clientTransactionLimitOptional) {
         ClientTransactionLimit clientTransactionLimit = clientTransactionLimitOptional.get();
         clientTransactionLimit.update(command);
+        this.checkClientSpecificLimitShouldNotExceedLimitByGlobalLimit(clientTransactionLimit.getDailyWithdrawLimit(),
+                clientTransactionLimit.getSingleWithdrawLimit(), clientTransactionLimit.getClientLevelId());
         clientTransactionLimitRepository.saveAndFlush(clientTransactionLimit);
     }
 
@@ -700,9 +714,47 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 .bigDecimalValueOfParameterNamedDefaultToNullIfZero(ClientApiConstants.dailyWithdrawLimit);
         final BigDecimal singleDailyWithDrawLimit = command
                 .bigDecimalValueOfParameterNamedDefaultToNullIfZero(ClientApiConstants.singleWithdrawLimit);
+        this.checkClientSpecificLimitShouldNotExceedLimitByGlobalLimit(dailyWithDrawLimit, singleDailyWithDrawLimit, clientLevelId);
         ClientTransactionLimit clientTransactionLimit = new ClientTransactionLimit(client, clientLevelId, dailyWithDrawLimit,
                 singleDailyWithDrawLimit);
         clientTransactionLimitRepository.saveAndFlush(clientTransactionLimit);
+    }
+
+    public void checkClientSpecificLimitShouldNotExceedLimitByGlobalLimit(BigDecimal dailyWithDrawLimit, BigDecimal singleDailyWithDrawLimit,
+                                                                         Long clientLevelId) {
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(CLIENT_RESOURCE_NAME);
+        if (dailyWithDrawLimit != null) {
+            final String errorCode = "maximum.dailyWithDraw.limit.cannot.exceed.global.limit";
+            final String defaultMessage = "Maximum dailyWithDraw limit cannot exceed global validation limit";
+            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(clientLevelId);
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificDailyWithdrawLimit() != null && dailyWithDrawLimit
+                    .compareTo(validationLimit.getMaximumClientSpecificDailyWithdrawLimit()) > 0) {
+                baseDataValidator.reset().parameter(ClientApiConstants.dailyWithdrawLimit)
+                        .value(dailyWithDrawLimit).failWithCode(errorCode, defaultMessage);
+            }
+        }
+        if(singleDailyWithDrawLimit != null) {
+            final String errorCode = "maximum.singleWithDraw.limit.cannot.exceed.global.limit";
+            final String defaultMessage = "Maximum singleWithDraw limit cannot exceed global validation limit";
+            ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(clientLevelId);
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificSingleWithdrawLimit() != null && singleDailyWithDrawLimit
+                    .compareTo(validationLimit.getMaximumClientSpecificSingleWithdrawLimit()) > 0) {
+                baseDataValidator.reset().parameter(ClientApiConstants.singleWithdrawLimit)
+                        .value(singleDailyWithDrawLimit).failWithCode(errorCode, defaultMessage);
+            }
+        }
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
+        if (!dataValidationErrors.isEmpty()) {
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                    dataValidationErrors);
+        }
     }
 
     private static boolean hasClientTransactionLimitParameter(JsonCommand command) {
