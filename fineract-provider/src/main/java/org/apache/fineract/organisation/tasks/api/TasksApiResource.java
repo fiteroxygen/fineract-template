@@ -75,7 +75,6 @@ public class TasksApiResource {
     private final DefaultToApiJsonSerializer<TaskData> toApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
-    // private final CodeValueReadPlatformService codeValueReadPlatformService;
 
     @Autowired
     public TasksApiResource(final PlatformSecurityContext context, final TasksReadPlatformService readPlatformService,
@@ -143,8 +142,6 @@ public class TasksApiResource {
 
         TaskData task = this.readPlatformService.retrieveTask(taskId);
         if (settings.isTemplate()) {
-            // Collection<CodeValueData> taskStatus =
-            // this.codeValueReadPlatformService.retrieveCodeValuesByCode("taskStatus");
             task = TaskData.templateData(task, null);
         }
         return this.toApiJsonSerializer.serialize(settings, task, this.responseDataParameters);
