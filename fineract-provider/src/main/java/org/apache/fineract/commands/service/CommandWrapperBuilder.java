@@ -318,6 +318,22 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder createTask() {
+        this.actionName = "ADD";
+        this.entityName = "TASKS";
+        this.entityId = null;
+        this.href = "/task/template";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateTask(final Long taskId) {
+        this.actionName = "UPDATE";
+        this.entityName = "TASKS";
+        this.entityId = taskId;
+        this.href = "/task/" + taskId;
+        return this;
+    }
+
     public CommandWrapperBuilder createGuarantor(final Long loanId) {
         this.actionName = "CREATE";
         this.entityName = "GUARANTOR";
