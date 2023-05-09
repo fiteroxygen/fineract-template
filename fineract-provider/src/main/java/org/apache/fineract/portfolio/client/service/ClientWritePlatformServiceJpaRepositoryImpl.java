@@ -18,16 +18,18 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
+import static org.apache.fineract.portfolio.client.api.ClientApiConstants.CLIENT_RESOURCE_NAME;
+
 import com.google.gson.JsonElement;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.ArrayList;
 import javax.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -104,9 +106,6 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.apache.fineract.portfolio.client.api.ClientApiConstants.CLIENT_RESOURCE_NAME;
-
-
 @Service
 @Slf4j
 public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWritePlatformService {
@@ -144,23 +143,23 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
     @Autowired
     public ClientWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
-                                                       final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
-                                                       final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
-                                                       final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
-                                                       final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
-                                                       final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
-                                                       final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
-                                                       final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
-                                                       final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
-                                                       final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
-                                                       final ConfigurationReadPlatformService configurationReadPlatformService,
-                                                       final AddressWritePlatformService addressWritePlatformService,
-                                                       final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
-                                                       final BusinessEventNotifierService businessEventNotifierService,
-                                                       final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
-                                                       BusinessOwnerWritePlatformService businessOwnerWritePlatformService,
-                                                       final ClientTransactionLimitRepository clientTransactionLimitRepository,
-                                                       ClientAdditionalInfoRepository clientAdditionalInfoRepository, ValidationLimitRepository validationLimitRepository) {
+            final ClientRepositoryWrapper clientRepository, final ClientNonPersonRepositoryWrapper clientNonPersonRepository,
+            final OfficeRepositoryWrapper officeRepositoryWrapper, final NoteRepository noteRepository,
+            final ClientDataValidator fromApiJsonDeserializer, final AccountNumberGenerator accountNumberGenerator,
+            final GroupRepository groupRepository, final StaffRepositoryWrapper staffRepository,
+            final CodeValueRepositoryWrapper codeValueRepository, final LoanRepositoryWrapper loanRepositoryWrapper,
+            final SavingsAccountRepositoryWrapper savingsRepositoryWrapper, final SavingsProductRepository savingsProductRepository,
+            final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
+            final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
+            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper,
+            final ConfigurationReadPlatformService configurationReadPlatformService,
+            final AddressWritePlatformService addressWritePlatformService,
+            final ClientFamilyMembersWritePlatformService clientFamilyMembersWritePlatformService,
+            final BusinessEventNotifierService businessEventNotifierService,
+            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
+            BusinessOwnerWritePlatformService businessOwnerWritePlatformService,
+            final ClientTransactionLimitRepository clientTransactionLimitRepository,
+            ClientAdditionalInfoRepository clientAdditionalInfoRepository, ValidationLimitRepository validationLimitRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
@@ -720,30 +719,29 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         clientTransactionLimitRepository.saveAndFlush(clientTransactionLimit);
     }
 
-    public void checkClientSpecificLimitShouldNotExceedLimitByGlobalLimit(BigDecimal dailyWithDrawLimit, BigDecimal singleDailyWithDrawLimit,
-                                                                         Long clientLevelId) {
+    public void checkClientSpecificLimitShouldNotExceedLimitByGlobalLimit(BigDecimal dailyWithDrawLimit,
+            BigDecimal singleDailyWithDrawLimit, Long clientLevelId) {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
-                .resource(CLIENT_RESOURCE_NAME);
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(CLIENT_RESOURCE_NAME);
         if (dailyWithDrawLimit != null) {
             final String errorCode = "maximum.dailyWithDraw.limit.cannot.exceed.global.limit";
             final String defaultMessage = "Maximum dailyWithDraw limit cannot exceed global validation limit";
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(clientLevelId);
-            if (validationLimit != null && validationLimit.getMaximumClientSpecificDailyWithdrawLimit() != null && dailyWithDrawLimit
-                    .compareTo(validationLimit.getMaximumClientSpecificDailyWithdrawLimit()) > 0) {
-                baseDataValidator.reset().parameter(ClientApiConstants.dailyWithdrawLimit)
-                        .value(dailyWithDrawLimit).failWithCode(errorCode, defaultMessage);
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificDailyWithdrawLimit() != null
+                    && dailyWithDrawLimit.compareTo(validationLimit.getMaximumClientSpecificDailyWithdrawLimit()) > 0) {
+                baseDataValidator.reset().parameter(ClientApiConstants.dailyWithdrawLimit).value(dailyWithDrawLimit).failWithCode(errorCode,
+                        defaultMessage);
             }
         }
-        if(singleDailyWithDrawLimit != null) {
+        if (singleDailyWithDrawLimit != null) {
             final String errorCode = "maximum.singleWithDraw.limit.cannot.exceed.global.limit";
             final String defaultMessage = "Maximum singleWithDraw limit cannot exceed global validation limit";
             ValidationLimit validationLimit = this.validationLimitRepository.findByClientLevelId(clientLevelId);
-            if (validationLimit != null && validationLimit.getMaximumClientSpecificSingleWithdrawLimit() != null && singleDailyWithDrawLimit
-                    .compareTo(validationLimit.getMaximumClientSpecificSingleWithdrawLimit()) > 0) {
-                baseDataValidator.reset().parameter(ClientApiConstants.singleWithdrawLimit)
-                        .value(singleDailyWithDrawLimit).failWithCode(errorCode, defaultMessage);
+            if (validationLimit != null && validationLimit.getMaximumClientSpecificSingleWithdrawLimit() != null
+                    && singleDailyWithDrawLimit.compareTo(validationLimit.getMaximumClientSpecificSingleWithdrawLimit()) > 0) {
+                baseDataValidator.reset().parameter(ClientApiConstants.singleWithdrawLimit).value(singleDailyWithDrawLimit)
+                        .failWithCode(errorCode, defaultMessage);
             }
         }
 
