@@ -137,6 +137,7 @@ Feature: Test loan account apis
 
     * def loan = call read('classpath:features/portfolio/loans/loansteps.feature@createloanTemplate400Step') { submittedOnDate : '#(submittedOnDate)', loanAmount : '#(loanAmount)', loanProductId : '#(loanProductId)', clientId : '#(clientId)'}
     * def loanId = loan.loanId
+    * def loanResponseBeforeReschedule = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
     * def loanReschedule = call read('classpath:features/portfolio/loans/loansteps.feature@loanRescheduleSteps') { submittedOnDate : '#(submittedOnDate)', rescheduledFrom : '#(rescheduledFrom)', adjustedDueDate : '#(adjustedDueDate)', loanId : '#(loanId)' }
 
     Given  path 'rescheduleloans',loanId,
@@ -150,3 +151,18 @@ Feature: Test loan account apis
     Then status 200
     Then match $ contains { loanId: '#notnull' }
     And response.loanId=loanId
+
+    * def loanResponseAfterUndoReschedule = call read('classpath:features/portfolio/loans/loansteps.feature@findloanbyidWithAllAssociationStep') { loanId : '#(loanId)' }
+
+    #Compare first and last repayment schedule before and after undo loan reschedule
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[0].fromDate == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[0].fromDate
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[0].dueDate == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[0].dueDate
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[0].principalDue == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[0].principalDue
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[0].daysInPeriod == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[0].daysInPeriod
+
+    #Compare the last repayments
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[-1].fromDate == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[-1].fromDate
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[-1].dueDate == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[-1].dueDate
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[-1].principalDue == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[-1].principalDue
+    * assert loanResponseAfterUndoReschedule.repaymentSchedule.futurePeriods[-].daysInPeriod == loanResponseBeforeReschedule.repaymentSchedule.futurePeriods[-1].daysInPeriod
+

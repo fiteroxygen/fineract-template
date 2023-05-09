@@ -646,6 +646,8 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
     @Override
     public CommandProcessingResult undo(JsonCommand jsonCommand) {
         try {
+            this.platformSecurityContext.authenticatedUser();
+            this.loanRescheduleRequestDataValidator.validateForUndoAction(jsonCommand);
             final var loanId = jsonCommand.entityId();
             final var loan = loanRepositoryWrapper.findOneWithNotFoundDetection(loanId);
             final var loanRescheduleRequests = loanRescheduleRequestRepository.findByLoanIdAndStatusEnum(loanId,
@@ -654,10 +656,6 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             if (loanRescheduleRequests.isEmpty()) {
                 throw new LoanRescheduleRequestNotFoundException();
             }
-
-            this.loanRescheduleRequestDataValidator.validateForUndoAction(jsonCommand);
-
-            this.platformSecurityContext.authenticatedUser();
 
             loanRescheduleRequests.stream()
                     .peek(loanRescheduleRequest -> loanRescheduleRequest.getLoanRescheduleRequestToTermVariationMappings().stream()
