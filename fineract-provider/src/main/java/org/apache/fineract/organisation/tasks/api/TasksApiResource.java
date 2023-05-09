@@ -131,12 +131,11 @@ public class TasksApiResource {
     @Path("{taskId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve a Task", description = "Returns the details of a Task.\n" + "\n" + "Example Requests:\n"
-            + "\n" + "tasks/1")
+    @Operation(summary = "Retrieve a Task", description = "Returns the details of a Task.\n" + "\n" + "Example Requests:\n" + "\n"
+            + "tasks/1")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.RetrieveOneResponse.class))) })
-    public String retrieveOne(@PathParam("taskId") @Parameter(description = "taskId") final Long taskId,
-            @Context final UriInfo uriInfo) {
+    public String retrieveOne(@PathParam("taskId") @Parameter(description = "taskId") final Long taskId, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
