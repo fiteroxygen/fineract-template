@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 
 /**
- * Created by sanyam on 19/8/17.
+ * Created by brian on 09/05/2023.
  */
 
 final class TasksApiResourceSwagger {
@@ -31,29 +31,19 @@ final class TasksApiResourceSwagger {
 
     }
 
-    @Schema(description = "PostStaffRequest")
-    public static final class PostStaffRequest {
+    @Schema(description = "PostTaskRequest")
+    public static final class PostTaskRequest {
 
-        private PostStaffRequest() {
+        private PostTaskRequest() {
 
         }
 
-        @Schema(example = "1")
-        public Long officeId;
-        @Schema(example = "John")
-        public String firstname;
-        @Schema(example = "Doe")
-        public String lastname;
-        @Schema(example = "true")
-        public Boolean isLoanOfficer;
-        @Schema(example = "17H")
-        public String externalId;
-        @Schema(example = "+353851239876")
-        public String mobileNo;
-        @Schema(example = "true")
-        public Boolean isActive;
-        @Schema(example = "01 January 2009")
-        public LocalDate joiningDate;
+        @Schema(example = "Create A Loan")
+        public String title;
+        @Schema(example = "Create a loan of amount 40,000 for client account no. 1000023423")
+        public String description;
+        @Schema(example = "09 May 2023")
+        public String dueDate;
         @Schema(example = "en")
         public String locale;
         @Schema(example = "dd MMMM yyyy")
@@ -61,20 +51,18 @@ final class TasksApiResourceSwagger {
 
     }
 
-    @Schema(description = "PostStaffResponse")
-    public static final class CreateStaffResponse {
+    @Schema(description = "PostTaskResponse")
+    public static final class CreateTaskResponse {
 
-        private CreateStaffResponse() {
+        private CreateTaskResponse() {
 
         }
 
         @Schema(example = "1")
-        public Long officeId;
-        @Schema(example = "1")
         public Long resourceId;
     }
 
-    @Schema(description = "GetStaffResponse")
+    @Schema(description = "GetTaskResponse")
     public static final class RetrieveOneResponse {
 
         private RetrieveOneResponse() {
@@ -83,60 +71,50 @@ final class TasksApiResourceSwagger {
 
         @Schema(example = "1")
         public Long id;
-        @Schema(example = "John")
-        public String firstname;
-        @Schema(example = "Doe")
-        public String lastname;
-        @Schema(example = "Doe, John")
-        public String displayName;
-        @Schema(example = "1")
-        public Long officeId;
-        @Schema(example = "Head Office")
-        public String officeName;
-        @Schema(example = "true")
-        public Boolean isLoanOfficer;
-        @Schema(example = "17H")
-        public String externalId;
-        @Schema(example = "+353851239876")
-        public Boolean isActive;
-        @Schema(example = "[2009,8,1]")
-        public LocalDate joiningDate;
+        @Schema(example = "Create Loan Account")
+        public String title;
+        @Schema(example = "Create Loan Account for Given client 10231023")
+        public String description;
+        @Schema(example = "task.status.pending")
+        public String status;
+        @Schema(example = "[2023,5,9]")
+        public LocalDate createdDate;
+        @Schema(example = "[2023,8,10]")
+        public LocalDate dueDate;
 
     }
 
-    @Schema(description = "PutStaffRequest")
-    public static final class PutStaffRequest {
+    @Schema(description = "PutTaskRequest")
+    public static final class PutTaskRequest {
 
-        private PutStaffRequest() {
+        private PutTaskRequest() {
 
         }
 
-        @Schema(example = "false")
-        public Boolean isLoanOfficer;
-        @Schema(example = "17Hbb")
-        public String externalId;
+        @Schema(example = "200")
+        public Integer status;
+        @Schema(example = "Approve Client Details")
+        public String description;
 
     }
 
-    @Schema(description = "PutStaffResponse")
-    public static final class UpdateStaffResponse {
+    @Schema(description = "PutTaskResponse")
+    public static final class UpdateTaskResponse {
 
-        private UpdateStaffResponse() {
+        private UpdateTaskResponse() {
 
         }
 
-        static final class PutStaffResponseChanges {
+        static final class PutTaskResponseChanges {
 
-            private PutStaffResponseChanges() {}
+            private PutTaskResponseChanges() {}
 
             @Schema(example = "false")
-            public Boolean isLoanOfficer;
-            @Schema(example = "17Hbb")
-            public String externalId;
+            public Integer status;
+            @Schema(example = "Activate loan account 1020312")
+            public String description;
         }
 
-        @Schema(example = "1")
-        public Long officeId;
         @Schema(example = "1")
         public Long resourceId;
 

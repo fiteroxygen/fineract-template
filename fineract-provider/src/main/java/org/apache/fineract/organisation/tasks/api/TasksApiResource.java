@@ -102,22 +102,22 @@ public class TasksApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final Collection<TaskData> staff;
+        final Collection<TaskData> tasks;
 
-        staff = this.readPlatformService.retrieveAllTasks(status);
+        tasks = this.readPlatformService.retrieveAllTasks(status);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, staff, this.responseDataParameters);
+        return this.toApiJsonSerializer.serialize(settings, tasks, this.responseDataParameters);
     }
 
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Create a staff member", description = "Creates a staff member.\n" + "\n" + "Mandatory Fields: \n"
-            + "officeId, firstname, lastname\n" + "\n" + "Optional Fields: \n" + "isLoanOfficer, isActive")
-    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.PostStaffRequest.class)))
+    @Operation(summary = "Create a task", description = "Creates a task.\n" + "\n" + "Mandatory Fields: \n"
+            + "title, description, dueDate\n" + "\n" + "Optional Fields: \n" + "")
+    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.PostTaskRequest.class)))
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.CreateStaffResponse.class))) })
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.CreateTaskResponse.class))) })
     public String create(@Parameter(hidden = true) final String apiRequestBodyAsJson) {
 
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createTask().withJson(apiRequestBodyAsJson).build();
@@ -128,27 +128,27 @@ public class TasksApiResource {
     }
 
     @GET
-    @Path("{staffId}")
+    @Path("{taskId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(summary = "Retrieve a Staff Member", description = "Returns the details of a Staff Member.\n" + "\n" + "Example Requests:\n"
-            + "\n" + "staff/1")
+    @Operation(summary = "Retrieve a Task", description = "Returns the details of a Task.\n" + "\n" + "Example Requests:\n"
+            + "\n" + "tasks/1")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.RetrieveOneResponse.class))) })
-    public String retrieveOne(@PathParam("staffId") @Parameter(description = "staffId") final Long staffId,
+    public String retrieveOne(@PathParam("taskId") @Parameter(description = "taskId") final Long taskId,
             @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
-        TaskData staff = this.readPlatformService.retrieveTask(staffId);
+        TaskData task = this.readPlatformService.retrieveTask(taskId);
         if (settings.isTemplate()) {
             // Collection<CodeValueData> taskStatus =
             // this.codeValueReadPlatformService.retrieveCodeValuesByCode("taskStatus");
-            staff = TaskData.templateData(staff, null);
+            task = TaskData.templateData(task, null);
         }
-        return this.toApiJsonSerializer.serialize(settings, staff, this.responseDataParameters);
+        return this.toApiJsonSerializer.serialize(settings, task, this.responseDataParameters);
     }
 
     @PUT
@@ -156,9 +156,9 @@ public class TasksApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Update a task", description = "Updates the details of a task.")
-    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.PutStaffRequest.class)))
+    @RequestBody(required = true, content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.PutTaskRequest.class)))
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.UpdateStaffResponse.class))) })
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TasksApiResourceSwagger.UpdateTaskResponse.class))) })
     public String update(@PathParam("taskId") @Parameter(description = "taskId") final Long taskId,
             @Parameter(hidden = true) final String apiRequestBodyAsJson) {
 
