@@ -587,7 +587,7 @@ public final class PostingPeriod {
                     // move periodStartDate forward to day after this period
                     periodStartDate = periodEndDate.plusDays(1);
                 }
-                break;
+            break;
             // case NO_COMPOUNDING_SIMPLE_INTEREST:
             // break;
         }
