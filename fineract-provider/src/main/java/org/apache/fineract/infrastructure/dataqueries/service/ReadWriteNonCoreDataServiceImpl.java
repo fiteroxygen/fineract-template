@@ -1959,7 +1959,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                     + sqlGenerator.escape(datatableName) + ") and " + sqlGenerator.escape("office_id") + " = " + appTableId;
             final BigDecimal count = this.jdbcTemplate.queryForObject(sqlString, BigDecimal.class); // NOSONAR
             return count;
-        }catch (EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             LOG.info("no data in fx rate");
             return null;
         }

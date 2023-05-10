@@ -28,13 +28,13 @@ import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.Arrays;
-import java.util.HashMap;
 import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -320,9 +320,8 @@ public class FixedDepositAccount extends SavingsAccount {
 
         final List<LocalDateInterval> postingPeriodIntervals = postingPeriodType.equals(SavingsPostingInterestPeriodType.TENURE)
                 ? Arrays.asList(LocalDateInterval.create(accountSubmittedOrActivationDate(), maturityDate))
-                : this.savingsHelper.determineInterestPostingPeriods(
-                accountSubmittedOrActivationDate(), maturityDate, postingPeriodType, financialYearBeginningMonth,
-                postedAsOnTransactionDates);
+                : this.savingsHelper.determineInterestPostingPeriods(accountSubmittedOrActivationDate(), maturityDate, postingPeriodType,
+                        financialYearBeginningMonth, postedAsOnTransactionDates);
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
