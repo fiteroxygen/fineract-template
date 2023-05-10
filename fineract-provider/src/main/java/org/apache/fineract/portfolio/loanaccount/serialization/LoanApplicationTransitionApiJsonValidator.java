@@ -160,25 +160,54 @@ public final class LoanApplicationTransitionApiJsonValidator {
         }
 
         final Set<String> disbursementParameters = new HashSet<>(Arrays.asList(LoanApiConstants.transactionDateParamName,
-                LoanApiConstants.noteParameterName,LoanApiConstants.principalDisbursedParameterName,
-                LoanApiConstants.localeParameterName, LoanApiConstants.dateFormatParameterName));
+                LoanApiConstants.noteParameterName, LoanApiConstants.principalDisbursedParameterName, LoanApiConstants.localeParameterName,
+                LoanApiConstants.dateFormatParameterName));
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
         this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, disbursementParameters);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(LoanApiConstants.withdrawFromRedraw);
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(LoanApiConstants.withdrawFromRedraw);
 
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.transactionDateParamName,
-                element);
+        final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.transactionDateParamName, element);
         baseDataValidator.reset().parameter(LoanApiConstants.withdrawnOnDateParameterName).value(transactionDate).notNull();
 
-        final BigDecimal transactionAmount= this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.principalDisbursedParameterName,element,Locale.US);
+        final BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.principalDisbursedParameterName,
+                element, Locale.US);
         baseDataValidator.reset().parameter(LoanApiConstants.withdrawnOnDateParameterName).value(transactionAmount).notNull();
 
         final String note = this.fromApiJsonHelper.extractStringNamed(LoanApiConstants.noteParameterName, element);
         baseDataValidator.reset().parameter(LoanApiConstants.noteParameterName).value(note).notExceedingLengthOf(1000);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateApplyRedrawPayment(final String json) {
+
+        if (StringUtils.isBlank(json)) {
+            throw new InvalidJsonException();
+        }
+
+        final Set<String> disbursementParameters = new HashSet<>(
+                Arrays.asList(LoanApiConstants.transactionDateParamName, LoanApiConstants.principalDisbursedParameterName,
+                        LoanApiConstants.localeParameterName, LoanApiConstants.dateFormatParameterName));
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, disbursementParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(LoanApiConstants.withdrawFromRedraw);
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.transactionDateParamName, element);
+        baseDataValidator.reset().parameter(LoanApiConstants.withdrawnOnDateParameterName).value(transactionDate).notNull();
+
+        final BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.principalDisbursedParameterName,
+                element, Locale.US);
+        baseDataValidator.reset().parameter(LoanApiConstants.withdrawnOnDateParameterName).value(transactionAmount).notNull();
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }

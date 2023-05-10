@@ -3649,4 +3649,13 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "?command=nextWithdrawalDate";
         return this;
     }
+
+    public CommandWrapperBuilder applyRedrawPayment(Long loanId) {
+        this.actionName = "APPLY_REDRAW_PAYMENT";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId;
+        return this;
+    }
 }

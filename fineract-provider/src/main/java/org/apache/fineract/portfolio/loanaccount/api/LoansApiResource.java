@@ -983,11 +983,10 @@ public class LoansApiResource {
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
-       else if (is(commandParam, "updateArrearsTolerance")) {
+        else if (is(commandParam, "updateArrearsTolerance")) {
             final CommandWrapper commandRequest = builder.updateArrearsTolerance(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        }
-        else if (is(commandParam, "runCloneJobForLoanPenalty")) {
+        } else if (is(commandParam, "runCloneJobForLoanPenalty")) {
             final CommandWrapper commandRequest = builder.runCloneJobForLoanPenalty(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
@@ -997,7 +996,12 @@ public class LoansApiResource {
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
-       else  if (result == null) {
+        else if (is(commandParam, "applyRedrawPayment")) {
+            final CommandWrapper commandRequest = builder.applyRedrawPayment(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
+
+        else if (result == null) {
             throw new UnrecognizedQueryParamException("command", commandParam);
         }
 
