@@ -16,19 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.rescheduleloan.service;
+package org.apache.fineract.organisation.tasks.domain;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface LoanRescheduleRequestWritePlatformService {
-
-    CommandProcessingResult create(JsonCommand jsonCommand);
-
-    CommandProcessingResult approve(JsonCommand jsonCommand);
-
-    CommandProcessingResult reject(JsonCommand jsonCommand);
-
-    CommandProcessingResult undo(JsonCommand jsonCommand);
+public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
 }

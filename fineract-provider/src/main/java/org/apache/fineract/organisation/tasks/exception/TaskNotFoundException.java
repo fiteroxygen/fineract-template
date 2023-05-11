@@ -16,19 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.rescheduleloan.service;
+package org.apache.fineract.organisation.tasks.exception;
 
-import org.apache.fineract.infrastructure.core.api.JsonCommand;
-import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
+import org.springframework.dao.EmptyResultDataAccessException;
 
-public interface LoanRescheduleRequestWritePlatformService {
+/**
+ * A {@link RuntimeException} thrown when staff resources are not found.
+ */
+public class TaskNotFoundException extends AbstractPlatformResourceNotFoundException {
 
-    CommandProcessingResult create(JsonCommand jsonCommand);
+    public TaskNotFoundException(final Long id) {
+        super("error.msg.task.id.invalid", "Task with identifier " + id + " does not exist", id);
+    }
 
-    CommandProcessingResult approve(JsonCommand jsonCommand);
-
-    CommandProcessingResult reject(JsonCommand jsonCommand);
-
-    CommandProcessingResult undo(JsonCommand jsonCommand);
-
+    public TaskNotFoundException(Long id, EmptyResultDataAccessException e) {
+        super("error.msg.task.id.invalid", "Task with identifier " + id + " does not exist", id, e);
+    }
 }

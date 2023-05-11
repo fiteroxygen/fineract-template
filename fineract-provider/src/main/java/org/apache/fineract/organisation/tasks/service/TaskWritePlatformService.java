@@ -16,19 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.loanaccount.rescheduleloan.service;
+package org.apache.fineract.organisation.tasks.service;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 
-public interface LoanRescheduleRequestWritePlatformService {
+public interface TaskWritePlatformService {
 
-    CommandProcessingResult create(JsonCommand jsonCommand);
+    CommandProcessingResult createTask(JsonCommand command);
 
-    CommandProcessingResult approve(JsonCommand jsonCommand);
-
-    CommandProcessingResult reject(JsonCommand jsonCommand);
-
-    CommandProcessingResult undo(JsonCommand jsonCommand);
-
+    CommandProcessingResult updateTask(Long taskId, JsonCommand command);
 }
