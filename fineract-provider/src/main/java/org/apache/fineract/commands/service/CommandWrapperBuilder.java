@@ -1038,6 +1038,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder withdrawalFromRedraw(final Long loanId) {
+        this.actionName = "WITHDRAWAL_REDRAW";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId;
+        return this;
+    }
+
     public CommandWrapperBuilder approveLoanApplication(final Long loanId) {
         this.actionName = "APPROVE";
         this.entityName = "LOAN";
@@ -3655,6 +3664,15 @@ public class CommandWrapperBuilder {
         this.entityId = accountId;
         this.href = "/savingsaccounts/" + accountId + "?command=nextWithdrawalDate";
         return this;
+    }
+
+    public CommandWrapperBuilder applyRedrawPayment(Long loanId) {
+        this.actionName = "APPLY_REDRAW_PAYMENT";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId;
+
     }
 
     public CommandWrapperBuilder undoLoanReschedule(String entityName, Long loanId) {
