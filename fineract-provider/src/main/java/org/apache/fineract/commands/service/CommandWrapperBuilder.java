@@ -3666,14 +3666,13 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-
     public CommandWrapperBuilder applyRedrawPayment(Long loanId) {
         this.actionName = "APPLY_REDRAW_PAYMENT";
         this.entityName = "LOAN";
         this.entityId = loanId;
         this.loanId = loanId;
         this.href = "/loans/" + loanId;
-      
+
     }
 
     public CommandWrapperBuilder undoLoanReschedule(String entityName, Long loanId) {
