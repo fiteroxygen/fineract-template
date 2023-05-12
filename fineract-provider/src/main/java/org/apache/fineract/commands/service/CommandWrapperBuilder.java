@@ -3672,7 +3672,7 @@ public class CommandWrapperBuilder {
         this.entityId = loanId;
         this.loanId = loanId;
         this.href = "/loans/" + loanId;
-
+        return this;
     }
 
     public CommandWrapperBuilder undoLoanReschedule(String entityName, Long loanId) {
