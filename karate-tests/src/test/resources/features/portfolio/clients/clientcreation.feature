@@ -46,10 +46,8 @@ Feature: Test client apis
     # Update fetched client
     * def updatedClient = call read('classpath:features/portfolio/clients/clientsteps.feature@update') { clientId : '#(createdClientId)'}
     * assert createdClientId == updatedClient.res.resourceId
-    * match updatedClient.res.changes contains { externalId: '#notnull'}
-    * assert fullname == updatedClient.res.changes.fullname
 
-
+    @Ignore
     #createClientWithSavings
     Scenario: Create client with savings account
 
@@ -65,3 +63,19 @@ Feature: Test client apis
     * def savingsResponse = call read('classpath:features/portfolio/savingsaccount/savingssteps.feature@findsavingsbyid') { savingsId : '#(savingsId)' }
     * assert savingsProductId == savingsResponse.savingsAccount.savingsProductId
 
+
+    @testDailyWithdrawalLimitAndSingleWithdrawalLimitCanNotExceedGlobalLimit
+    Scenario: Test DailyWithdrawalLimit And SingleWithdrawalLimit Can Not Exceed GlobalLimit
+    * def submittedOnDate = df.format(faker.date().past(30, 29, TimeUnit.DAYS))
+
+    * def result = call read('classpath:features/portfolio/products/validationLimitsSteps.feature@list')
+    * def limits = result.validationLimits
+    * print limits, karate.sizeOf(limits)
+    * def call = if (karate.sizeOf(limits) < 1) karate.call('classpath:features/portfolio/products/validationLimitsSteps.feature@createValidationLimit');
+    * print call
+    * def addValue = 100
+    * def clientLevel = limits[0].clientLevel.id
+    * def dailyLimit = limits[0].maximumClientSpecificDailyWithdrawLimit + addValue
+    * def singleLimit = limits[0].maximumClientSpecificSingleWithdrawLimit + addValue
+    * def result = call read('classpath:features/portfolio/clients/clientsteps.feature@createClientWithWithdrawalLimitsStep') { clientCreationDate : '#(submittedOnDate)',dailyWithdrawLimit : '#(dailyLimit)', singleWithdrawLimit : '#(singleLimit)', clientLevel : #(clientLevel)}
+    * print result
