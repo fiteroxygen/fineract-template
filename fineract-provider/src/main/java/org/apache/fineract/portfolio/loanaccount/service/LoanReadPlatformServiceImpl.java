@@ -270,13 +270,14 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     }
 
     @Override
-    public List<LoanAccountData> retrieveOverDueLoansForClient(Long clientId) {
+    public List<LoanAccountData> retrieveOverDueLoansForClient(Long clientId, Long savingsAccountId) {
         this.context.authenticatedUser();
         final LoanMapper rm = new LoanMapper(sqlGenerator);
 
-        final String sql = "select " + rm.loanSchema() + " where l.client_id=? and l.total_outstanding_derived > 0";
+        final String sql = "select " + rm.loanSchema()
+                + " where l.client_id=? and l.total_outstanding_derived > 0 and paa.linked_savings_account_id=? and paa.is_active=true and paa.association_type_enum=1";
 
-        return this.jdbcTemplate.query(sql, rm, clientId); // NOSONAR
+        return this.jdbcTemplate.query(sql, rm, clientId, savingsAccountId); // NOSONAR
 
     }
 
@@ -721,7 +722,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " left join ref_loan_transaction_processing_strategy lps on lps.id = l.loan_transaction_strategy_id"
                     + " left join m_product_loan_variable_installment_config lpvi on lpvi.loan_product_id = l.product_id"
                     + " left join m_loan_topup as topup on l.id = topup.loan_id"
-                    + " left join m_loan as topuploan on topuploan.id = topup.closure_loan_id";
+                    + " left join m_loan as topuploan on topuploan.id = topup.closure_loan_id"
+                    + " left join m_portfolio_account_associations as paa on l.id = paa.loan_account_id";
 
         }
 
