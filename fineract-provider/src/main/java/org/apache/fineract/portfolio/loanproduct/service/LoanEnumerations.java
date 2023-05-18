@@ -438,6 +438,10 @@ public final class LoanEnumerations {
             case TOP_UP:
                 optionData = new LoanTransactionEnumData(LoanTransactionType.TOP_UP.getValue().longValue(),
                         LoanTransactionType.TOP_UP.getCode(), "Top Up");
+
+            case WITHDRAWAL_REDRAW:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.WITHDRAWAL_REDRAW.getValue().longValue(),
+                        LoanTransactionType.WITHDRAWAL_REDRAW.getCode(), "Withdraw from Redraw");
             break;
         }
         return optionData;
@@ -503,6 +507,10 @@ public final class LoanEnumerations {
                 optionData = new LoanStatusEnumData(LoanStatus.TRANSFER_ON_HOLD.getValue().longValue(),
                         LoanStatus.TRANSFER_ON_HOLD.getCode(), "Transfer on hold");
             break;
+
+            case UNDO_LOAN_RESCHEDULE:
+                optionData = new LoanStatusEnumData(LoanStatus.UNDO_LOAN_RESCHEDULE.getValue().longValue(),
+                        LoanStatus.UNDO_LOAN_RESCHEDULE.getCode(), "Undo Loan Reschedule");
         }
 
         return optionData;

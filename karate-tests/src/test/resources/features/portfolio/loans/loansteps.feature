@@ -374,6 +374,19 @@ Feature: Create loan stapes
     Then def loanId = response.loanId
 
   @ignore
+  @loanRescheduleSteps
+  Scenario: Loan reschedule Steps
+    Given configure ssl = true
+    * def loansData = read('classpath:templates/loans.json')
+    Given path 'rescheduleloans'
+    And params {command:'reschedule'}
+    And request loansData.loanReschedulePayLoad
+    When method POST
+    Then status 200
+    Then match $ contains { loanId: '#notnull' }
+    Then def loanId = response.loanId
+    
+  @ignore
   @OXY163loanScheduleWithInterestRecalculationEnabledIsOnly3PeriodsLongRegardlessOfTheNumberOfRepaymentsSetSteps
   Scenario: OXY-163 Loan Schedule with interest recalculation enabled is only 3 periods long regardless of the number of repayments set.
     Given configure ssl = true
