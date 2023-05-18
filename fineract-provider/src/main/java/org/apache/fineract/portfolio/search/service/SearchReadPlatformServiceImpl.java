@@ -226,30 +226,31 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 case EQUALS:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" = ? ");
-                    params.add(filterConstraint.getValue());
+                    params.add(convertValue(filterConstraint.getValue()));
                 break;
+
                 case EQUALS_CASE_SENSITIVE:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" COLLATE utf8mb4_bin = ? ");
-                    params.add(filterConstraint.getValue());
+                    params.add(convertValue(filterConstraint.getValue()));
                 break;
 
                 case DIFFERENT_THAN:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" <> ? ");
-                    params.add(filterConstraint.getValue());
+                    params.add(convertValue(filterConstraint.getValue()));
                 break;
 
                 case MORE_THAN:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" > ? ");
-                    params.add(filterConstraint.getValue());
+                    params.add(convertValue(filterConstraint.getValue()));
                 break;
 
                 case LESS_THAN:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" < ? ");
-                    params.add(filterConstraint.getValue());
+                    params.add(convertValue(filterConstraint.getValue()));
                 break;
 
                 case AFTER:
@@ -279,8 +280,8 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 case BETWEEN:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" BETWEEN ? AND ? ");
-                    params.add(filterConstraint.getValue());
-                    params.add(filterConstraint.getSecondValue());
+                    params.add(convertValue(filterConstraint.getValue()));
+                    params.add(convertValue(filterConstraint.getSecondValue()));
                 break;
 
                 case IN:
@@ -325,6 +326,22 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
             throw new UnsupportedFilterException(filterSelection);
         }
         return correspondingFilterSelection;
+    }
+
+    private Object convertValue(Object value) {
+        if (value instanceof String) {
+            String strValue = (String) value;
+            try {
+                return Integer.parseInt(strValue);
+            } catch (NumberFormatException e) {
+                try {
+                    return Double.parseDouble(strValue);
+                } catch (NumberFormatException ex) {
+                    return value; // Return original value if parsing fails
+                }
+            }
+        }
+        return value; // Return original value for non-string types
     }
 
     private static final class AdHocQuerySearchMapper implements RowMapper<AdHocSearchQueryData> {
