@@ -222,6 +222,13 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
         StringBuilder queryBuilder = new StringBuilder();
         for (int i = 0; i < filterConstraints.length; i++) {
             FilterConstraint filterConstraint = filterConstraints[i];
+            String constraintValue = filterConstraint.getValue();
+            Object value = constraintValue;
+
+            if (StringUtils.isNumeric(constraintValue)) {
+                value = new BigDecimal(constraintValue);
+            }
+
             switch (filterConstraint.getFilterElement()) {
                 case EQUALS:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
@@ -238,6 +245,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 case DIFFERENT_THAN:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" <> ? ");
+
                     params.add(convertValue(filterConstraint.getValue()));
                 break;
 
@@ -256,25 +264,25 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 case AFTER:
                     queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(") > DATE(?) ");
-                    params.add(filterConstraint.getValue());
+                    params.add(value);
                 break;
 
                 case AFTER_INCLUSIVE:
                     queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(") >= DATE(?) ");
-                    params.add(filterConstraint.getValue());
+                    params.add(value);
                 break;
 
                 case BEFORE:
                     queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(") < DATE(?) ");
-                    params.add(filterConstraint.getValue());
+                    params.add(value);
                 break;
 
                 case BEFORE_INCLUSIVE:
                     queryBuilder.append(" AND DATE(").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(") <= DATE(?) ");
-                    params.add(filterConstraint.getValue());
+                    params.add(value);
                 break;
 
                 case BETWEEN:
@@ -294,7 +302,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 case STARTS_WITH:
                     queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                             .append(" LIKE ? ");
-                    params.add(filterConstraint.getValue() + "%");
+                    params.add(value + "%");
                 break;
 
                 case ON:
@@ -304,7 +312,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                 case THIS_YEAR:
                 case LAST_DAYS:
                     DateRange dateRange = DateUtils.getDateRange(LocalDate.now(ZoneId.systemDefault()), filterConstraint.getFilterElement(),
-                            filterConstraint.getValue());
+                            String.valueOf(value));
                     if (dateRange != null) {
                         queryBuilder.append(" AND ").append(getFilterSelection(filterConstraint.getFilterSelection(), searchRequestMap))
                                 .append(" BETWEEN ? AND ? ");
