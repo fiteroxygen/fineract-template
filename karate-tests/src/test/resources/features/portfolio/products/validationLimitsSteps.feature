@@ -16,6 +16,7 @@ Feature: Validation limit Api's
     And request validationLimit.createPayload
     When method POST
     Then status 200
+    Then match $ contains { resourceId: '#notnull' }
     Then def code = response
 
   @ignore
@@ -30,6 +31,20 @@ Feature: Validation limit Api's
     When method GET
     Then status 200
     Then def validationLimits = response
+
+  #set parameter validationLimitId
+  @ignore
+  @fetchById
+  Scenario: Get validation limit
+    Given configure ssl = true
+    Given path 'validationlimit',validationLimitId
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    When method GET
+    Then status 200
+    Then def validationLimit = response
 
 
 

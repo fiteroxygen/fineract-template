@@ -77,7 +77,7 @@
     "isRegister": "true"
   },
   "createClientWithSavingsPayload" : {
-    "address": "#(address)",
+    "address": [],
     "officeId": 1,
     "legalFormId": 1,
     "firstname": "#(faker.name().firstName())",
