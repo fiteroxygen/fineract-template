@@ -224,9 +224,9 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
             FilterConstraint filterConstraint = filterConstraints[i];
             String constraintValue = filterConstraint.getValue();
             Object value = constraintValue;
-            //check if constraintValue is a numeric value take care of postgres query strictness
+
             if (StringUtils.isNumeric(constraintValue)) {
-                value= new BigDecimal(constraintValue);
+                value = new BigDecimal(constraintValue);
             }
 
             switch (filterConstraint.getFilterElement()) {
