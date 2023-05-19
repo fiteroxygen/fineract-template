@@ -29,6 +29,7 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component;
 @Data
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(callSuper = false)
 public class LoanRedrawAccount extends AbstractPersistableCustom {
 
     public LoanRedrawAccount() {
