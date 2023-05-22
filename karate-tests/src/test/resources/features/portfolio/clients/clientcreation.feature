@@ -47,7 +47,7 @@ Feature: Test client apis
     * def updatedClient = call read('classpath:features/portfolio/clients/clientsteps.feature@update') { clientId : '#(createdClientId)'}
     * assert createdClientId == updatedClient.res.resourceId
 
-    @Ignore
+
     #createClientWithSavings
     Scenario: Create client with savings account
 
@@ -69,13 +69,20 @@ Feature: Test client apis
     * def submittedOnDate = df.format(faker.date().past(30, 29, TimeUnit.DAYS))
 
     * def result = call read('classpath:features/portfolio/products/validationLimitsSteps.feature@list')
-    * def limits = result.validationLimits
-    * print limits, karate.sizeOf(limits)
-    * def call = if (karate.sizeOf(limits) < 1) karate.call('classpath:features/portfolio/products/validationLimitsSteps.feature@createValidationLimit');
-    * print call
+    * def limits =  result.validationLimits
+    * def limitValue = ((karate.sizeOf(limits) > 0)) ? limits[0] : {}
+    * print limits, karate.sizeOf(limits), limitValue
+
+    * def createdValLimit = if (karate.sizeOf(limits) < 1) karate.call('classpath:features/portfolio/products/validationLimitsSteps.feature@createValidationLimit');
+    * def createdId = createdValLimit != null ? createdValLimit.code.resourceId : 0
+    * def res = if(createdId != null && createdId >0) {karate.call('classpath:features/portfolio/products/validationLimitsSteps.feature@fetchById', { validationLimitId : createdId });}
+    * print res
+    * def limitValue = (res != null ? res.validationLimit : limitValue)
+    * print limitValue
+
     * def addValue = 100
-    * def clientLevel = limits[0].clientLevel.id
-    * def dailyLimit = limits[0].maximumClientSpecificDailyWithdrawLimit + addValue
-    * def singleLimit = limits[0].maximumClientSpecificSingleWithdrawLimit + addValue
-    * def result = call read('classpath:features/portfolio/clients/clientsteps.feature@createClientWithWithdrawalLimitsStep') { clientCreationDate : '#(submittedOnDate)',dailyWithdrawLimit : '#(dailyLimit)', singleWithdrawLimit : '#(singleLimit)', clientLevel : #(clientLevel)}
-    * print result
+    * def clientLevel = limitValue.clientLevel.id
+    * def dailyLimit = limitValue.maximumClientSpecificDailyWithdrawLimit + addValue
+    * def singleLimit = limitValue.maximumClientSpecificSingleWithdrawLimit + addValue
+    * def clientResult = call read('classpath:features/portfolio/clients/clientsteps.feature@createClientWithWithdrawalLimitsStep') { clientCreationDate : '#(submittedOnDate)',dailyWithdrawLimit : '#(dailyLimit)', singleWithdrawLimit : '#(singleLimit)', clientLevel : #(clientLevel)}
+    * print clientResult
