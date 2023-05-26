@@ -67,7 +67,7 @@ public class WebHookProcessor implements HookProcessor {
                 contentType = conf.getFieldValue();
             }
             if (fieldName.equals(BasicAuthParamName)) {
-                basicAuthCreds = "Basic "+ conf.getFieldValue();
+                basicAuthCreds = "Basic " + conf.getFieldValue();
             }
             if (fieldName.equals(apiKeyName)) {
                 String keyValuePair = conf.getFieldValue();
@@ -81,7 +81,7 @@ public class WebHookProcessor implements HookProcessor {
 
     @SuppressWarnings("unchecked")
     private void sendRequest(final String url, final String contentType, final String payload, final String entityName,
-                             final String actionName, final FineractContext context, String basicAuthCreds, String apiKey, String apiKeyValue) {
+            final String actionName, final FineractContext context, String basicAuthCreds, String apiKey, String apiKeyValue) {
 
         final String fineractEndpointUrl = System.getProperty("baseUrl");
         final WebHookService service = processorHelper.createWebHookService(url);
@@ -93,14 +93,14 @@ public class WebHookProcessor implements HookProcessor {
             final JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
 
             if (StringUtils.isBlank(basicAuthCreds)) {
-                service.sendJsonRequestBasicAuth(entityName, actionName, context.getTenantContext().getTenantIdentifier(), fineractEndpointUrl,basicAuthCreds, json)
-                        .enqueue(callback);
-            }else if (StringUtils.isBlank(apiKey)) {
-                service.sendJsonRequestApiKey(entityName, actionName, context.getTenantContext().getTenantIdentifier(), fineractEndpointUrl, apiKeyValue, json)
-                        .enqueue(callback);
-            }else
+                service.sendJsonRequestBasicAuth(entityName, actionName, context.getTenantContext().getTenantIdentifier(),
+                        fineractEndpointUrl, basicAuthCreds, json).enqueue(callback);
+            } else if (StringUtils.isBlank(apiKey)) {
+                service.sendJsonRequestApiKey(entityName, actionName, context.getTenantContext().getTenantIdentifier(), fineractEndpointUrl,
+                        apiKeyValue, json).enqueue(callback);
+            } else
                 service.sendJsonRequest(entityName, actionName, context.getTenantContext().getTenantIdentifier(), fineractEndpointUrl, json)
-                    .enqueue(callback);
+                        .enqueue(callback);
         } else {
             Map<String, String> map = new HashMap<>();
             map = new Gson().fromJson(payload, map.getClass());

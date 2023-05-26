@@ -46,13 +46,13 @@ public interface WebHookService {
     @POST(".")
     Call<Void> sendJsonRequestBasicAuth(@Header(ENTITY_HEADER) String entityHeader, @Header(ACTION_HEADER) String actionHeader,
             @Header(TENANT_HEADER) String tenantHeader, @Header(ENDPOINT_HEADER) String endpointHeader,
-                               @Header(BASIC_AUTH_HEADER) String basicAuthHeader, @Body JsonObject result);
+            @Header(BASIC_AUTH_HEADER) String basicAuthHeader, @Body JsonObject result);
 
     // Template - Web
     @POST(".")
     Call<Void> sendJsonRequestApiKey(@Header(ENTITY_HEADER) String entityHeader, @Header(ACTION_HEADER) String actionHeader,
             @Header(TENANT_HEADER) String tenantHeader, @Header(ENDPOINT_HEADER) String endpointHeader,
-                               @Header(API_KEY_HEADER) String apiKeyValue, @Body JsonObject result);
+            @Header(API_KEY_HEADER) String apiKeyValue, @Body JsonObject result);
 
     // Template - Web
     @POST(".")
