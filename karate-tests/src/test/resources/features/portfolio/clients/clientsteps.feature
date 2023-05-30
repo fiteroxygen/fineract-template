@@ -90,7 +90,7 @@ Feature: Client creations steps
     Then status 200
     Then def res = response
 
-  #set parameter clientCreationDate
+  #set parameter clientCreationDate, constitutionId
   @ignore
   @createEntityStep
   Scenario: Create Entity client test
@@ -133,4 +133,19 @@ Feature: Client creations steps
     Then status 200
     Then match $ contains { resourceId: '#notnull', savingsId : '#notnull' }
     Then def client = response
+
+  #set parameter clientCreationDate, dailyWithdrawLimit, singleWithdrawLimit
+  @ignore
+  @createClientWithWithdrawalLimitsStep
+  Scenario: Create client with Withdrawal limits
+    Given configure ssl = true
+    Given path 'clients'
+    And header Accept = 'application/json'
+    And header Authorization = authToken
+    And header fineract-platform-tenantid = tenantId
+    And request clientdata.createClientWithdrawalLimitsPayload
+    When method POST
+    Then status 400
+    Then match $ contains { developerMessage: '#notnull' }}
+
 

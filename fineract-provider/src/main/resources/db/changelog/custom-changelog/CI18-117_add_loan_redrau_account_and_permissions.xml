@@ -22,7 +22,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="judiao@fiter.io" id="CI18-117_add_loan_redraw_account_and_permissions">
+    <changeSet author="judiao@fiter.io" id="CI18-117_add_loan_redraw_account_and_permissions001">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="m_loan_redraw_account"/>
@@ -55,13 +55,6 @@
             </column>
         </createTable>
         <insert tableName="m_permission">
-            <column name="grouping" value="organisation"/>
-            <column name="code" value="VIEW_TASKS"/>
-            <column name="entity_name" value="TASKS"/>
-            <column name="action_name" value="VIEW"/>
-            <column name="can_maker_checker" valueBoolean="false"/>
-        </insert>
-        <insert tableName="m_permission">
             <column name="grouping" value="transaction_loan"/>
             <column name="code" value="LOAN_WITHDRAWAL_REDRAW"/>
             <column name="entity_name" value="LOAN"/>
@@ -75,6 +68,5 @@
             <column name="action_name" value="APPLY_REDRAW_PAYMENT"/>
             <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
-
     </changeSet>
 </databaseChangeLog>
