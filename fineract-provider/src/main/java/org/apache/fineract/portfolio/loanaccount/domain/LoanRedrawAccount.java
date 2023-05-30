@@ -29,6 +29,7 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component;
 @Data
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(callSuper = false)
 public class LoanRedrawAccount extends AbstractPersistableCustom {
 
     public LoanRedrawAccount() {
@@ -56,10 +58,10 @@ public class LoanRedrawAccount extends AbstractPersistableCustom {
     @JoinColumn(name = "withdrawn_by")
     private AppUser withdrawnBy;
 
-    @Column(name = "createdby_id")
+    @Column(name = "createdby_id", nullable = false)
     private Long createdBy;
 
-    @Column(name = "created_date")
+    @Column(name = "created_date", nullable = false)
     private LocalDateTime createdDate;
 
     @Column(name = "lastmodifiedby_id")
@@ -68,7 +70,7 @@ public class LoanRedrawAccount extends AbstractPersistableCustom {
     @Column(name = "lastmodified_date")
     private LocalDateTime lastModifiedDate;
 
-    @Column(name = "redrawBalance", scale = 6, precision = 19)
+    @Column(name = "redraw_balance", scale = 6, precision = 19, nullable = false)
     private BigDecimal redrawBalance;
 
     public void withdraw(final BigDecimal transactionAmount, final AppUser withdrawnBy, final LocalDateTime withdrawnOnDate) {

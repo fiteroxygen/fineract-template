@@ -1,7 +1,6 @@
 {
   "createClientPayload": {
     "address": [],
-    "familyMembers": [],
     "officeId": 1,
     "legalFormId": 1,
     "firstname": "#(faker.name().firstName())",
@@ -33,8 +32,6 @@
   },
   "createEntityClient" : {
     "address": [],
-    "familyMembers": [],
-    "businessOwners": [],
     "officeId": 1,
     "legalFormId": 2,
     "fullname": "Business",
@@ -43,12 +40,12 @@
       "incorpNumber": "#(faker.number().randomNumber())",
       "locale": "en",
       "dateFormat": "dd MMMM yyyy",
-      "incorpValidityTillDate": "#(df.format(calendar.getTime()))"
+      "incorpValidityTillDate": "#(df.format(calendar.getTime()))",
+      "constitutionId": "#(constitutionId)"
     },
     "active": false,
     "locale": "en",
     "dateFormat": "#(format)",
-    "activationDate": "#(clientCreationDate)",
     "submittedOnDate": "#(clientCreationDate)",
     "dateOfBirth": "#(df.format(faker.date().birthday()))",
     "savingsProductId": null,
@@ -65,7 +62,9 @@
        "incorpNumber": "#(faker.number().randomNumber())",
        "locale": "en",
        "dateFormat": "#(format)",
-       "incorpValidityTillDate": "#(df.format(calendar.getTime()))"
+       "incorpValidityTillDate": "#(df.format(calendar.getTime()))",
+       "constitutionId": "#(constitutionId)",
+       "isRegistered": "true"
      },
     "legalFormId": 2,
     "altMobileNo": "#(faker.phoneNumber().cellPhone())",
@@ -80,8 +79,6 @@
   },
   "createClientWithSavingsPayload" : {
     "address": [],
-    "familyMembers": [],
-    "businessOwners": [],
     "officeId": 1,
     "legalFormId": 1,
     "firstname": "#(faker.name().firstName())",
@@ -99,5 +96,24 @@
     "activationDate": "#(df.format(calendar.getTime()))",
     "submittedOnDate": "#(df.format(calendar.getTime()))",
     "dateOfBirth": "#(df.format(faker.date().birthday()))"
+  },
+  "createClientWithdrawalLimitsPayload": {
+    "address": [],
+    "officeId": 1,
+    "legalFormId": 1,
+    "firstname": "#(faker.name().firstName())",
+    "lastname": "#(faker.name().lastName())",
+    "mobileNo": "#(faker.phoneNumber().cellPhone())",
+    "active": true,
+    "locale": "en",
+    "dateFormat": "#(format)",
+    "submittedOnDate": "#(clientCreationDate)",
+    "activationDate": "#(clientCreationDate)",
+    "dateOfBirth": "#(df.format(faker.date().birthday()))",
+    "mnemonics": "anything",
+    "initials": "1",
+    "dailyWithdrawLimit": "#(dailyWithdrawLimit)",
+    "singleWithdrawLimit": "#(singleWithdrawLimit)",
+    "clientLevelId": "#(clientLevel)"
   }
 }
