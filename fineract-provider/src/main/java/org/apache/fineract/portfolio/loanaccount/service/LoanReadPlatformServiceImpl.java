@@ -2044,8 +2044,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
         public String schema() {
 
-            return " tr.id as id, tr.transaction_type_enum as transactionType,tr.transaction_date as " + sqlGenerator.escape("createdDate")
-                    + "tr.transaction_date as " + sqlGenerator.escape("date") + ", tr.amount as total, "
+            return " tr.id as id, tr.transaction_type_enum as transactionType, tr.transaction_date as " + sqlGenerator.escape("createdDate")
+                    + " ,tr.transaction_date as " + sqlGenerator.escape("date") + ", tr.amount as total, "
                     + " tr.principal_portion_derived as principal, tr.interest_portion_derived as interest, "
                     + " tr.fee_charges_portion_derived as fees, tr.penalty_charges_portion_derived as penalties, "
                     + " tr.overpayment_portion_derived as overpayment, tr.outstanding_loan_balance_derived as outstandingLoanBalance, "
