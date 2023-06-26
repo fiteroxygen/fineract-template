@@ -53,6 +53,8 @@ import org.apache.fineract.portfolio.loanaccount.domain.ChangedTransactionDetail
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanAccountDomainService;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentReminder;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentReminderRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallmentRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
@@ -118,6 +120,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
     private final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository;
 
     private final NoteRepository noteRepository;
+    private final LoanRepaymentReminderRepository loanRepaymentReminderRepository;
 
     /**
      * LoanRescheduleRequestWritePlatformServiceImpl constructor
@@ -139,7 +142,8 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             final LoanScheduleGeneratorFactory loanScheduleFactory, final LoanSummaryWrapper loanSummaryWrapper,
             final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
             final LoanAccountDomainService loanAccountDomainService,
-            final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository, NoteRepository noteRepository) {
+            final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository, NoteRepository noteRepository,
+            LoanRepaymentReminderRepository loanRepaymentReminderRepository) {
         this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
         this.platformSecurityContext = platformSecurityContext;
         this.loanRescheduleRequestDataValidator = loanRescheduleRequestDataValidator;
@@ -159,6 +163,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
         this.loanAccountDomainService = loanAccountDomainService;
         this.repaymentScheduleInstallmentRepository = repaymentScheduleInstallmentRepository;
         this.noteRepository = noteRepository;
+        this.loanRepaymentReminderRepository = loanRepaymentReminderRepository;
     }
 
     /**
@@ -525,7 +530,7 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
             // update the status of the request
             loanRescheduleRequest.approve(appUser, approvedOnDate);
-
+            deleteLoanRepaymentRemindersAssociatedToThisLoanAccount(loan);
             // update the loan object
             saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
 
@@ -553,6 +558,15 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
             // return an empty command processing result object
             return CommandProcessingResult.empty();
+        }
+    }
+
+    private void deleteLoanRepaymentRemindersAssociatedToThisLoanAccount(Loan loan) {
+        // delete dependencies on m_loan_repayment_reminder associated with this Loan Account
+        List<LoanRepaymentReminder> loanRepaymentReminders = loanRepaymentReminderRepository
+                .getLoanRepaymentReminderByLoanId(loan.getId().intValue());
+        for (LoanRepaymentReminder reminder : loanRepaymentReminders) {
+            loanRepaymentReminderRepository.delete(reminder);
         }
     }
 
