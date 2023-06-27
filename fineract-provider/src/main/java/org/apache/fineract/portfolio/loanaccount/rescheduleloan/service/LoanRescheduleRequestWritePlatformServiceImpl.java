@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
@@ -565,8 +566,9 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
         // delete dependencies on m_loan_repayment_reminder associated with this Loan Account
         List<LoanRepaymentReminder> loanRepaymentReminders = loanRepaymentReminderRepository
                 .getLoanRepaymentReminderByLoanId(loan.getId().intValue());
-        for (LoanRepaymentReminder reminder : loanRepaymentReminders) {
-            loanRepaymentReminderRepository.delete(reminder);
+
+        if (!CollectionUtils.isEmpty(loanRepaymentReminders)) {
+            loanRepaymentReminderRepository.deleteAll(loanRepaymentReminders);
         }
     }
 
