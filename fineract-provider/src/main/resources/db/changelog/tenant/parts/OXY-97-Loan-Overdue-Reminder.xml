@@ -310,4 +310,31 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="drop.modify.FK_m_loan_overdue_reminder-m_loan_id.m_loan" author="bosco@fiter.io">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK_m_loan_overdue_reminder-m_loan_id"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="m_loan_overdue_reminder"
+                                  constraintName="FK_m_loan_overdue_reminder-m_loan_id"/>
+        <addForeignKeyConstraint
+                baseColumnNames="loan_id" baseTableName="m_loan_overdue_reminder"
+                constraintName="FK_m_loan_overdue_reminder-m_loan_id_2" onDelete="CASCADE"
+                onUpdate="RESTRICT" referencedColumnNames="id"
+                referencedTableName="m_loan" />
+    </changeSet>
+
+    <changeSet id="drop.modify.FK_m_loan_overdue_reminder-loan_schedule_id.m_loan_overdue_reminder" author="bosco@fiter.io">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK_m_loan_overdue_reminder-loan_schedule_id"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="m_loan_overdue_reminder"
+                                  constraintName="FK_m_loan_overdue_reminder-loan_schedule_id"/>
+        <addForeignKeyConstraint
+                baseColumnNames="loan_schedule_id" baseTableName="m_loan_overdue_reminder"
+                constraintName="FK_m_loan_overdue_reminder-loan_schedule_id_2" onDelete="CASCADE"
+                onUpdate="RESTRICT" referencedColumnNames="id"
+                referencedTableName="m_loan_repayment_schedule" />
+    </changeSet>
+
 </databaseChangeLog>
