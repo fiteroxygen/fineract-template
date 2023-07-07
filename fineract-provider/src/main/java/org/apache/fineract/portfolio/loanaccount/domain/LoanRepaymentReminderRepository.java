@@ -29,7 +29,4 @@ public interface LoanRepaymentReminderRepository
 
     @Query("SELECT r FROM LoanRepaymentReminder r WHERE r.batchId = :batchId")
     List<LoanRepaymentReminder> getLoanRepaymentReminderByBatchId(@Param("batchId") String batchId);
-
-    @Query("SELECT r FROM LoanRepaymentReminder r WHERE r.loanId = :loanId")
-    List<LoanRepaymentReminder> getLoanRepaymentReminderByLoanId(@Param("loanId") Integer loanId);
 }

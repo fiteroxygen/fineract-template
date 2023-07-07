@@ -176,8 +176,6 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanInstallmentCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanInterestRecalcualtionAdditionalDetails;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanOverdueInstallmentCharge;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentReminder;
-import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentReminderRepository;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepository;
@@ -281,7 +279,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanRepository loanRepository;
     private final RepaymentWithPostDatedChecksAssembler repaymentWithPostDatedChecksAssembler;
     private final PostDatedChecksRepository postDatedChecksRepository;
-    private final LoanRepaymentReminderRepository loanRepaymentReminderRepository;
 
     @Autowired
     private ActiveMqNotificationDomainServiceImpl activeMqNotificationDomainService;
@@ -1920,7 +1917,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 accruedCharge = accruedCharge.plus(chargePaidByData.getAmount());
             }
         }
-        deleteLoanRepaymentRemindersAssociatedToThisLoanAccount(loan);
         final LoanTransaction waiveTransaction = loan.waiveLoanCharge(loanCharge, defaultLoanLifecycleStateMachine(), changes,
                 existingTransactionIds, existingReversedTransactionIds, loanInstallmentNumber, scheduleGeneratorDTO, accruedCharge);
 
@@ -3476,16 +3472,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         }
 
-    }
-
-    private void deleteLoanRepaymentRemindersAssociatedToThisLoanAccount(Loan loan) {
-        // delete dependencies on m_loan_repayment_reminder associated with this Loan Account
-        List<LoanRepaymentReminder> loanRepaymentReminders = loanRepaymentReminderRepository
-                .getLoanRepaymentReminderByLoanId(loan.getId().intValue());
-
-        if (!CollectionUtils.isEmpty(loanRepaymentReminders)) {
-            loanRepaymentReminderRepository.deleteAll(loanRepaymentReminders);
-        }
     }
 
 }
