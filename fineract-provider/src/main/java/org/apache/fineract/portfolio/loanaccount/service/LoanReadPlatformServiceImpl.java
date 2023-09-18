@@ -723,7 +723,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " left join m_product_loan_variable_installment_config lpvi on lpvi.loan_product_id = l.product_id"
                     + " left join m_loan_topup as topup on l.id = topup.loan_id"
                     + " left join m_loan as topuploan on topuploan.id = topup.closure_loan_id"
-                    + " left join m_portfolio_account_associations as paa on l.id = paa.loan_account_id";
+                    + " left join m_portfolio_account_associations as paa on l.id = paa.loan_account_id and paa.association_type_enum =1";
 
         }
 
