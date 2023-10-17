@@ -165,4 +165,12 @@ public final class TaxComponentData implements Serializable {
         return this.creditAccount;
     }
 
+    public Collection<TaxComponentHistoryData> getTaxComponentHistories() {
+        return taxComponentHistories;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
 }
