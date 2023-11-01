@@ -780,9 +780,12 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         }
 
         if (databaseTypeResolver.isPostgreSQL()) {
-            sqlBuilder = sqlBuilder.append(", RENAME COLUMN " + sqlGenerator.escape(name) + " TO " + sqlGenerator.escape(newName))
-                    .append("; ALTER TABLE " + sqlGenerator.escape(datatableName) + " ALTER COLUMN " + sqlGenerator.escape(newName)
-                            + " TYPE " + type);
+            if (!name.equalsIgnoreCase(newName)) {
+                sqlBuilder = sqlBuilder.append("; ALTER TABLE " + sqlGenerator.escape(datatableName) + " RENAME COLUMN "
+                        + sqlGenerator.escape(name) + " TO " + sqlGenerator.escape(newName));
+            }
+            sqlBuilder = sqlBuilder.append("; ALTER TABLE " + sqlGenerator.escape(datatableName) + " ALTER COLUMN "
+                    + sqlGenerator.escape(newName) + " TYPE " + type);
         } else {
             sqlBuilder = sqlBuilder.append(", CHANGE " + sqlGenerator.escape(name) + " " + sqlGenerator.escape(newName) + " " + type);
         }
@@ -889,8 +892,11 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         final String datatableAlias = datatableName.toLowerCase().replaceAll("\\s", "_");
         final String name = column.has("name") ? column.get("name").getAsString() : null;
         final StringBuilder findFKSql = new StringBuilder();
+
+        sqlBuilder.append(", DROP COLUMN " + sqlGenerator.escape(name));
+
         findFKSql.append("SELECT count(*)").append("FROM information_schema.TABLE_CONSTRAINTS i")
-                .append(" WHERE i.CONSTRAINT_TYPE = 'FOREIGN KEY'").append(" AND i.TABLE_SCHEMA = DATABASE()")
+                .append(" WHERE i.CONSTRAINT_TYPE = 'FOREIGN KEY'").append(" AND i.TABLE_SCHEMA = ").append(sqlGenerator.currentSchema())
                 .append(" AND i.TABLE_NAME = '").append(datatableName).append("' AND i.CONSTRAINT_NAME = 'fk_").append(datatableAlias)
                 .append("_").append(name).append("' ");
         final int count = this.jdbcTemplate.queryForObject(findFKSql.toString(), Integer.class);
@@ -1079,7 +1085,12 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             }
             if (changeColumns != null) {
 
-                StringBuilder sqlBuilder = new StringBuilder("ALTER TABLE " + sqlGenerator.escape(datatableName));
+                StringBuilder sqlBuilder = null;
+                if (databaseTypeResolver.isPostgreSQL()) {
+                    sqlBuilder = new StringBuilder();
+                } else {
+                    sqlBuilder = new StringBuilder("ALTER TABLE " + sqlGenerator.escape(datatableName));
+                }
                 final StringBuilder constrainBuilder = new StringBuilder();
                 final Map<String, Long> codeMappings = new HashMap<>();
                 final List<String> removeMappings = new ArrayList<>();
@@ -1092,10 +1103,18 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 }
 
                 // Remove the first comma, right after ALTER TABLE datatable
-                final int indexOfFirstComma = sqlBuilder.indexOf(",");
-                if (indexOfFirstComma != -1) {
-                    sqlBuilder = sqlBuilder.deleteCharAt(indexOfFirstComma);
+                if (databaseTypeResolver.isPostgreSQL()) {
+                    final int indexOfFirstComma = sqlBuilder.indexOf(";");
+                    if (indexOfFirstComma != -1) {
+                        sqlBuilder = sqlBuilder.deleteCharAt(indexOfFirstComma);
+                    }
+                } else {
+                    final int indexOfFirstComma = sqlBuilder.indexOf(",");
+                    if (indexOfFirstComma != -1) {
+                        sqlBuilder = sqlBuilder.deleteCharAt(indexOfFirstComma);
+                    }
                 }
+
                 sqlBuilder.append(constrainBuilder);
                 try {
                     this.jdbcTemplate.execute(sqlBuilder.toString());
