@@ -552,9 +552,6 @@ public final class LoanApplicationCommandFromApiJsonHelper {
 
         validateLoanMultiDisbursementDate(element, baseDataValidator, expectedDisbursementDate, principal);
         validatePartialPeriodSupport(interestCalculationPeriodType, baseDataValidator, element, loanProduct);
-        if (!dataValidationErrors.isEmpty()) {
-            throw new PlatformApiDataValidationException(dataValidationErrors);
-        }
 
         // BNPL related validations
         Boolean isBnplLoan = false;
@@ -565,23 +562,28 @@ public final class LoanApplicationCommandFromApiJsonHelper {
         }
 
         Boolean requiresEquityContribution = false;
+        BigDecimal equityContributionLoanPercentage = null;
         if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.requiresEquityContributionParamName, element)) {
             requiresEquityContribution = this.fromApiJsonHelper.extractBooleanNamed(LoanApiConstants.requiresEquityContributionParamName,
                     element);
             baseDataValidator.reset().parameter(LoanApiConstants.requiresEquityContributionParamName).value(requiresEquityContribution)
                     .ignoreIfNull().validateForBooleanValue();
-        }
 
-        BigDecimal equityContributionLoanPercentage = null;
-        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.equityContributionLoanPercentageParamName, element)) {
-            equityContributionLoanPercentage = this.fromApiJsonHelper
-                    .extractBigDecimalWithLocaleNamed(LoanApiConstants.equityContributionLoanPercentageParamName, element);
-            baseDataValidator.reset().parameter(LoanApiConstants.equityContributionLoanPercentageParamName)
-                    .value(equityContributionLoanPercentage).ignoreIfNull().zeroOrPositiveAmount();
+            if (Boolean.TRUE.equals(requiresEquityContribution)) {
+                equityContributionLoanPercentage = this.fromApiJsonHelper
+                        .extractBigDecimalWithLocaleNamed(LoanApiConstants.equityContributionLoanPercentageParamName, element);
+                baseDataValidator.reset().parameter(LoanApiConstants.equityContributionLoanPercentageParamName)
+                        .value(equityContributionLoanPercentage).notBlank().zeroOrPositiveAmount()
+                        .notGreaterThanMax(BigDecimal.valueOf(100));
+            }
         }
 
         validateBnplValues(baseDataValidator, isBnplLoan == null ? false : isBnplLoan,
                 requiresEquityContribution == null ? false : requiresEquityContribution, equityContributionLoanPercentage);
+
+        if (!dataValidationErrors.isEmpty()) {
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
     }
 
     private void validateBnplValues(final DataValidatorBuilder baseDataValidator, Boolean isBnplLoan, Boolean requiresEquityContribution,
