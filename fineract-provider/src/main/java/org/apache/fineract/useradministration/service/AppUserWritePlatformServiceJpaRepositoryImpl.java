@@ -129,10 +129,13 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             final Boolean sendPasswordToEmail = command.booleanObjectValueOfParameterNamed("sendPasswordToEmail");
             this.userDomainService.create(appUser, sendPasswordToEmail);
 
+            Map<String, Object> commandWithEncodedPassword = updateCommandWithEncodedPassword(appUser, officeId, staffId, command);
+
             return new CommandProcessingResultBuilder() //
                     .withCommandId(command.commandId()) //
                     .withEntityId(appUser.getId()) //
                     .withOfficeId(userOffice.getId()) //
+                    .with(commandWithEncodedPassword)
                     .build();
         } catch (final DataIntegrityViolationException dve) {
             throw handleDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
@@ -151,6 +154,22 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
             throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
                     List.of(error), e);
         }
+    }
+
+    private Map<String, Object> updateCommandWithEncodedPassword(AppUser appUser, Long officeId, Long staffId, JsonCommand command) {
+        Map<String, Object> commandWithEncodedPassword = command.mapObjectValueOfParameterNamed(command.json());
+        String passwordEncodedValue = appUser.getPassword();
+
+        commandWithEncodedPassword.put("password", passwordEncodedValue);
+        commandWithEncodedPassword.put("repeatPassword", passwordEncodedValue);
+        if (officeId != null) {
+            commandWithEncodedPassword.put("officeId", officeId);
+        }
+        if (staffId != null) {
+            commandWithEncodedPassword.put("staffId", staffId);
+        }
+
+        return commandWithEncodedPassword;
     }
 
     @Override
