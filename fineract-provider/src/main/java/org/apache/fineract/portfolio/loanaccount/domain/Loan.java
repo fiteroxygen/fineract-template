@@ -1294,6 +1294,12 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
 
     private void applyPeriodicAccruals(final Collection<LoanTransaction> accruals) {
         List<LoanRepaymentScheduleInstallment> installments = getRepaymentScheduleInstallments();
+
+        if (getAccruedTill() == null) {
+            final String errorMessage = "Loan can't be disbursed. Failed to apply Periodic Accruals for loan transactions";
+            throw new LoanDisbursalException(errorMessage, "failed.apply.periodic.accruals.because.accruedTill.is.null", getAccruedTill());
+        }
+
         for (LoanRepaymentScheduleInstallment installment : installments) {
             Money interest = Money.zero(getCurrency());
             Money fee = Money.zero(getCurrency());

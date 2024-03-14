@@ -447,14 +447,16 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 BigDecimal loanOutstanding = this.loanReadPlatformService
                         .retrieveLoanForeclosureTemplate(loanIdToClose, actualDisbursementDate).getAmount();
                 final BigDecimal firstDisbursalAmount = loan.getFirstDisbursalAmount();
-                if (loanOutstanding.compareTo(firstDisbursalAmount) > 0) {
+                if (loanOutstanding.compareTo(firstDisbursalAmount) > 0 & loan.isMultiDisburmentLoan()) {
                     throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
                             "Topup loan amount should be greater than outstanding amount of loan to be closed.");
                 }
 
-                amountToDisburse = disburseAmount.minus(loanOutstanding);
-
                 disburseLoanToLoan(loan, command, loanOutstanding);
+                Money principalAmount = loan.getLoanRepaymentScheduleDetail().getPrincipal();
+                BigDecimal principalAmountWithLoanOutstanding = principalAmount.add(loanOutstanding).getAmount();
+                loan.getLoanRepaymentScheduleDetail().setPrincipal(principalAmountWithLoanOutstanding);
+                recalculateSchedule = true;
             }
 
             if (isAccountTransfer) {
