@@ -872,7 +872,9 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             } else if (type.equalsIgnoreCase("Decimal")) {
                 sqlBuilder = sqlBuilder.append("(19,6)");
             } else if (type.equalsIgnoreCase("Dropdown")) {
-                sqlBuilder = sqlBuilder.append("(11)");
+                if (databaseTypeResolver.isMySQL()) {
+                    sqlBuilder = sqlBuilder.append("(11)");
+                }
             }
         }
 
