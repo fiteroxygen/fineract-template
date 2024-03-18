@@ -342,7 +342,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                     BigDecimal loanOutstanding = this.loanReadPlatformService
                             .retrieveLoanForeclosureTemplate(loanIdToClose, newLoanApplication.getDisbursementDate()).getAmount();
                     final BigDecimal firstDisbursalAmount = newLoanApplication.getFirstDisbursalAmount();
-                    if (loanOutstanding.compareTo(firstDisbursalAmount) > 0) {
+                    if (loanOutstanding.compareTo(firstDisbursalAmount) > 0 & newLoanApplication.isMultiDisburmentLoan()) {
                         throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
                                 "Topup loan amount should be greater than outstanding amount of loan to be closed.");
                     }
@@ -934,7 +934,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                         BigDecimal loanOutstanding = this.loanReadPlatformService
                                 .retrieveLoanForeclosureTemplate(loanIdToClose, existingLoanApplication.getDisbursementDate()).getAmount();
                         final BigDecimal firstDisbursalAmount = existingLoanApplication.getFirstDisbursalAmount();
-                        if (loanOutstanding.compareTo(firstDisbursalAmount) > 0) {
+                        if (loanOutstanding.compareTo(firstDisbursalAmount) > 0 & existingLoanApplication.isMultiDisburmentLoan()) {
                             throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
                                     "Topup loan amount should be greater than outstanding amount of loan to be closed.");
                         }
@@ -1515,7 +1515,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 BigDecimal loanOutstanding = this.loanReadPlatformService
                         .retrieveLoanForeclosureTemplate(loanIdToClose, expectedDisbursementDate).getAmount();
                 final BigDecimal firstDisbursalAmount = loan.getFirstDisbursalAmount();
-                if (loanOutstanding.compareTo(firstDisbursalAmount) > 0) {
+                if (loanOutstanding.compareTo(firstDisbursalAmount) > 0 & loan.isMultiDisburmentLoan()) {
                     throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
                             "Topup loan amount should be greater than outstanding amount of loan to be closed.");
                 }

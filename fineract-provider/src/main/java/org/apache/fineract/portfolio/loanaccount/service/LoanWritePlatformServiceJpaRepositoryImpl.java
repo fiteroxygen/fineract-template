@@ -447,14 +447,16 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 BigDecimal loanOutstanding = this.loanReadPlatformService
                         .retrieveLoanForeclosureTemplate(loanIdToClose, actualDisbursementDate).getAmount();
                 final BigDecimal firstDisbursalAmount = loan.getFirstDisbursalAmount();
-                if (loanOutstanding.compareTo(firstDisbursalAmount) > 0) {
+                if (loanOutstanding.compareTo(firstDisbursalAmount) > 0 & loan.isMultiDisburmentLoan()) {
                     throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
                             "Topup loan amount should be greater than outstanding amount of loan to be closed.");
                 }
 
-                amountToDisburse = disburseAmount.minus(loanOutstanding);
-
                 disburseLoanToLoan(loan, command, loanOutstanding);
+                Money principalAmount = loan.getLoanRepaymentScheduleDetail().getPrincipal();
+                BigDecimal principalAmountWithLoanOutstanding = principalAmount.add(loanOutstanding).getAmount();
+                loan.getLoanRepaymentScheduleDetail().setPrincipal(principalAmountWithLoanOutstanding);
+                recalculateSchedule = true;
             }
 
             if (isAccountTransfer) {
@@ -2117,17 +2119,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 // if equity contribution is false, it means full disbursal amount transfer to vendor
                 bnplVendorAmount = amount;
             }
-
-            // deduct charge from vendor amount
-            BigDecimal pendingDisbursalCharges = BigDecimal.ZERO;
-            final Set<LoanCharge> loanCharges = loan.charges();
-            for (final LoanCharge loanCharge : loanCharges) {
-                if ((loanCharge.isDueAtDisbursement() || loanCharge.isDisburseToSavings()) && loanCharge.isChargePending()) {
-                    pendingDisbursalCharges = pendingDisbursalCharges.add(loanCharge.amountOutstanding(), mc);
-                }
-            }
-            Money pendingDisbursalChargeMoney = Money.of(loan.getCurrency(), pendingDisbursalCharges);
-            bnplVendorAmount = bnplVendorAmount.minus(pendingDisbursalChargeMoney);
 
             final AccountTransferDTO vendorAccountTransferDTO = new AccountTransferDTO(transactionDate, bnplVendorAmount.getAmount(),
                     PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS, portfolioAccountData.accountId(),
