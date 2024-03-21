@@ -478,6 +478,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                  */
                 recalculateSchedule = true;
             }
+
+            if (loan.getRepaymentScheduleInstallments().size() > 0 & loan.getExpectedDisbursedOnLocalDate().isEqual(actualDisbursementDate)) {
+                LoanRepaymentScheduleInstallment firstLoanRepaymentScheduleInstallment = loan.getRepaymentScheduleInstallments().get(0);
+                if (!firstLoanRepaymentScheduleInstallment.getFromDate().isEqual(actualDisbursementDate)) {
+                    recalculateSchedule = true;
+                }
+            }
+
             regenerateScheduleOnDisbursement(command, loan, recalculateSchedule, scheduleGeneratorDTO, nextPossibleRepaymentDate,
                     rescheduledRepaymentDate);
             if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
