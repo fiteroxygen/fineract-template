@@ -52,6 +52,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -232,6 +233,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @Slf4j
@@ -279,6 +282,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanRepository loanRepository;
     private final RepaymentWithPostDatedChecksAssembler repaymentWithPostDatedChecksAssembler;
     private final PostDatedChecksRepository postDatedChecksRepository;
+    private static final Logger LOG = LoggerFactory.getLogger(LoanWritePlatformServiceJpaRepositoryImpl.class);
 
     @Autowired
     private ActiveMqNotificationDomainServiceImpl activeMqNotificationDomainService;
@@ -317,262 +321,267 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     @Override
     public CommandProcessingResult disburseLoan(final Long loanId, final JsonCommand command, Boolean isAccountTransfer) {
 
-        final AppUser currentUser = getAppUserIfPresent();
+        try {
+            final AppUser currentUser = getAppUserIfPresent();
 
-        this.loanEventApiJsonValidator.validateDisbursement(command.json(), isAccountTransfer);
+            this.loanEventApiJsonValidator.validateDisbursement(command.json(), isAccountTransfer);
 
-        if (command.parameterExists("postDatedChecks")) {
-            // validate with post dated checks for the disbursement
-            this.loanEventApiJsonValidator.validateDisbursementWithPostDatedChecks(command.json(), loanId);
-        }
-
-        final Loan loan = this.loanAssembler.assembleFrom(loanId);
-        if (loan.loanProduct().isDisallowExpectedDisbursements()) {
-            // create artificial 'tranche/expected disbursal' as current disburse code expects it for multi-disbursal
-            // products
-            final LocalDate artificialExpectedDate = loan.getExpectedDisbursedOnLocalDate();
-            LoanDisbursementDetails disbursementDetail = new LoanDisbursementDetails(artificialExpectedDate, null,
-                    loan.getDisbursedAmount(), null);
-            disbursementDetail.updateLoan(loan);
-            loan.getDisbursementDetails().add(disbursementDetail);
-        }
-
-        // Get disbursedAmount
-        final BigDecimal disbursedAmount = loan.getDisbursedAmount();
-        final Set<LoanCollateralManagement> loanCollateralManagements = loan.getLoanCollateralManagements();
-
-        // Get relevant loan collateral modules
-        if ((loanCollateralManagements != null && loanCollateralManagements.size() != 0)
-                && AccountType.fromInt(loan.getLoanType()).isIndividualAccount()) {
-
-            BigDecimal totalCollateral = BigDecimal.valueOf(0);
-
-            for (LoanCollateralManagement loanCollateralManagement : loanCollateralManagements) {
-                BigDecimal quantity = loanCollateralManagement.getQuantity();
-                BigDecimal pctToBase = loanCollateralManagement.getClientCollateralManagement().getCollaterals().getPctToBase();
-                BigDecimal basePrice = loanCollateralManagement.getClientCollateralManagement().getCollaterals().getBasePrice();
-                totalCollateral = totalCollateral.add(quantity.multiply(basePrice).multiply(pctToBase).divide(BigDecimal.valueOf(100)));
+            if (command.parameterExists("postDatedChecks")) {
+                // validate with post dated checks for the disbursement
+                this.loanEventApiJsonValidator.validateDisbursementWithPostDatedChecks(command.json(), loanId);
             }
 
-            // Validate the loan collateral value against the disbursedAmount
-            if (disbursedAmount.compareTo(totalCollateral) > 0) {
-                throw new LoanCollateralAmountNotSufficientException(disbursedAmount);
+            final Loan loan = this.loanAssembler.assembleFrom(loanId);
+            if (loan.loanProduct().isDisallowExpectedDisbursements()) {
+                // create artificial 'tranche/expected disbursal' as current disburse code expects it for multi-disbursal
+                // products
+                final LocalDate artificialExpectedDate = loan.getExpectedDisbursedOnLocalDate();
+                LoanDisbursementDetails disbursementDetail = new LoanDisbursementDetails(artificialExpectedDate, null,
+                        loan.getDisbursedAmount(), null);
+                disbursementDetail.updateLoan(loan);
+                loan.getDisbursementDetails().add(disbursementDetail);
             }
-        }
 
-        final LocalDate actualDisbursementDate = command.localDateValueOfParameterNamed("actualDisbursementDate");
+            // Get disbursedAmount
+            final BigDecimal disbursedAmount = loan.getDisbursedAmount();
+            final Set<LoanCollateralManagement> loanCollateralManagements = loan.getLoanCollateralManagements();
 
-        // validate ActualDisbursement Date Against Expected Disbursement Date
-        LoanProduct loanProduct = loan.loanProduct();
-        if (loanProduct.syncExpectedWithDisbursementDate()) {
-            syncExpectedDateWithActualDisbursementDate(loan, actualDisbursementDate);
-        }
+            // Get relevant loan collateral modules
+            if ((loanCollateralManagements != null && loanCollateralManagements.size() != 0)
+                    && AccountType.fromInt(loan.getLoanType()).isIndividualAccount()) {
 
-        for (final LoanCharge loanCharge : loan.charges()) {
-            if (loanCharge.isDisburseToSavings()) {
-                loanCharge.setDueDate(actualDisbursementDate);
-            }
-        }
-        checkClientOrGroupActive(loan);
+                BigDecimal totalCollateral = BigDecimal.valueOf(0);
 
-        final LocalDate nextPossibleRepaymentDate = loan.getNextPossibleRepaymentDateForRescheduling();
-        final LocalDate rescheduledRepaymentDate = command.localDateValueOfParameterNamed("adjustRepaymentDate");
-
-        entityDatatableChecksWritePlatformService.runTheCheckForProduct(loanId, EntityTables.LOAN.getName(),
-                StatusEnum.DISBURSE.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(), loan.productId());
-
-        LocalDate recalculateFrom = null;
-        if (!loan.isMultiDisburmentLoan()) {
-            loan.setActualDisbursementDate(actualDisbursementDate);
-        }
-        ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
-
-        // validate actual disbursement date against meeting date
-        final CalendarInstance calendarInstance = this.calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
-                CalendarEntityType.LOANS.getValue());
-        if (loan.isSyncDisbursementWithMeeting()) {
-            this.loanEventApiJsonValidator.validateDisbursementDateWithMeetingDate(actualDisbursementDate, calendarInstance,
-                    scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(), scheduleGeneratorDTO.getNumberOfdays());
-        }
-
-        businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
-
-        final List<Long> existingTransactionIds = new ArrayList<>();
-        final List<Long> existingReversedTransactionIds = new ArrayList<>();
-
-        final Map<String, Object> changes = new LinkedHashMap<>();
-
-        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
-        if (paymentDetail != null && paymentDetail.getPaymentType() != null && paymentDetail.getPaymentType().isCashPayment()) {
-            BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
-            this.cashierTransactionDataValidator.validateOnLoanDisbursal(currentUser, loan.getCurrencyCode(), transactionAmount);
-        }
-        final Boolean isPaymnetypeApplicableforDisbursementCharge = configurationDomainService
-                .isPaymnetypeApplicableforDisbursementCharge();
-
-        // Recalculate first repayment date based in actual disbursement date.
-        updateLoanCounters(loan, actualDisbursementDate);
-        Money amountBeforeAdjust = loan.getPrincpal();
-        loan.validateAccountStatus(LoanEvent.LOAN_DISBURSED);
-        boolean canDisburse = loan.canDisburse(actualDisbursementDate);
-        ChangedTransactionDetail changedTransactionDetail = null;
-        if (canDisburse) {
-
-            // Get netDisbursalAmount from disbursal screen field.
-            final BigDecimal netDisbursalAmount = command
-                    .bigDecimalValueOfParameterNamed(LoanApiConstants.disbursementNetDisbursalAmountParameterName);
-            if (netDisbursalAmount != null) {
-                loan.setNetDisbursalAmount(netDisbursalAmount);
-            }
-            Money disburseAmount = loan.adjustDisburseAmount(command, actualDisbursementDate);
-            Money amountToDisburse = disburseAmount.copy();
-            boolean recalculateSchedule = amountBeforeAdjust.isNotEqualTo(loan.getPrincpal());
-            final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
-
-            if (loan.isTopup() && loan.getClientId() != null) {
-                final Long loanIdToClose = loan.getTopupLoanDetails().getLoanIdToClose();
-                final Loan loanToClose = this.loanRepositoryWrapper.findNonClosedLoanThatBelongsToClient(loanIdToClose, loan.getClientId());
-                if (loanToClose == null) {
-                    throw new GeneralPlatformDomainRuleException("error.msg.loan.to.be.closed.with.topup.is.not.active",
-                            "Loan to be closed with this topup is not active.");
-                }
-                final LocalDate lastUserTransactionOnLoanToClose = loanToClose.getLastUserTransactionDate();
-                if (loan.getDisbursementDate().isBefore(lastUserTransactionOnLoanToClose)) {
-                    throw new GeneralPlatformDomainRuleException(
-                            "error.msg.loan.disbursal.date.should.be.after.last.transaction.date.of.loan.to.be.closed",
-                            "Disbursal date of this loan application " + loan.getDisbursementDate()
-                                    + " should be after last transaction date of loan to be closed " + lastUserTransactionOnLoanToClose);
+                for (LoanCollateralManagement loanCollateralManagement : loanCollateralManagements) {
+                    BigDecimal quantity = loanCollateralManagement.getQuantity();
+                    BigDecimal pctToBase = loanCollateralManagement.getClientCollateralManagement().getCollaterals().getPctToBase();
+                    BigDecimal basePrice = loanCollateralManagement.getClientCollateralManagement().getCollaterals().getBasePrice();
+                    totalCollateral = totalCollateral.add(quantity.multiply(basePrice).multiply(pctToBase).divide(BigDecimal.valueOf(100)));
                 }
 
-                BigDecimal loanOutstanding = this.loanReadPlatformService
-                        .retrieveLoanForeclosureTemplate(loanIdToClose, actualDisbursementDate).getAmount();
-                final BigDecimal firstDisbursalAmount = loan.getFirstDisbursalAmount();
-                if (loanOutstanding.compareTo(firstDisbursalAmount) > 0 & loan.isMultiDisburmentLoan()) {
-                    throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
-                            "Topup loan amount should be greater than outstanding amount of loan to be closed.");
+                // Validate the loan collateral value against the disbursedAmount
+                if (disbursedAmount.compareTo(totalCollateral) > 0) {
+                    throw new LoanCollateralAmountNotSufficientException(disbursedAmount);
                 }
-
-                disburseLoanToLoan(loan, command, loanOutstanding);
-                Money principalAmount = loan.getLoanRepaymentScheduleDetail().getPrincipal();
-                BigDecimal principalAmountWithLoanOutstanding = principalAmount.add(loanOutstanding).getAmount();
-                loan.getLoanRepaymentScheduleDetail().setPrincipal(principalAmountWithLoanOutstanding);
-                recalculateSchedule = true;
             }
 
-            if (isAccountTransfer) {
-                disburseLoanToSavings(loan, command, amountToDisburse, paymentDetail);
-                existingTransactionIds.addAll(loan.findExistingTransactionIds());
-                existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
-            } else {
-                existingTransactionIds.addAll(loan.findExistingTransactionIds());
-                existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
-                LoanTransaction disbursementTransaction = LoanTransaction.disbursement(loan.getOffice(), amountToDisburse, paymentDetail,
-                        actualDisbursementDate, txnExternalId);
-                disbursementTransaction.updateLoan(loan);
-                loan.addLoanTransaction(disbursementTransaction);
+            final LocalDate actualDisbursementDate = command.localDateValueOfParameterNamed("actualDisbursementDate");
+
+            // validate ActualDisbursement Date Against Expected Disbursement Date
+            LoanProduct loanProduct = loan.loanProduct();
+            if (loanProduct.syncExpectedWithDisbursementDate()) {
+                syncExpectedDateWithActualDisbursementDate(loan, actualDisbursementDate);
             }
 
-            if (loan.getRepaymentScheduleInstallments().size() == 0) {
-                /*
-                 * If no schedule, generate one (applicable to non-tranche multi-disbursal loans)
-                 */
-                recalculateSchedule = true;
+            for (final LoanCharge loanCharge : loan.charges()) {
+                if (loanCharge.isDisburseToSavings()) {
+                    loanCharge.setDueDate(actualDisbursementDate);
+                }
+            }
+            checkClientOrGroupActive(loan);
+
+            final LocalDate nextPossibleRepaymentDate = loan.getNextPossibleRepaymentDateForRescheduling();
+            final LocalDate rescheduledRepaymentDate = command.localDateValueOfParameterNamed("adjustRepaymentDate");
+
+            entityDatatableChecksWritePlatformService.runTheCheckForProduct(loanId, EntityTables.LOAN.getName(),
+                    StatusEnum.DISBURSE.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(), loan.productId());
+
+            LocalDate recalculateFrom = null;
+            if (!loan.isMultiDisburmentLoan()) {
+                loan.setActualDisbursementDate(actualDisbursementDate);
+            }
+            ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
+
+            // validate actual disbursement date against meeting date
+            final CalendarInstance calendarInstance = this.calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
+                    CalendarEntityType.LOANS.getValue());
+            if (loan.isSyncDisbursementWithMeeting()) {
+                this.loanEventApiJsonValidator.validateDisbursementDateWithMeetingDate(actualDisbursementDate, calendarInstance,
+                        scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(), scheduleGeneratorDTO.getNumberOfdays());
             }
 
-            if (loan.getRepaymentScheduleInstallments().size() > 0 & loan.getExpectedDisbursedOnLocalDate().isEqual(actualDisbursementDate)) {
-                LoanRepaymentScheduleInstallment firstLoanRepaymentScheduleInstallment = loan.getRepaymentScheduleInstallments().get(0);
-                if (!firstLoanRepaymentScheduleInstallment.getFromDate().isEqual(actualDisbursementDate)) {
+            businessEventNotifierService.notifyPreBusinessEvent(new LoanDisbursalBusinessEvent(loan));
+
+            final List<Long> existingTransactionIds = new ArrayList<>();
+            final List<Long> existingReversedTransactionIds = new ArrayList<>();
+
+            final Map<String, Object> changes = new LinkedHashMap<>();
+
+            final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+            if (paymentDetail != null && paymentDetail.getPaymentType() != null && paymentDetail.getPaymentType().isCashPayment()) {
+                BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+                this.cashierTransactionDataValidator.validateOnLoanDisbursal(currentUser, loan.getCurrencyCode(), transactionAmount);
+            }
+            final Boolean isPaymnetypeApplicableforDisbursementCharge = configurationDomainService
+                    .isPaymnetypeApplicableforDisbursementCharge();
+
+            // Recalculate first repayment date based in actual disbursement date.
+            updateLoanCounters(loan, actualDisbursementDate);
+            Money amountBeforeAdjust = loan.getPrincpal();
+            loan.validateAccountStatus(LoanEvent.LOAN_DISBURSED);
+            boolean canDisburse = loan.canDisburse(actualDisbursementDate);
+            ChangedTransactionDetail changedTransactionDetail = null;
+            if (canDisburse) {
+
+                // Get netDisbursalAmount from disbursal screen field.
+                final BigDecimal netDisbursalAmount = command
+                        .bigDecimalValueOfParameterNamed(LoanApiConstants.disbursementNetDisbursalAmountParameterName);
+                if (netDisbursalAmount != null) {
+                    loan.setNetDisbursalAmount(netDisbursalAmount);
+                }
+                Money disburseAmount = loan.adjustDisburseAmount(command, actualDisbursementDate);
+                Money amountToDisburse = disburseAmount.copy();
+                boolean recalculateSchedule = amountBeforeAdjust.isNotEqualTo(loan.getPrincpal());
+                final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
+
+                if (loan.isTopup() && loan.getClientId() != null) {
+                    final Long loanIdToClose = loan.getTopupLoanDetails().getLoanIdToClose();
+                    final Loan loanToClose = this.loanRepositoryWrapper.findNonClosedLoanThatBelongsToClient(loanIdToClose, loan.getClientId());
+                    if (loanToClose == null) {
+                        throw new GeneralPlatformDomainRuleException("error.msg.loan.to.be.closed.with.topup.is.not.active",
+                                "Loan to be closed with this topup is not active.");
+                    }
+                    final LocalDate lastUserTransactionOnLoanToClose = loanToClose.getLastUserTransactionDate();
+                    if (loan.getDisbursementDate().isBefore(lastUserTransactionOnLoanToClose)) {
+                        throw new GeneralPlatformDomainRuleException(
+                                "error.msg.loan.disbursal.date.should.be.after.last.transaction.date.of.loan.to.be.closed",
+                                "Disbursal date of this loan application " + loan.getDisbursementDate()
+                                        + " should be after last transaction date of loan to be closed " + lastUserTransactionOnLoanToClose);
+                    }
+
+                    BigDecimal loanOutstanding = this.loanReadPlatformService
+                            .retrieveLoanForeclosureTemplate(loanIdToClose, actualDisbursementDate).getAmount();
+                    final BigDecimal firstDisbursalAmount = loan.getFirstDisbursalAmount();
+                    if (loanOutstanding.compareTo(firstDisbursalAmount) > 0 & loan.isMultiDisburmentLoan()) {
+                        throw new GeneralPlatformDomainRuleException("error.msg.loan.amount.less.than.outstanding.of.loan.to.be.closed",
+                                "Topup loan amount should be greater than outstanding amount of loan to be closed.");
+                    }
+
+                    disburseLoanToLoan(loan, command, loanOutstanding);
+                    Money principalAmount = loan.getLoanRepaymentScheduleDetail().getPrincipal();
+                    BigDecimal principalAmountWithLoanOutstanding = principalAmount.add(loanOutstanding).getAmount();
+                    loan.getLoanRepaymentScheduleDetail().setPrincipal(principalAmountWithLoanOutstanding);
                     recalculateSchedule = true;
                 }
+
+                if (isAccountTransfer) {
+                    disburseLoanToSavings(loan, command, amountToDisburse, paymentDetail);
+                    existingTransactionIds.addAll(loan.findExistingTransactionIds());
+                    existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
+                } else {
+                    existingTransactionIds.addAll(loan.findExistingTransactionIds());
+                    existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
+                    LoanTransaction disbursementTransaction = LoanTransaction.disbursement(loan.getOffice(), amountToDisburse, paymentDetail,
+                            actualDisbursementDate, txnExternalId);
+                    disbursementTransaction.updateLoan(loan);
+                    loan.addLoanTransaction(disbursementTransaction);
+                }
+
+                if (loan.getRepaymentScheduleInstallments().size() == 0) {
+                    /*
+                     * If no schedule, generate one (applicable to non-tranche multi-disbursal loans)
+                     */
+                    recalculateSchedule = true;
+                }
+
+                if (loan.getRepaymentScheduleInstallments().size() > 0 & loan.getExpectedDisbursedOnLocalDate().isEqual(actualDisbursementDate)) {
+                    LoanRepaymentScheduleInstallment firstLoanRepaymentScheduleInstallment = loan.getRepaymentScheduleInstallments().get(0);
+                    if (!firstLoanRepaymentScheduleInstallment.getFromDate().isEqual(actualDisbursementDate)) {
+                        recalculateSchedule = true;
+                    }
+                }
+
+                regenerateScheduleOnDisbursement(command, loan, recalculateSchedule, scheduleGeneratorDTO, nextPossibleRepaymentDate,
+                        rescheduledRepaymentDate);
+                if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
+                    createAndSaveLoanScheduleArchive(loan, scheduleGeneratorDTO);
+                }
+                if (isPaymnetypeApplicableforDisbursementCharge) {
+                    changedTransactionDetail = loan.disburse(currentUser, command, changes, scheduleGeneratorDTO, paymentDetail);
+                } else {
+                    changedTransactionDetail = loan.disburse(currentUser, command, changes, scheduleGeneratorDTO, null);
+                }
+
+                loan.adjustNetDisbursalAmount(amountToDisburse.getAmount());
+            }
+            if (!changes.isEmpty()) {
+                saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
+
+                final String noteText = command.stringValueOfParameterNamed("note");
+                if (StringUtils.isNotBlank(noteText)) {
+                    final Note note = Note.loanNote(loan, noteText);
+                    this.noteRepository.save(note);
+                }
+
+                if (changedTransactionDetail != null) {
+                    for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                        this.loanTransactionRepository.save(mapEntry.getValue());
+                        this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
+                    }
+                }
+
+                // auto create standing instruction
+                createStandingInstruction(loan);
+
+                postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
             }
 
-            regenerateScheduleOnDisbursement(command, loan, recalculateSchedule, scheduleGeneratorDTO, nextPossibleRepaymentDate,
-                    rescheduledRepaymentDate);
-            if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
-                createAndSaveLoanScheduleArchive(loan, scheduleGeneratorDTO);
-            }
-            if (isPaymnetypeApplicableforDisbursementCharge) {
-                changedTransactionDetail = loan.disburse(currentUser, command, changes, scheduleGeneratorDTO, paymentDetail);
-            } else {
-                changedTransactionDetail = loan.disburse(currentUser, command, changes, scheduleGeneratorDTO, null);
-            }
-
-            loan.adjustNetDisbursalAmount(amountToDisburse.getAmount());
-        }
-        if (!changes.isEmpty()) {
-            saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
-
-            final String noteText = command.stringValueOfParameterNamed("note");
-            if (StringUtils.isNotBlank(noteText)) {
-                final Note note = Note.loanNote(loan, noteText);
-                this.noteRepository.save(note);
-            }
-
-            if (changedTransactionDetail != null) {
-                for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
-                    this.loanTransactionRepository.save(mapEntry.getValue());
-                    this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
+            final Set<LoanCharge> loanCharges = loan.charges();
+            final Map<Long, BigDecimal> disBuLoanCharges = new HashMap<>();
+            for (final LoanCharge loanCharge : loanCharges) {
+                if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()
+                        && loanCharge.isChargePending()) {
+                    disBuLoanCharges.put(loanCharge.getId(), loanCharge.amountOutstanding());
                 }
             }
 
-            // auto create standing instruction
-            createStandingInstruction(loan);
-
-            postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
-        }
-
-        final Set<LoanCharge> loanCharges = loan.charges();
-        final Map<Long, BigDecimal> disBuLoanCharges = new HashMap<>();
-        for (final LoanCharge loanCharge : loanCharges) {
-            if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()
-                    && loanCharge.isChargePending()) {
-                disBuLoanCharges.put(loanCharge.getId(), loanCharge.amountOutstanding());
+            final Locale locale = command.extractLocale();
+            final DateTimeFormatter fmt = DateTimeFormatter.ofPattern(command.dateFormat()).withLocale(locale);
+            for (final Map.Entry<Long, BigDecimal> entrySet : disBuLoanCharges.entrySet()) {
+                final PortfolioAccountData savingAccountData = this.accountAssociationsReadPlatformService.retriveLoanLinkedAssociation(loanId);
+                final SavingsAccount fromSavingsAccount = null;
+                final boolean isRegularTransaction = true;
+                final boolean isExceptionForBalanceCheck = false;
+                final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(actualDisbursementDate, entrySet.getValue(),
+                        PortfolioAccountType.SAVINGS, PortfolioAccountType.LOAN, savingAccountData.accountId(), loanId, "Loan Charge Payment",
+                        locale, fmt, null, null, LoanTransactionType.REPAYMENT_AT_DISBURSEMENT.getValue(), entrySet.getKey(), null,
+                        AccountTransferType.CHARGE_PAYMENT.getValue(), null, null, null, null, null, fromSavingsAccount, isRegularTransaction,
+                        isExceptionForBalanceCheck);
+                this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
             }
+
+            updateRecurringCalendarDatesForInterestRecalculation(loan);
+            this.loanAccountDomainService.recalculateAccruals(loan);
+
+            // Post Dated Checks
+            if (command.parameterExists("postDatedChecks")) {
+                // get repayment with post dates checks to update
+                Set<PostDatedChecks> postDatedChecks = this.repaymentWithPostDatedChecksAssembler.fromParsedJson(command.json(), loan);
+                updatePostDatedChecks(postDatedChecks);
+            }
+
+            businessEventNotifierService.notifyPostBusinessEvent(new LoanDisbursalBusinessEvent(loan));
+
+            Long entityId = loan.getId();
+
+            // During a disbursement, the entityId should be the disbursement transaction id
+            if (!isAccountTransfer) {
+                entityId = loan.getLoanTransactions().get(loan.getLoanTransactions().size() - 1).getId();
+            }
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(entityId) //
+                    .withOfficeId(loan.getOfficeId()) //
+                    .withClientId(loan.getClientId()) //
+                    .withGroupId(loan.getGroupId()) //
+                    .withLoanId(loanId) //
+                    .with(changes) //
+                    .build();
+        } catch (final JpaSystemException | DataIntegrityViolationException dve) {
+            handleLoanDataIntegrityIssues(command, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
         }
-
-        final Locale locale = command.extractLocale();
-        final DateTimeFormatter fmt = DateTimeFormatter.ofPattern(command.dateFormat()).withLocale(locale);
-        for (final Map.Entry<Long, BigDecimal> entrySet : disBuLoanCharges.entrySet()) {
-            final PortfolioAccountData savingAccountData = this.accountAssociationsReadPlatformService.retriveLoanLinkedAssociation(loanId);
-            final SavingsAccount fromSavingsAccount = null;
-            final boolean isRegularTransaction = true;
-            final boolean isExceptionForBalanceCheck = false;
-            final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(actualDisbursementDate, entrySet.getValue(),
-                    PortfolioAccountType.SAVINGS, PortfolioAccountType.LOAN, savingAccountData.accountId(), loanId, "Loan Charge Payment",
-                    locale, fmt, null, null, LoanTransactionType.REPAYMENT_AT_DISBURSEMENT.getValue(), entrySet.getKey(), null,
-                    AccountTransferType.CHARGE_PAYMENT.getValue(), null, null, null, null, null, fromSavingsAccount, isRegularTransaction,
-                    isExceptionForBalanceCheck);
-            this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
-        }
-
-        updateRecurringCalendarDatesForInterestRecalculation(loan);
-        this.loanAccountDomainService.recalculateAccruals(loan);
-
-        // Post Dated Checks
-        if (command.parameterExists("postDatedChecks")) {
-            // get repayment with post dates checks to update
-            Set<PostDatedChecks> postDatedChecks = this.repaymentWithPostDatedChecksAssembler.fromParsedJson(command.json(), loan);
-            updatePostDatedChecks(postDatedChecks);
-        }
-
-        businessEventNotifierService.notifyPostBusinessEvent(new LoanDisbursalBusinessEvent(loan));
-
-        Long entityId = loan.getId();
-
-        // During a disbursement, the entityId should be the disbursement transaction id
-        if (!isAccountTransfer) {
-            entityId = loan.getLoanTransactions().get(loan.getLoanTransactions().size() - 1).getId();
-        }
-
-        return new CommandProcessingResultBuilder() //
-                .withCommandId(command.commandId()) //
-                .withEntityId(entityId) //
-                .withOfficeId(loan.getOfficeId()) //
-                .withClientId(loan.getClientId()) //
-                .withGroupId(loan.getGroupId()) //
-                .withLoanId(loanId) //
-                .with(changes) //
-                .build();
     }
 
     private void addOverdueChargeToLoanAccountInArrears(Long loanId) {
@@ -3471,6 +3480,17 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         }
 
+    }
+
+    private void handleLoanDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
+        if (realCause.getMessage().contains("duplicate key value violates unique constraint \"m_account_transfer_standing_instructions_name_key\"")) {
+            throw new PlatformDataIntegrityException("error.msg.account.transfer.standing.instruction.already.created",
+                    "A standing instruction already created for this account transfer'", "name");
+        }
+
+        LOG.error("Error due to Exception", dve);
+        throw new PlatformDataIntegrityException("error.msg.loan.unknown.data.integrity.issue",
+                "Unknown data integrity issue with resource: " + realCause.getMessage());
     }
 
 }
