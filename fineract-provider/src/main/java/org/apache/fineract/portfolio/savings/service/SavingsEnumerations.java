@@ -311,6 +311,16 @@ public final class SavingsEnumerations {
         return optionData;
     }
 
+    public static List<SavingsAccountStatusEnumData> savingStatusTypeOptions(final SavingsAccountStatusType[] savingStatuses) {
+        final List<SavingsAccountStatusEnumData> optionData = new ArrayList<>();
+        for (final SavingsAccountStatusType savingStatus : savingStatuses) {
+            if(!savingStatus.getValue().equals(0)) {
+                optionData.add(SavingsEnumerations.status(savingStatus));
+            }
+        }
+        return optionData;
+    }
+
     public static SavingsAccountSubStatusEnumData subStatus(final Integer subStatusEnum) {
         return subStatus(SavingsAccountSubStatusEnum.fromInt(subStatusEnum));
     }
