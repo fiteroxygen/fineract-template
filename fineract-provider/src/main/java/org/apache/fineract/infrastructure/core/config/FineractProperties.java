@@ -41,6 +41,8 @@ public class FineractProperties {
 
     private FineractTemplateProperties template;
 
+    private FineractSupportedProperties supported;
+
     @Getter
     @Setter
     public static class FineractTenantProperties {
@@ -115,5 +117,12 @@ public class FineractProperties {
 
         private boolean regexWhitelistEnabled;
         private List<String> regexWhitelist;
+    }
+
+    @Getter
+    @Setter
+    public static class FineractSupportedProperties {
+
+        private List<String> urls;
     }
 }

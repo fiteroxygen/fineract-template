@@ -42,6 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.fineract.infrastructure.configuration.service.ExternalServiceHelper;
 import org.apache.fineract.infrastructure.core.config.FineractProperties;
 import org.apache.fineract.template.domain.Template;
 import org.apache.fineract.template.domain.TemplateFunctions;
@@ -154,6 +155,7 @@ public class TemplateMergeService {
 
         HttpURLConnection connection = null;
         try {
+            ExternalServiceHelper.validateUrl(fineractProperties, url);
             connection = (HttpURLConnection) new URL(url).openConnection();
             if (this.authToken != null) {
                 connection.setRequestProperty("Authorization", "Basic " + this.authToken);// NOSONAR
