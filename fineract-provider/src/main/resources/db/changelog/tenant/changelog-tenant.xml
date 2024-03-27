@@ -87,5 +87,6 @@
     <include file="parts/OXY-138_add_on_hold_table_for_savings_account.xml" relativeToChangelogFile="true" />
     <include file="parts/FSO-1_pentaho_reports_parameter.xml" relativeToChangelogFile="true" />
     <include file="parts/FSO_17_update_password_validation_policy.xml" relativeToChangelogFile="true" />
+    <include file="parts/FSO_34_add_provisioning_category.xml" relativeToChangelogFile="true" />
     <includeAll path="custom-changelog" relativeToChangelogFile="true"/>
 </databaseChangeLog>
