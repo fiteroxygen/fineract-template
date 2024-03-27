@@ -18,6 +18,8 @@
  */
 package org.apache.fineract.portfolio.loanproduct.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.fineract.accounting.common.AccountingEnumerations;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.portfolio.accountdetails.service.AccountEnumerations;
@@ -38,9 +40,6 @@ import org.apache.fineract.portfolio.loanproduct.domain.LoanProductParamType;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductValueConditionType;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanRescheduleStrategyMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.RecalculationFrequencyType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class LoanEnumerations {
 
@@ -527,7 +526,7 @@ public final class LoanEnumerations {
     public static List<LoanStatusEnumData> loanStatusTypeOptions(final LoanStatus[] loanStatuses) {
         final List<LoanStatusEnumData> optionData = new ArrayList<>();
         for (final LoanStatus loanStatus : loanStatuses) {
-            if(!loanStatus.getValue().equals(0)) {
+            if (!loanStatus.getValue().equals(0)) {
                 optionData.add(LoanEnumerations.status(loanStatus));
             }
         }

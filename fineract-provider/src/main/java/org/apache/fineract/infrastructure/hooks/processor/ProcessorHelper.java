@@ -27,9 +27,13 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import lombok.RequiredArgsConstructor;
 import okhttp3.OkHttpClient;
+import org.apache.fineract.infrastructure.configuration.service.ExternalServiceHelper;
+import org.apache.fineract.infrastructure.core.config.FineractProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -37,10 +41,13 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 @Service
+@RequiredArgsConstructor
 public final class ProcessorHelper {
 
     // Nota bene: Similar code to insecure HTTPS is also in Fineract Client's
     // org.apache.fineract.client.util.FineractClient.Builder.insecure()
+
+    private final FineractProperties fineractProperties;
 
     private static final Logger LOG = LoggerFactory.getLogger(ProcessorHelper.class);
 
@@ -67,7 +74,9 @@ public final class ProcessorHelper {
     private final boolean insecureHttpClient = Boolean.getBoolean("fineract.insecureHttpClient");
     private final SSLContext insecureSSLContext;
 
-    public ProcessorHelper() throws KeyManagementException, NoSuchAlgorithmException {
+    @Autowired
+    public ProcessorHelper(FineractProperties fineractProperties) throws KeyManagementException, NoSuchAlgorithmException {
+        this.fineractProperties = fineractProperties;
         if (insecureHttpClient) {
             insecureSSLContext = createInsecureSSLContext();
         } else {
@@ -115,6 +124,7 @@ public final class ProcessorHelper {
     public WebHookService createWebHookService(final String url) {
         final OkHttpClient client = createClient();
         final Retrofit.Builder retrofitBuilder = new Retrofit.Builder();
+        ExternalServiceHelper.validateUrl(fineractProperties, url);
         retrofitBuilder.baseUrl(url);
         retrofitBuilder.client(client);
         retrofitBuilder.addConverterFactory(GsonConverterFactory.create());

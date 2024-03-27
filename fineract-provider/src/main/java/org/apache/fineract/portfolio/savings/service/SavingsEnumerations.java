@@ -314,7 +314,7 @@ public final class SavingsEnumerations {
     public static List<SavingsAccountStatusEnumData> savingStatusTypeOptions(final SavingsAccountStatusType[] savingStatuses) {
         final List<SavingsAccountStatusEnumData> optionData = new ArrayList<>();
         for (final SavingsAccountStatusType savingStatus : savingStatuses) {
-            if(!savingStatus.getValue().equals(0)) {
+            if (!savingStatus.getValue().equals(0)) {
                 optionData.add(SavingsEnumerations.status(savingStatus));
             }
         }
