@@ -25,7 +25,7 @@ public final class ExternalServiceHelper {
 
     public static void validateUrl(FineractProperties fineractProperties, String url) {
         if (fineractProperties.getSupported() != null) {
-            if (!fineractProperties.getSupported().getUrls().contains(url)) {
+            if (fineractProperties.getSupported().getUrls() == null || !fineractProperties.getSupported().getUrls().contains(url)) {
                 throw new ExternalServiceForbiddenException(url);
             }
         }
