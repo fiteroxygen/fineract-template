@@ -39,6 +39,9 @@ import org.apache.fineract.portfolio.loanproduct.domain.LoanProductValueConditio
 import org.apache.fineract.portfolio.loanproduct.domain.LoanRescheduleStrategyMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.RecalculationFrequencyType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class LoanEnumerations {
 
     private LoanEnumerations() {
@@ -518,6 +521,16 @@ public final class LoanEnumerations {
                         LoanStatus.UNDO_LOAN_RESCHEDULE.getCode(), "Undo Loan Reschedule");
         }
 
+        return optionData;
+    }
+
+    public static List<LoanStatusEnumData> loanStatusTypeOptions(final LoanStatus[] loanStatuses) {
+        final List<LoanStatusEnumData> optionData = new ArrayList<>();
+        for (final LoanStatus loanStatus : loanStatuses) {
+            if(!loanStatus.getValue().equals(0)) {
+                optionData.add(LoanEnumerations.status(loanStatus));
+            }
+        }
         return optionData;
     }
 
