@@ -227,14 +227,14 @@ import org.apache.fineract.portfolio.repaymentwithpostdatedchecks.service.Repaym
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.transfer.api.TransferApiConstants;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 @Slf4j
@@ -333,7 +333,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
             final Loan loan = this.loanAssembler.assembleFrom(loanId);
             if (loan.loanProduct().isDisallowExpectedDisbursements()) {
-                // create artificial 'tranche/expected disbursal' as current disburse code expects it for multi-disbursal
+                // create artificial 'tranche/expected disbursal' as current disburse code expects it for
+                // multi-disbursal
                 // products
                 final LocalDate artificialExpectedDate = loan.getExpectedDisbursedOnLocalDate();
                 LoanDisbursementDetails disbursementDetail = new LoanDisbursementDetails(artificialExpectedDate, null,
@@ -436,7 +437,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
                 if (loan.isTopup() && loan.getClientId() != null) {
                     final Long loanIdToClose = loan.getTopupLoanDetails().getLoanIdToClose();
-                    final Loan loanToClose = this.loanRepositoryWrapper.findNonClosedLoanThatBelongsToClient(loanIdToClose, loan.getClientId());
+                    final Loan loanToClose = this.loanRepositoryWrapper.findNonClosedLoanThatBelongsToClient(loanIdToClose,
+                            loan.getClientId());
                     if (loanToClose == null) {
                         throw new GeneralPlatformDomainRuleException("error.msg.loan.to.be.closed.with.topup.is.not.active",
                                 "Loan to be closed with this topup is not active.");
@@ -446,7 +448,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                         throw new GeneralPlatformDomainRuleException(
                                 "error.msg.loan.disbursal.date.should.be.after.last.transaction.date.of.loan.to.be.closed",
                                 "Disbursal date of this loan application " + loan.getDisbursementDate()
-                                        + " should be after last transaction date of loan to be closed " + lastUserTransactionOnLoanToClose);
+                                        + " should be after last transaction date of loan to be closed "
+                                        + lastUserTransactionOnLoanToClose);
                     }
 
                     BigDecimal loanOutstanding = this.loanReadPlatformService
@@ -471,8 +474,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 } else {
                     existingTransactionIds.addAll(loan.findExistingTransactionIds());
                     existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
-                    LoanTransaction disbursementTransaction = LoanTransaction.disbursement(loan.getOffice(), amountToDisburse, paymentDetail,
-                            actualDisbursementDate, txnExternalId);
+                    LoanTransaction disbursementTransaction = LoanTransaction.disbursement(loan.getOffice(), amountToDisburse,
+                            paymentDetail, actualDisbursementDate, txnExternalId);
                     disbursementTransaction.updateLoan(loan);
                     loan.addLoanTransaction(disbursementTransaction);
                 }
@@ -484,7 +487,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     recalculateSchedule = true;
                 }
 
-                if (loan.getRepaymentScheduleInstallments().size() > 0 & loan.getExpectedDisbursedOnLocalDate().isEqual(actualDisbursementDate)) {
+                if (loan.getRepaymentScheduleInstallments().size() > 0
+                        & loan.getExpectedDisbursedOnLocalDate().isEqual(actualDisbursementDate)) {
                     LoanRepaymentScheduleInstallment firstLoanRepaymentScheduleInstallment = loan.getRepaymentScheduleInstallments().get(0);
                     if (!firstLoanRepaymentScheduleInstallment.getFromDate().isEqual(actualDisbursementDate)) {
                         recalculateSchedule = true;
@@ -514,7 +518,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 }
 
                 if (changedTransactionDetail != null) {
-                    for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                    for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings()
+                            .entrySet()) {
                         this.loanTransactionRepository.save(mapEntry.getValue());
                         this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
                     }
@@ -538,15 +543,16 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormatter.ofPattern(command.dateFormat()).withLocale(locale);
             for (final Map.Entry<Long, BigDecimal> entrySet : disBuLoanCharges.entrySet()) {
-                final PortfolioAccountData savingAccountData = this.accountAssociationsReadPlatformService.retriveLoanLinkedAssociation(loanId);
+                final PortfolioAccountData savingAccountData = this.accountAssociationsReadPlatformService
+                        .retriveLoanLinkedAssociation(loanId);
                 final SavingsAccount fromSavingsAccount = null;
                 final boolean isRegularTransaction = true;
                 final boolean isExceptionForBalanceCheck = false;
                 final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(actualDisbursementDate, entrySet.getValue(),
-                        PortfolioAccountType.SAVINGS, PortfolioAccountType.LOAN, savingAccountData.accountId(), loanId, "Loan Charge Payment",
-                        locale, fmt, null, null, LoanTransactionType.REPAYMENT_AT_DISBURSEMENT.getValue(), entrySet.getKey(), null,
-                        AccountTransferType.CHARGE_PAYMENT.getValue(), null, null, null, null, null, fromSavingsAccount, isRegularTransaction,
-                        isExceptionForBalanceCheck);
+                        PortfolioAccountType.SAVINGS, PortfolioAccountType.LOAN, savingAccountData.accountId(), loanId,
+                        "Loan Charge Payment", locale, fmt, null, null, LoanTransactionType.REPAYMENT_AT_DISBURSEMENT.getValue(),
+                        entrySet.getKey(), null, AccountTransferType.CHARGE_PAYMENT.getValue(), null, null, null, null, null,
+                        fromSavingsAccount, isRegularTransaction, isExceptionForBalanceCheck);
                 this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
             }
 
@@ -3483,7 +3489,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     }
 
     private void handleLoanDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
-        if (realCause.getMessage().contains("duplicate key value violates unique constraint \"m_account_transfer_standing_instructions_name_key\"")) {
+        if (realCause.getMessage()
+                .contains("duplicate key value violates unique constraint \"m_account_transfer_standing_instructions_name_key\"")) {
             throw new PlatformDataIntegrityException("error.msg.account.transfer.standing.instruction.already.created",
                     "A standing instruction already created for this account transfer'", "name");
         }

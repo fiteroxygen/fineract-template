@@ -179,14 +179,15 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
                 .retrieveTemplates(StatusEnum.CREATE.getCode().longValue(), EntityTables.CLIENT.getName(), null);
 
         final List<LoanStatusEnumData> clientLoanStatusOptions = LoanEnumerations.loanStatusTypeOptions(LoanStatus.values());
-        final List<SavingsAccountStatusEnumData> clientSavingStatusOptions = SavingsEnumerations.savingStatusTypeOptions(SavingsAccountStatusType.values());
+        final List<SavingsAccountStatusEnumData> clientSavingStatusOptions = SavingsEnumerations
+                .savingStatusTypeOptions(SavingsAccountStatusType.values());
 
         return ClientData.template(defaultOfficeId, LocalDate.now(DateUtils.getDateTimeZoneOfTenant()), offices, staffOptions, null,
                 genderOptions, savingsProductDatas, clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions,
                 clientNonPersonMainBusinessLineOptions, clientLegalFormOptions, familyMemberOptions,
                 new ArrayList<AddressData>(Arrays.asList(address)), isAddressEnabled, datatableTemplates,
-                new ArrayList<ClientBusinessOwnerData>(Arrays.asList(ownerData)), isbusinessOwnersEnabled,
-                titleOptions, clientLoanStatusOptions, clientSavingStatusOptions);
+                new ArrayList<ClientBusinessOwnerData>(Arrays.asList(ownerData)), isbusinessOwnersEnabled, titleOptions,
+                clientLoanStatusOptions, clientSavingStatusOptions);
     }
 
     @Override

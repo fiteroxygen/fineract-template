@@ -332,8 +332,8 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
             final Collection<CodeValueData> clientNonPersonMainBusinessLineOptions, final List<EnumOptionData> clientLegalFormOptions,
             final ClientFamilyMembersData familyMemberOptions, final Collection<AddressData> address, final Boolean isAddressEnabled,
             final List<DatatableData> datatables, final Collection<ClientBusinessOwnerData> ownersData,
-            final Boolean isBusinessOwnerEnabled, Collection<CodeValueData> titleOptions,
-            final List<LoanStatusEnumData> loanStatusEnumData, final List<SavingsAccountStatusEnumData> savingStatusOptions) {
+            final Boolean isBusinessOwnerEnabled, Collection<CodeValueData> titleOptions, final List<LoanStatusEnumData> loanStatusEnumData,
+            final List<SavingsAccountStatusEnumData> savingStatusOptions) {
         final String accountNo = null;
         final EnumOptionData status = null;
         final CodeValueData subStatus = null;
@@ -372,8 +372,8 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
                 savingsProductId, savingsProductName, savingsAccountId, savingAccountOptions, clientType, clientClassification,
                 clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions, clientNonPersonMainBusinessLineOptions,
                 clientNonPersonDetails, clientLegalFormOptions, familyMemberOptions, legalForm, address, isAddressEnabled, datatables,
-                isStaff, clientCollateralManagements, ownersData, isBusinessOwnerEnabled, null, null,
-                null, titleOptions, null, null, loanStatusEnumData, savingStatusOptions);
+                isStaff, clientCollateralManagements, ownersData, isBusinessOwnerEnabled, null, null, null, titleOptions, null, null,
+                loanStatusEnumData, savingStatusOptions);
 
     }
 
@@ -479,8 +479,7 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
                 savingProductOptions, savingsProductId, savingsProductName, savingsAccountId, savingAccountOptions, clientType,
                 clientClassification, clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions,
                 clientNonPersonMainBusinessLineOptions, clientNonPerson, clientLegalFormOptions, familyMemberOptions, legalForm, null, null,
-                null, isStaff, clientCollateralManagements, null, null, null,
-                null, null, null, null, null, null, null);
+                null, isStaff, clientCollateralManagements, null, null, null, null, null, null, null, null, null, null);
     }
 
     public static ClientData lookup(final Long id, final String displayName, final Long officeId, final String officeName) {
@@ -531,8 +530,7 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
                 savingProductOptions, savingsProductId, savingsProductName, savingsAccountId, savingAccountOptions, clientType,
                 clientClassification, clientTypeOptions, clientClassificationOptions, clientNonPersonConstitutionOptions,
                 clientNonPersonMainBusinessLineOptions, clientNonPerson, clientLegalFormOptions, familyMemberOptions, legalForm, null, null,
-                null, isStaff, clientCollateralManagements, null, null, null, null,
-                null, null, null, null, null, null);
+                null, isStaff, clientCollateralManagements, null, null, null, null, null, null, null, null, null, null);
 
     }
 
@@ -595,7 +593,8 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
             final Set<ClientCollateralManagementData> clientCollateralManagements, final Collection<ClientBusinessOwnerData> ownersData,
             final Boolean isBusinessOwnerEnabled, final CodeValueData clientLevel, final BigDecimal dailyWithdrawLimit,
             final BigDecimal singleWithdrawLimit, Collection<CodeValueData> titleOptions, ClientAdditionalInfoData clientAdditionalInfoData,
-            final LocalDateTime createdDate, List<LoanStatusEnumData> loanStatusEnumData, List<SavingsAccountStatusEnumData> savingStatusOptions) {
+            final LocalDateTime createdDate, List<LoanStatusEnumData> loanStatusEnumData,
+            List<SavingsAccountStatusEnumData> savingStatusOptions) {
         this.accountNo = accountNo;
         this.status = status;
         if (status != null) {
