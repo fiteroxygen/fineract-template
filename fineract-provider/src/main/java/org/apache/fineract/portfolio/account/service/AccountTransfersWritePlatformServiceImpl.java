@@ -393,6 +393,16 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                 toLoanAccount = accountTransferDetails.toLoanAccount();
                 this.loanAccountAssembler.setHelpers(toLoanAccount);
             }
+            boolean isLoanRepayment = AccountTransferType.fromInt(accountTransferDTO.getTransferType()).isLoanRepayment();
+            boolean isChargePayment = AccountTransferType.fromInt(accountTransferDTO.getTransferType()).isChargePayment();
+            BigDecimal transactionAmount = accountTransferDTO.getTransactionAmount();
+
+            // check that savings account has sufficient funds for the transfer(loan repayment), if not, use the savings
+            // account balance as transfer amount
+            if (isLoanRepayment && (fromSavingsAccount.getSummary().getAccountBalance().compareTo(transactionAmount) < 0)) {
+                transactionAmount = fromSavingsAccount.getSummary().getAccountBalance();
+                accountTransferDTO.setTransactionAmount(transactionAmount);
+            }
 
             final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
                     isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(),
@@ -405,7 +415,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             LoanTransaction loanTransaction = null;
 
-            if (AccountTransferType.fromInt(accountTransferDTO.getTransferType()).isChargePayment()) {
+            if (isChargePayment) {
                 loanTransaction = this.loanAccountDomainService.makeChargePayment(toLoanAccount, accountTransferDTO.getChargeId(),
                         accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
                         accountTransferDTO.getPaymentDetail(), null, null, accountTransferDTO.getToTransferType(),
@@ -478,8 +488,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
                 }
             } catch (EmptyResultDataAccessException ex) {
-                ex.printStackTrace();
-                log.error(ex.getMessage());
+                log.error(ex.getMessage(), ex);
             }
 
             final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
