@@ -31,7 +31,8 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 public class AccountTransferDTO {
 
     private final LocalDate transactionDate;
-    private final BigDecimal transactionAmount;
+    // removed final keyword to allow for modification
+    private BigDecimal transactionAmount;
     private final PortfolioAccountType fromAccountType;
     private final PortfolioAccountType toAccountType;
     private final Long fromAccountId;
@@ -131,6 +132,10 @@ public class AccountTransferDTO {
 
     public BigDecimal getTransactionAmount() {
         return this.transactionAmount;
+    }
+
+    public void setTransactionAmount(BigDecimal transactionAmount) {
+        this.transactionAmount = transactionAmount;
     }
 
     public PortfolioAccountType getFromAccountType() {
