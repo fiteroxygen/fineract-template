@@ -854,7 +854,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
     private void addPaymentDetailsToInterestPostingTransaction(SavingsAccountTransaction newPostingTransaction) {
         PaymentType paymentType = this.repositoryWrapper.findOneWithNotFoundDetection(1L); // Default payment Type for
-                                                                                           // Interest Posting
+        // Interest Posting
         PaymentDetail paymentDetail = PaymentDetail.paymentDetails(paymentType,
                 newPostingTransaction.getSavingsAccount().getAccountNumber());
         final PaymentDetail savedPaymentDetails = this.paymentDetailWritePlatformService.persistPaymentDetail(paymentDetail);
@@ -1729,7 +1729,7 @@ public class SavingsAccount extends AbstractPersistableCustom {
                 }
 
                 if (charge.isEnablePaymentType() && charge.isEnableFreeWithdrawal()) { // discount transaction to
-                                                                                       // specific paymentType
+                    // specific paymentType
                     if (paymentDetail.getPaymentType().getPaymentName().equals(charge.getCharge().getPaymentType().getPaymentName())) {
                         resetFreeChargeDaysCount(charge, transactionAmount, transactionDate, user, refNo);
                     }
@@ -1740,8 +1740,8 @@ public class SavingsAccount extends AbstractPersistableCustom {
                                 backdatedTxnsAllowedTill, refNo);
                     }
                 } else if (!charge.isEnablePaymentType() && charge.isEnableFreeWithdrawal()) { // discount transaction
-                                                                                               // irrespective of
-                                                                                               // PaymentTypes.
+                    // irrespective of
+                    // PaymentTypes.
                     resetFreeChargeDaysCount(charge, transactionAmount, transactionDate, user, refNo);
 
                 } else { // normal-withdraw
@@ -4279,14 +4279,15 @@ public class SavingsAccount extends AbstractPersistableCustom {
         } else {
             this.sub_status = SavingsAccountSubStatusEnum.BLOCK_CREDIT.getValue();
         }
-        SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
-                blockNarration.getId(), pndComment, "BLOCK CREDIT");
-        this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
+
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
 
         // set narration
         this.blockNarration = blockNarration;
         if (blockNarration != null) {
+            SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
+                    blockNarration.getId(), pndComment, "BLOCK CREDIT");
+            this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
 
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
@@ -4321,14 +4322,14 @@ public class SavingsAccount extends AbstractPersistableCustom {
         } else {
             this.sub_status = SavingsAccountSubStatusEnum.NONE.getValue();
         }
-        SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
-                blockNarration.getId(), pndComment, "UNBLOCK CREDIT");
-        this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
+
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
         // set narration
         this.blockNarration = blockNarration;
         if (blockNarration != null) {
-
+            SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
+                    blockNarration.getId(), pndComment, "UNBLOCK CREDIT");
+            this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
         return actualChanges;
@@ -4364,11 +4365,12 @@ public class SavingsAccount extends AbstractPersistableCustom {
 
         // set narration
         this.blockNarration = blockNarration;
-        SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
-                blockNarration.getId(), pndComment, "BLOCK DEBIT");
-        this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
+
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
         if (blockNarration != null) {
+            SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
+                    blockNarration.getId(), pndComment, "BLOCK DEBIT");
+            this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
 
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
@@ -4408,11 +4410,11 @@ public class SavingsAccount extends AbstractPersistableCustom {
         actualChanges.put(SavingsApiConstants.subStatusParamName, SavingsEnumerations.subStatus(this.sub_status));
         // set narration
         this.blockNarration = blockNarration;
-        SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
-                blockNarration.getId(), pndComment, "UNBLOCK DEBIT");
-        this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
-        if (blockNarration != null) {
 
+        if (blockNarration != null) {
+            SavingsAccountBlockNarrationHistory savingsAccountBlockNarrationHistory = SavingsAccountBlockNarrationHistory.createNew(this,
+                    blockNarration.getId(), pndComment, "UNBLOCK DEBIT");
+            this.savingsAccountBlockNarrationHistory.add(savingsAccountBlockNarrationHistory);
             actualChanges.put(SavingsApiConstants.blockNarrationParamName, blockNarration.toData());
         }
         return actualChanges;

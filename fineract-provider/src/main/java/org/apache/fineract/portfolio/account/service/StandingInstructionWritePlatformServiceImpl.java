@@ -303,7 +303,7 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
                 final boolean isExceptionForBalanceCheck = false;
                 AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transactionDate, transactionAmount, data.fromAccountType(),
                         data.toAccountType(), data.fromAccount().accountId(), data.toAccount().accountId(),
-                        data.name() + " Standing instruction trasfer ", null, null, null, null, data.toTransferType(), null, null,
+                        data.name() + " Standing instruction transfer ", null, null, null, null, data.toTransferType(), null, null,
                         data.transferType().getValue(), null, null, null, null, null, fromSavingsAccount, isRegularTransaction,
                         isExceptionForBalanceCheck);
                 final boolean transferCompleted = transferAmount(errors, accountTransferDTO, data.getId());
@@ -329,22 +329,22 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
         try {
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
         } catch (final PlatformApiDataValidationException e) {
-            errors.add(new Exception("Validation exception while transfering funds for standing Instruction id" + instructionId + " from "
+            errors.add(new Exception("Validation exception while transferring funds for standing Instruction id" + instructionId + " from "
                     + accountTransferDTO.getFromAccountId() + " to " + accountTransferDTO.getToAccountId(), e));
-            errorLog.append("Validation exception while trasfering funds " + e.getDefaultUserMessage());
+            errorLog.append("Validation exception while transferring funds " + e.getDefaultUserMessage());
         } catch (final InsufficientAccountBalanceException e) {
             errors.add(new Exception(StandingInstructionApiConstants.insufficientBalanceExceptionMessage
                     + " while transferring funds for standing Instruction id" + instructionId + " from "
                     + accountTransferDTO.getFromAccountId() + " to " + accountTransferDTO.getToAccountId(), e));
             errorLog.append(StandingInstructionApiConstants.insufficientBalanceExceptionMessage);
         } catch (final AbstractPlatformServiceUnavailableException e) {
-            errors.add(new Exception("Platform exception while trasfering funds for standing Instruction id" + instructionId + " from "
+            errors.add(new Exception("Platform exception while transferring funds for standing Instruction id" + instructionId + " from "
                     + accountTransferDTO.getFromAccountId() + " to " + accountTransferDTO.getToAccountId(), e));
-            errorLog.append("Platform exception while trasfering funds " + e.getDefaultUserMessage());
+            errorLog.append("Platform exception while transferring funds " + e.getDefaultUserMessage());
         } catch (Exception e) {
-            errors.add(new Exception("Unhandled System Exception while trasfering funds for standing Instruction id" + instructionId
+            errors.add(new Exception("Unhandled System Exception while transferring funds for standing Instruction id" + instructionId
                     + " from " + accountTransferDTO.getFromAccountId() + " to " + accountTransferDTO.getToAccountId(), e));
-            errorLog.append("Exception while trasfering funds " + e.getMessage());
+            errorLog.append("Exception while transferring funds " + e.getMessage());
 
         }
         updateQuery.append(instructionId).append(",");
