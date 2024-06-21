@@ -399,8 +399,8 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
             // check that savings account has sufficient funds for the transfer(loan repayment), if not, use the savings
             // account balance as transfer amount
-            if (isLoanRepayment && (fromSavingsAccount.getSummary().getAccountBalance().compareTo(transactionAmount) < 0)) {
-                transactionAmount = fromSavingsAccount.getSummary().getAccountBalance();
+            if (isLoanRepayment && (fromSavingsAccount.getWithdrawableBalance().compareTo(transactionAmount) < 0)) {
+                transactionAmount = fromSavingsAccount.getWithdrawableBalance();
                 accountTransferDTO.setTransactionAmount(transactionAmount);
             }
 
