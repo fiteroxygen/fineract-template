@@ -293,7 +293,8 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
                     transactionAmount = standingInstructionDuesData.totalDueAmount();
                 }
                 if (recurrenceType.isDuesRecurrence()) {
-                    isDueForTransfer = DateUtils.getBusinessLocalDate().equals(standingInstructionDuesData.dueDate());
+                    isDueForTransfer = (DateUtils.getBusinessLocalDate().equals(standingInstructionDuesData.dueDate()) ||
+                            (standingInstructionDuesData.dueDate() != null && DateUtils.getBusinessLocalDate().isAfter(standingInstructionDuesData.dueDate())));
                 }
             }
 
@@ -347,17 +348,20 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
             errorLog.append("Exception while transferring funds " + e.getMessage());
 
         }
-        updateQuery.append(instructionId).append(",");
-        if (errorLog.length() > 0) {
+        if(accountTransferDTO.getTransactionAmount().compareTo(BigDecimal.ZERO) > 0) {
+            updateQuery.append(instructionId).append(",");
+            if (errorLog.length() > 0) {
+                transferCompleted = false;
+                updateQuery.append("'failed'").append(",");
+            } else {
+                updateQuery.append("'success'").append(",");
+            }
+            updateQuery.append(accountTransferDTO.getTransactionAmount().doubleValue());
+            updateQuery.append(", ").append(sqlGenerator.currentTenantDateTime()).append(" ");
+            updateQuery.append(", '").append(errorLog).append("')");
+            this.jdbcTemplate.update(updateQuery.toString());
+        } else
             transferCompleted = false;
-            updateQuery.append("'failed'").append(",");
-        } else {
-            updateQuery.append("'success'").append(",");
-        }
-        updateQuery.append(accountTransferDTO.getTransactionAmount().doubleValue());
-        updateQuery.append(", ").append(sqlGenerator.currentTenantDateTime()).append(" ");
-        updateQuery.append(", '").append(errorLog).append("')");
-        this.jdbcTemplate.update(updateQuery.toString());
         return transferCompleted;
     }
 }
