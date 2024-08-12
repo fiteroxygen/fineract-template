@@ -402,7 +402,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             if (isLoanRepayment && (fromSavingsAccount.getWithdrawableBalance().compareTo(transactionAmount) < 0)) {
                 transactionAmount = fromSavingsAccount.getWithdrawableBalance();
                 accountTransferDTO.setTransactionAmount(transactionAmount);
-                if(transactionAmount.compareTo(BigDecimal.ZERO) == 0) {
+                if (transactionAmount.compareTo(BigDecimal.ZERO) == 0) {
                     return transferTransactionId;
                 }
 

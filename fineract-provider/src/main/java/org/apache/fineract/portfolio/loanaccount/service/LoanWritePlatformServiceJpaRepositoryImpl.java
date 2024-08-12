@@ -534,8 +534,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final Set<LoanCharge> loanCharges = loan.charges();
             final Map<Long, BigDecimal> disBuLoanCharges = new HashMap<>();
             for (final LoanCharge loanCharge : loanCharges) {
-                if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()
-                        && loanCharge.isChargePending()) {
+                if ((loanCharge.isDueAtDisbursement() || loanCharge.isDisburseToSavings())
+                        && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer() && loanCharge.isChargePending()) {
                     disBuLoanCharges.put(loanCharge.getId(), loanCharge.amountOutstanding());
                 }
             }
