@@ -293,8 +293,9 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
                     transactionAmount = standingInstructionDuesData.totalDueAmount();
                 }
                 if (recurrenceType.isDuesRecurrence()) {
-                    isDueForTransfer = (DateUtils.getBusinessLocalDate().equals(standingInstructionDuesData.dueDate()) ||
-                            (standingInstructionDuesData.dueDate() != null && DateUtils.getBusinessLocalDate().isAfter(standingInstructionDuesData.dueDate())));
+                    isDueForTransfer = (DateUtils.getBusinessLocalDate().equals(standingInstructionDuesData.dueDate())
+                            || (standingInstructionDuesData.dueDate() != null
+                                    && DateUtils.getBusinessLocalDate().isAfter(standingInstructionDuesData.dueDate())));
                 }
             }
 
@@ -348,7 +349,7 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
             errorLog.append("Exception while transferring funds " + e.getMessage());
 
         }
-        if(accountTransferDTO.getTransactionAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (accountTransferDTO.getTransactionAmount().compareTo(BigDecimal.ZERO) > 0) {
             updateQuery.append(instructionId).append(",");
             if (errorLog.length() > 0) {
                 transferCompleted = false;
