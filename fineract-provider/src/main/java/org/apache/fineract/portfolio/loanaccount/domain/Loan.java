@@ -2909,13 +2909,9 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         final Integer installmentNumber = null;
         for (final LoanCharge charge : charges()) {
             LocalDate actualDisbursementDate = getActualDisbursementDate(charge);
-            if ((charge.getCharge().getChargeTimeType().equals(ChargeTimeType.DISBURSEMENT.getValue())
-                    && disbursedOn.equals(actualDisbursementDate) && (actualDisbursementDate != null) && !charge.isWaived()
-                    && !charge.isFullyPaid())
-                    || (charge.getCharge().getChargeTimeType().equals(ChargeTimeType.TRANCHE_DISBURSEMENT.getValue())
-                            && disbursedOn.equals(actualDisbursementDate) && (actualDisbursementDate != null) && !charge.isWaived()
-                            && !charge.isFullyPaid())) {
-                if (totalFeeChargesDueAtDisbursement.isGreaterThanZero() && !charge.getChargePaymentMode().isPaymentModeAccountTransfer()) {
+            if ((charge.isDueAtDisbursement() && disbursedOn.equals(actualDisbursementDate) && (actualDisbursementDate != null)
+                    && !charge.isWaived() && !charge.isFullyPaid())) {
+                if (totalFeeChargesDueAtDisbursement.isGreaterThanZero()) {
                     charge.markAsFullyPaid();
                     // Add "Loan Charge Paid By" details to this transaction
                     final LoanChargePaidBy loanChargePaidBy = new LoanChargePaidBy(chargesPayment, charge, charge.amount(),

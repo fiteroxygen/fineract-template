@@ -578,7 +578,8 @@ public class LoanCharge extends AbstractPersistableCustom {
 
     public boolean isDueAtDisbursement() {
         return ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.DISBURSEMENT)
-                || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.TRANCHE_DISBURSEMENT);
+                || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.TRANCHE_DISBURSEMENT)
+                || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.DISBURSE_TO_SAVINGS);
     }
 
     public boolean isSpecifiedDueDate() {
