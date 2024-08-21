@@ -2909,8 +2909,8 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         final Integer installmentNumber = null;
         for (final LoanCharge charge : charges()) {
             LocalDate actualDisbursementDate = getActualDisbursementDate(charge);
-            if ((charge.isDueAtDisbursement() && disbursedOn.equals(actualDisbursementDate) && (actualDisbursementDate != null)
-                    && !charge.isWaived() && !charge.isFullyPaid())) {
+            if (charge.isDueAtDisbursement() && disbursedOn.equals(actualDisbursementDate) && (actualDisbursementDate != null)
+                    && !charge.isWaived() && !charge.isFullyPaid() && !charge.getChargePaymentMode().isPaymentModeAccountTransfer()) {
                 if (totalFeeChargesDueAtDisbursement.isGreaterThanZero()) {
                     charge.markAsFullyPaid();
                     // Add "Loan Charge Paid By" details to this transaction
@@ -2981,7 +2981,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         chargesPayment.updateComponents(zero, zero, charge.getAmount(getCurrency()), zero);
         chargesPayment.updateLoan(this);
         addLoanTransaction(chargesPayment);
-        updateLoanOutstandingBalaces();
+        updateLoanSummaryDerivedFields();
         charge.markAsFullyPaid();
         return chargesPayment;
     }
