@@ -534,8 +534,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final Set<LoanCharge> loanCharges = loan.charges();
             final Map<Long, BigDecimal> disBuLoanCharges = new HashMap<>();
             for (final LoanCharge loanCharge : loanCharges) {
-                if ((loanCharge.isDueAtDisbursement() || loanCharge.isDisburseToSavings())
-                        && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer() && loanCharge.isChargePending()) {
+                if (loanCharge.isDueAtDisbursement() && loanCharge.getChargePaymentMode().isPaymentModeAccountTransfer()
+                        && loanCharge.isChargePending()) {
                     disBuLoanCharges.put(loanCharge.getId(), loanCharge.amountOutstanding());
                 }
             }
@@ -551,7 +551,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(actualDisbursementDate, entrySet.getValue(),
                         PortfolioAccountType.SAVINGS, PortfolioAccountType.LOAN, savingAccountData.accountId(), loanId,
                         "Loan Charge Payment", locale, fmt, null, null, LoanTransactionType.REPAYMENT_AT_DISBURSEMENT.getValue(),
-                        entrySet.getKey(), null, AccountTransferType.CHARGE_PAYMENT.getValue(), null, null, null, null, null,
+                        entrySet.getKey(), null, AccountTransferType.CHARGE_PAYMENT.getValue(), null, null, null, loan, null,
                         fromSavingsAccount, isRegularTransaction, isExceptionForBalanceCheck);
                 this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
             }
