@@ -2981,8 +2981,8 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         chargesPayment.updateComponents(zero, zero, charge.getAmount(getCurrency()), zero);
         chargesPayment.updateLoan(this);
         addLoanTransaction(chargesPayment);
-        updateLoanSummaryDerivedFields();
         charge.markAsFullyPaid();
+        updateLoanSummaryDerivedFields();
         return chargesPayment;
     }
 
