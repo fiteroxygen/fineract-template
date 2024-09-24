@@ -20,7 +20,7 @@ package org.apache.fineract.portfolio.loanaccount.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,11 +50,19 @@ import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.organisation.workingdays.domain.WorkingDays;
 import org.apache.fineract.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
+import org.apache.fineract.portfolio.account.PortfolioAccountType;
+import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
+import org.apache.fineract.portfolio.account.domain.AccountTransferAssembler;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetailRepository;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetails;
 import org.apache.fineract.portfolio.account.domain.AccountTransferRepository;
 import org.apache.fineract.portfolio.account.domain.AccountTransferStandingInstruction;
 import org.apache.fineract.portfolio.account.domain.AccountTransferTransaction;
+import org.apache.fineract.portfolio.account.domain.AccountTransferType;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionRepository;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionStatus;
+import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.accountdetails.domain.AccountType;
 import org.apache.fineract.portfolio.businessevent.domain.loan.LoanBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.transaction.LoanChargePaymentPostBusinessEvent;
@@ -95,6 +103,12 @@ import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.repaymentwithpostdatedchecks.data.PostDatedChecksStatus;
 import org.apache.fineract.portfolio.repaymentwithpostdatedchecks.domain.PostDatedChecks;
 import org.apache.fineract.portfolio.repaymentwithpostdatedchecks.domain.PostDatedChecksRepository;
+import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
+import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -106,6 +120,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
 
     private final LoanAssembler loanAccountAssembler;
+    private final SavingsAccountAssembler savingsAccountAssembler;
     private final LoanRepositoryWrapper loanRepositoryWrapper;
     private final LoanTransactionRepository loanTransactionRepository;
     private final ConfigurationDomainService configurationDomainService;
@@ -124,6 +139,10 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
     private final StandingInstructionRepository standingInstructionRepository;
     private final PostDatedChecksRepository postDatedChecksRepository;
     private final LoanCollateralManagementRepository loanCollateralManagementRepository;
+    private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
+    private final SavingsAccountDomainService savingsAccountDomainService;
+    private final AccountTransferAssembler accountTransferAssembler;
+    private final AccountTransferDetailRepository accountTransferDetailRepository;
 
     private final LoanRedrawAccountRepository loanRedrawAccountRepository;
 
@@ -798,15 +817,45 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
         Money penaltyPayable = foreCloseDetail.getPenaltyChargesCharged(currency);
         Money payPrincipal = foreCloseDetail.getPrincipal(currency);
         loan.updateInstallmentsPostDate(foreClosureDate);
+        boolean isAccountTransfer = false;
 
         LoanTransaction payment = null;
 
-        if (payPrincipal.plus(interestPayable).plus(feePayable).plus(penaltyPayable).isGreaterThanZero()) {
+        Money transactionAmount = payPrincipal.plus(interestPayable).plus(feePayable).plus(penaltyPayable);
+        if (transactionAmount.isGreaterThanZero()) {
             final PaymentDetail paymentDetail = null;
             String externalId = null;
-            final LocalDateTime currentDateTime = DateUtils.getLocalDateTimeOfTenant();
-            payment = LoanTransaction.repayment(loan.getOffice(), payPrincipal.plus(interestPayable).plus(feePayable).plus(penaltyPayable),
-                    paymentDetail, foreClosureDate, externalId);
+            final PortfolioAccountData portfolioAccountData = this.accountAssociationsReadPlatformService
+                    .retriveLoanLinkedAssociation(loan.getId());
+
+            payment = LoanTransaction.repayment(loan.getOffice(), transactionAmount, paymentDetail, foreClosureDate, externalId);
+            // if loan is linked with savings then first repay from linked savings account
+            if (portfolioAccountData != null && portfolioAccountData.accountId() != null) {
+                isAccountTransfer = true;
+                final SavingsAccount fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(portfolioAccountData.accountId());
+
+                final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(true, true,
+                        fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(), false, false);
+                DateTimeFormatter fmt = DateUtils.getDefaultFormatter();
+                final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount, fmt,
+                        foreClosureDate, transactionAmount.getAmount(), paymentDetail, transactionBooleanValues, false, true);
+                final Boolean isHolidayValidationDone = false;
+                final HolidayDetailDTO holidayDetailDto = null;
+                final boolean isRecoveryRepayment = false;
+
+                AccountTransferDTO accountTransferDTO = new AccountTransferDTO(foreClosureDate, transactionAmount.getAmount(),
+                        PortfolioAccountType.SAVINGS, PortfolioAccountType.LOAN, fromSavingsAccount.getId(), loan.getId(),
+                        "Foreclosure Repayment Transfer", null, null, paymentDetail,
+                        SavingsAccountTransactionType.WITHDRAW_TRANSFER.getValue(), LoanTransactionType.REPAYMENT.getValue(), null, null,
+                        AccountTransferType.LOAN_REPAYMENT.getValue(), null, noteText, null, null, null, fromSavingsAccount, true, false);
+
+                final AccountTransferDetails accountTransferDetails = this.accountTransferAssembler
+                        .assembleSavingsToLoanTransfer(accountTransferDTO, fromSavingsAccount, loan, withdrawal, payment);
+                this.accountTransferDetailRepository.save(accountTransferDetails);
+                Long transferDetailId = accountTransferDetails.getId();
+
+            }
+
             payment.updateLoan(loan);
             newTransactions.add(payment);
         }
@@ -845,7 +894,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
             this.noteRepository.save(note);
         }
 
-        postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds, false);
+        postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
         businessEventNotifierService.notifyPostBusinessEvent(new LoanForeClosurePostBusinessEvent(payment));
         return changes;
 
