@@ -124,12 +124,14 @@ public final class ProcessorHelper {
     public WebHookService createWebHookService(final String url) {
         final OkHttpClient client = createClient();
         final Retrofit.Builder retrofitBuilder = new Retrofit.Builder();
-        ExternalServiceHelper.validateUrl(fineractProperties, url);
-        retrofitBuilder.baseUrl(url);
-        retrofitBuilder.client(client);
-        retrofitBuilder.addConverterFactory(GsonConverterFactory.create());
-        final Retrofit retrofit = retrofitBuilder.build();
-        return retrofit.create(WebHookService.class);
+        if (ExternalServiceHelper.validateUrl(fineractProperties, url)) {
+            retrofitBuilder.baseUrl(url);
+            retrofitBuilder.client(client);
+            retrofitBuilder.addConverterFactory(GsonConverterFactory.create());
+            final Retrofit retrofit = retrofitBuilder.build();
+            return retrofit.create(WebHookService.class);
+        }
+        return retrofitBuilder.build().create(WebHookService.class);
     }
 
     @SuppressWarnings("rawtypes")

@@ -155,14 +155,15 @@ public class TemplateMergeService {
 
         HttpURLConnection connection = null;
         try {
-            ExternalServiceHelper.validateUrl(fineractProperties, url);
-            connection = (HttpURLConnection) new URL(url).openConnection();
-            if (this.authToken != null) {
-                connection.setRequestProperty("Authorization", "Basic " + this.authToken);// NOSONAR
-            }
-            TrustModifier.relaxHostChecking(connection);
+            if (ExternalServiceHelper.validateUrl(fineractProperties, url)) {
+                connection = (HttpURLConnection) new URL(url).openConnection();
+                if (this.authToken != null) {
+                    connection.setRequestProperty("Authorization", "Basic " + this.authToken);// NOSONAR
+                }
+                TrustModifier.relaxHostChecking(connection);
 
-            connection.setDoInput(true);
+                connection.setDoInput(true);
+            }
 
         } catch (IOException | KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
             log.error("getConnection() failed, return null", e);
