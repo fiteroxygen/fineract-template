@@ -34,4 +34,6 @@ public interface StandingInstructionWritePlatformService {
 
     void sendNotificationForFailedStandingInstructions() throws JobExecutionException;
 
+    void processTotalAmountDueFailedStandingInstructions() throws JobExecutionException;
+
 }

@@ -41,11 +41,14 @@ public class StandingInstructionHistoryData {
     private final String status;
     private final LocalDate executionTime;
     private final String errorLog;
+    private final Long historyId;
+    private final Long processingCount;
 
     public StandingInstructionHistoryData(final Long standingInstructionId, final String name, final OfficeData fromOffice,
             final ClientData fromClient, final EnumOptionData fromAccountType, final PortfolioAccountData fromAccount,
             final EnumOptionData toAccountType, final PortfolioAccountData toAccount, final OfficeData toOffice, final ClientData toClient,
-            final BigDecimal amount, final String status, final LocalDate executionTime, final String errorLog) {
+            final BigDecimal amount, final String status, final LocalDate executionTime, final String errorLog, Long historyId,
+            final Long processingCount) {
         this.standingInstructionId = standingInstructionId;
         this.name = name;
         this.fromOffice = fromOffice;
@@ -60,6 +63,8 @@ public class StandingInstructionHistoryData {
         this.errorLog = errorLog;
         this.status = status;
         this.executionTime = executionTime;
+        this.processingCount = processingCount;
+        this.historyId = historyId;
     }
 
     public Long getStandingInstructionId() {
@@ -116,5 +121,17 @@ public class StandingInstructionHistoryData {
 
     public String getErrorLog() {
         return errorLog;
+    }
+
+    public Long getHistoryId() {
+        return historyId;
+    }
+
+    public Long getProcessingCount() {
+        Long processingCount = this.processingCount;
+        if (processingCount == null) {
+            processingCount = 0L;
+        }
+        return processingCount;
     }
 }

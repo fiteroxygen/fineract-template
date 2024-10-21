@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -53,7 +54,7 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
     private final JdbcTemplate jdbcTemplate;
     private final DatabaseSpecificSQLGenerator sqlGenerator;
     private final ColumnValidator columnValidator;
-
+    private final ConfigurationDomainService configurationDomainService;
     // mapper
     private final StandingInstructionHistoryMapper standingInstructionHistoryMapper;
 
@@ -62,12 +63,14 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
 
     @Autowired
     public StandingInstructionHistoryReadPlatformServiceImpl(final JdbcTemplate jdbcTemplate, final ColumnValidator columnValidator,
-            DatabaseSpecificSQLGenerator sqlGenerator, PaginationHelper paginationHelper) {
+            DatabaseSpecificSQLGenerator sqlGenerator, PaginationHelper paginationHelper,
+            ConfigurationDomainService configurationDomainService) {
         this.jdbcTemplate = jdbcTemplate;
         this.sqlGenerator = sqlGenerator;
         this.standingInstructionHistoryMapper = new StandingInstructionHistoryMapper();
         this.columnValidator = columnValidator;
         this.paginationHelper = paginationHelper;
+        this.configurationDomainService = configurationDomainService;
     }
 
     @Override
@@ -94,6 +97,36 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
         // adding condition for getting SI for which notification is not sent
         sqlBuilder.append(" atsih.is_notification_sent=? ");
         paramObj.add(false);
+
+        final Object[] finalObjectArray = paramObj.toArray();
+        return this.jdbcTemplate.query(sqlBuilder.toString(), this.standingInstructionHistoryMapper, finalObjectArray);
+    }
+
+    @Override
+    public Collection<StandingInstructionHistoryData> retrieveAllForProcessingAmountDue() {
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select " + sqlGenerator.calcFoundRows() + " ");
+        sqlBuilder.append(this.standingInstructionHistoryMapper.schema());
+        sqlBuilder.append(" where ");
+        List<Object> paramObj = new ArrayList<>();
+
+        // adding condition for SI with failed status
+        sqlBuilder.append(" atsih.status=? ");
+        paramObj.add("failed");
+
+        sqlBuilder.append(" and ");
+
+        // adding condition for SI with failed status with insufficient balance
+        sqlBuilder.append(" atsih.error_log=? ");
+        paramObj.add(StandingInstructionApiConstants.insufficientBalanceExceptionMessage);
+
+        sqlBuilder.append(" and ");
+
+        // adding condition for getting SI for which notification is not sent
+        sqlBuilder.append(" atsih.amount_due_processed=? and atsih.processing_count<=?");
+        paramObj.add(false);
+        Long processCountLimit = this.configurationDomainService.retrieveProcessAmountDueCount();
+        paramObj.add(processCountLimit);
 
         final Object[] finalObjectArray = paramObj.toArray();
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.standingInstructionHistoryMapper, finalObjectArray);
@@ -200,9 +233,9 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
 
         StandingInstructionHistoryMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
-            sqlBuilder.append("atsi.id as id,atsi.name as name, ");
+            sqlBuilder.append("atsi.id as id,atsi.name as name, atsih.id as historyId");
             sqlBuilder.append("atsih.status as status, atsih.execution_time as executionTime, ");
-            sqlBuilder.append("atsih.amount as amount, atsih.error_log as errorLog, ");
+            sqlBuilder.append("atsih.amount as amount, atsih.error_log as errorLog, atsih.processing_count as processingCount, ");
             sqlBuilder.append("fromoff.id as fromOfficeId, fromoff.name as fromOfficeName,");
             sqlBuilder.append("tooff.id as toOfficeId, tooff.name as toOfficeName,");
             sqlBuilder.append("fromclient.id as fromClientId, fromclient.display_name as fromClientName,");
@@ -295,6 +328,8 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
             final String toLoanAccountNo = rs.getString("toLoanAccountNo");
             final Long toLoanProductId = JdbcSupport.getLong(rs, "toLoanProductId");
             final String toLoanProductName = rs.getString("toLoanProductName");
+            final Long processingCount = JdbcSupport.getLong(rs, "processingCount");
+            final Long historyId = JdbcSupport.getLong(rs, "historyId");
 
             if (toSavingsAccountId != null) {
                 toAccount = new PortfolioAccountData(toSavingsAccountId, toSavingsAccountNo, null, null, null, null, null, toProductId,
@@ -307,7 +342,7 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
             }
 
             return new StandingInstructionHistoryData(id, name, fromOffice, fromClient, fromAccountType, fromAccount, toAccountType,
-                    toAccount, toOffice, toClient, transferAmount, status, executionTime, errorLog);
+                    toAccount, toOffice, toClient, transferAmount, status, executionTime, errorLog, historyId, processingCount);
         }
     }
 
