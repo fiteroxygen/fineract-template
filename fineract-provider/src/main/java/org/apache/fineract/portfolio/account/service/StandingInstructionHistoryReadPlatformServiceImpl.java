@@ -233,7 +233,7 @@ public class StandingInstructionHistoryReadPlatformServiceImpl implements Standi
 
         StandingInstructionHistoryMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
-            sqlBuilder.append("atsi.id as id,atsi.name as name, atsih.id as historyId");
+            sqlBuilder.append("atsi.id as id,atsi.name as name, atsih.id as historyId, ");
             sqlBuilder.append("atsih.status as status, atsih.execution_time as executionTime, ");
             sqlBuilder.append("atsih.amount as amount, atsih.error_log as errorLog, atsih.processing_count as processingCount, ");
             sqlBuilder.append("fromoff.id as fromOfficeId, fromoff.name as fromOfficeName,");

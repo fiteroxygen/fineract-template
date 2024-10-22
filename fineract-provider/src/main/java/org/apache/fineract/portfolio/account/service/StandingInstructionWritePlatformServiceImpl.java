@@ -28,8 +28,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -291,9 +294,10 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
 
         StandinAmountDueData.StandinAmountDueDataBuilder standinAmountDue = StandinAmountDueData.builder().clientId(toClient.id())
                 .loanId(loanAccount.accountId()).amountDUe(amountDue);
+        Set<Long> userIds = new HashSet<>();
         NotificationData notificationData = new NotificationData("Process Amount Due",
                 standingInstructionHistoryData.getStandingInstructionId(), "PROCESS_AMOUNT_DUE", appUser.getId(),
-                this.fromJsonHelper.toJson(standinAmountDue), false, false, tenantIdentifier, appUser.getOffice().getId(), null);
+                this.fromJsonHelper.toJson(standinAmountDue), false, false, tenantIdentifier, appUser.getOffice().getId(), userIds);
         try {
             notificationEventPublisher.broadcastGenericActiveMqNotification(notificationData,
                     env.getProperty("fineract.activemq.loanOverdueCollectionsQueue"));

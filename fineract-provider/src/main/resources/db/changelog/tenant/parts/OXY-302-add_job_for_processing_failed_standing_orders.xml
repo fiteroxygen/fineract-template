@@ -66,7 +66,7 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="brian@fiter.io" id="add_configuration_to_setup_limits_on_attempts_to_process_amount_due">
+    <changeSet author="brian@fiter.io" id="OXY-302_add_configuration_to_setup_limits_on_attempts_to_process_amount_due">
 
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -75,7 +75,7 @@
         </preConditions>
 
         <insert tableName="c_configuration">
-            <column name="name" value="process-amount-due-on-failed-standing-instructions-count-limit"/>
+            <column name="name" value="process_amount_due_on_failed_standing_instructions_count_limit"/>
             <column name="value" value="null"/>
             <column name="date_value" value="null"/>
             <column name="string_value" value="null"/>
