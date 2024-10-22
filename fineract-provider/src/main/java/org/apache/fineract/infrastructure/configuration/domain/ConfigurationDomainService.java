@@ -97,6 +97,8 @@ public interface ConfigurationDomainService {
 
     Integer retrieveOTPLiveTime();
 
+    Long retrieveProcessAmountDueCount();
+
     boolean isSubRatesEnabled();
 
     boolean isFirstRepaymentDateAfterRescheduleAllowedOnHoliday();

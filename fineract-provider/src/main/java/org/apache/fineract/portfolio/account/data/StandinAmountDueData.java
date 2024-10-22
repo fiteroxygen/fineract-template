@@ -16,19 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.account.service;
+package org.apache.fineract.portfolio.account.data;
 
-import java.util.Collection;
-import org.apache.fineract.infrastructure.core.service.Page;
-import org.apache.fineract.portfolio.account.data.StandingInstructionDTO;
-import org.apache.fineract.portfolio.account.data.StandingInstructionHistoryData;
+import java.math.BigDecimal;
+import lombok.Builder;
+import lombok.Data;
 
-public interface StandingInstructionHistoryReadPlatformService {
+@Data
+@Builder
+public class StandinAmountDueData {
 
-    Page<StandingInstructionHistoryData> retrieveAll(StandingInstructionDTO standingInstructionDTO);
-
-    Collection<StandingInstructionHistoryData> retrieveAllFailedWithInsufficientBalance(StandingInstructionDTO standingInstructionDTO);
-
-    Collection<StandingInstructionHistoryData> retrieveAllForProcessingAmountDue();
-
+    private final Long clientId;
+    private final Long loanId;
+    private final BigDecimal amountDUe;
 }
