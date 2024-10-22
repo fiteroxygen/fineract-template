@@ -28,8 +28,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -37,6 +40,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.exception.AbstractPlatformServiceUnavailableException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
@@ -49,6 +53,8 @@ import org.apache.fineract.notification.eventandlistener.NotificationEventPublis
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.api.StandingInstructionApiConstants;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
+import org.apache.fineract.portfolio.account.data.StandinAmountDueData;
 import org.apache.fineract.portfolio.account.data.StandingInstructionDTO;
 import org.apache.fineract.portfolio.account.data.StandingInstructionData;
 import org.apache.fineract.portfolio.account.data.StandingInstructionDataValidator;
@@ -63,11 +69,13 @@ import org.apache.fineract.portfolio.account.domain.StandingInstructionRepositor
 import org.apache.fineract.portfolio.account.domain.StandingInstructionStatus;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionType;
 import org.apache.fineract.portfolio.account.exception.StandingInstructionNotFoundException;
+import org.apache.fineract.portfolio.client.data.ClientData;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.DefaultScheduledDateGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.apache.fineract.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +104,7 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
     private final PlatformSecurityContext context;
     private final NotificationEventPublisher notificationEventPublisher;
     private final Environment env;
+    private final FromJsonHelper fromJsonHelper;
 
     @Autowired
     public StandingInstructionWritePlatformServiceImpl(PlatformSecurityContext context,
@@ -105,7 +114,7 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
             final StandingInstructionRepository standingInstructionRepository,
             final StandingInstructionReadPlatformService standingInstructionReadPlatformService,
             final AccountTransfersWritePlatformService accountTransfersWritePlatformService, final JdbcTemplate jdbcTemplate,
-            DatabaseSpecificSQLGenerator sqlGenerator,
+            DatabaseSpecificSQLGenerator sqlGenerator, FromJsonHelper fromJsonHelper,
             final StandingInstructionHistoryReadPlatformService standingInstructionHistoryReadPlatformService,
             final NotificationEventPublisher notificationEventPublisher, final Environment env) {
         this.standingInstructionDataValidator = standingInstructionDataValidator;
@@ -119,6 +128,7 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
         this.standingInstructionHistoryReadPlatformService = standingInstructionHistoryReadPlatformService;
         this.context = context;
         this.notificationEventPublisher = notificationEventPublisher;
+        this.fromJsonHelper = fromJsonHelper;
         this.env = env;
     }
 
@@ -236,6 +246,64 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
                 final String updateQuery = "UPDATE m_account_transfer_standing_instructions_history SET is_notification_sent = ? where standing_instruction_id = ?";
                 this.jdbcTemplate.update(updateQuery, true, standingInstructionHistoryData.getStandingInstructionId());
             }
+        }
+    }
+
+    @Override
+    @CronTarget(jobName = JobName.PROCESS_TOTAL_AMOUNT_DUE_FOR_FAILED_STANDING_INSTRUCTIONS)
+    public void processTotalAmountDueFailedStandingInstructions() throws JobExecutionException {
+        LOG.info("Sending Failed Instruction to Process Total Amount Due");
+        AppUser appUser = context.authenticatedUser();
+        /// get all the standing instruction failed with insufficient balance
+        Collection<StandingInstructionHistoryData> standingInstructionHistoryDataCollection = this.standingInstructionHistoryReadPlatformService
+                .retrieveAllForProcessingAmountDue();
+
+        if (CollectionUtils.isNotEmpty(standingInstructionHistoryDataCollection)) {
+            for (StandingInstructionHistoryData standingInstructionHistoryData : standingInstructionHistoryDataCollection) {
+                /// create and send the data for notification message - loan account, saving account id, client name
+                buildProcessAmountMessage(standingInstructionHistoryData, appUser);
+
+                // increase the process_count field in Standing Instruction History to indicate the number of times the
+                // amount_due has been processed
+                final String updateQuery = "UPDATE m_account_transfer_standing_instructions_history SET processing_count = ? where  id = ?";
+                Long finalProcessingCount = standingInstructionHistoryData.getProcessingCount() + 1;
+                this.jdbcTemplate.update(updateQuery, finalProcessingCount, standingInstructionHistoryData.getHistoryId());
+            }
+        }
+    }
+
+    private void buildProcessAmountMessage(StandingInstructionHistoryData standingInstructionHistoryData, AppUser appUser) {
+
+        String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
+        PortfolioAccountData loanAccount = standingInstructionHistoryData.getToAccount();
+        ClientData toClient = standingInstructionHistoryData.getToClient();
+
+        BigDecimal amountDue = standingInstructionHistoryData.getAmount();
+
+        StandingInstructionDuesData duesData = this.standingInstructionReadPlatformService.retriveLoanDuesData(loanAccount.accountId());
+        if (duesData != null) {
+            amountDue = duesData.totalDueAmount();
+        }
+
+        // if there is no amount due on the loan. Update the amount_due_processed to true and dont send any notification
+        if (amountDue.compareTo(BigDecimal.ZERO) <= 0) {
+            final String updateQuery = "UPDATE m_account_transfer_standing_instructions_history SET amount_due_processed=? where  id = ?";
+            this.jdbcTemplate.update(updateQuery, true, standingInstructionHistoryData.getHistoryId());
+            return;
+        }
+
+        StandinAmountDueData.StandinAmountDueDataBuilder standinAmountDue = StandinAmountDueData.builder().clientId(toClient.id())
+                .loanId(loanAccount.accountId()).amountDUe(amountDue);
+        Set<Long> userIds = new HashSet<>();
+        NotificationData notificationData = new NotificationData("Process Amount Due",
+                standingInstructionHistoryData.getStandingInstructionId(), "PROCESS_AMOUNT_DUE", appUser.getId(),
+                this.fromJsonHelper.toJson(standinAmountDue), false, false, tenantIdentifier, appUser.getOffice().getId(), userIds);
+        try {
+            notificationEventPublisher.broadcastGenericActiveMqNotification(notificationData,
+                    env.getProperty("fineract.activemq.loanOverdueCollectionsQueue"));
+        } catch (Exception e) {
+            // We want to avoid rethrowing the exception to stop the business transaction from rolling back
+            LOG.error("Error while broadcasting notification event", e);
         }
     }
 
