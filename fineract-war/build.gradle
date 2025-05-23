@@ -36,7 +36,7 @@ dependencies {
     //Pentaho
     fileTree('thirdparty') {
         include '*.jar' }
-    implementation 'org.openjdk.nashorn:nashorn-core:15.1'
+    implementation 'org.openjdk.nashorn:nashorn-core:15.6'
     implementation 'org.codehaus.groovy:groovy-jsr223:3.0.10'
 
     implementation ('org.yaml:snakeyaml:1.31') {
