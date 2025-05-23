@@ -7,8 +7,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-  - package-ecosystem: "docker"
-    directory: "/"
+   # Gradle (Java dependency updates)
+  - package-ecosystem: "gradle"
+    directory: "/" # Update if build.gradle is in a subdir
     schedule:
       interval: "daily"
     open-pull-requests-limit: 40  
+
