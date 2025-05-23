@@ -21,7 +21,7 @@ jobs:
       - uses: kamiazya/setup-graphviz@v1
 
       - name: Slack Notify
-        uses: rtCamp/action-slack-notify@v2.2.0
+        uses: rtCamp/action-slack-notify@v2.3.3
         env:
           SLACK_MESSAGE: "Core Banking Application Back-End `${{ github.event.repository.name }}` :hammer_and_pick: Build and Deploy to ECR Started."
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -81,14 +81,14 @@ jobs:
           helm upgrade -i backend --set fineract-rest.tag=$IMAGE_TAG .
 
       - name: Slack Notify
-        uses: rtCamp/action-slack-notify@v2.2.0
+        uses: rtCamp/action-slack-notify@v2.3.3
         env:
           SLACK_MESSAGE: "Core Banking Application Back-End `${{ github.event.repository.name }}` Build and Deploy :white_check_mark: Successful."
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: The job has failed
         if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2.2.0
+        uses: rtCamp/action-slack-notify@v2.3.3
         env:
           SLACK_MESSAGE: "Core Banking Application Back-End `${{ github.event.repository.name }}` Build :x: Failed."
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
