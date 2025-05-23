@@ -28,7 +28,7 @@ jobs:
           aws-region: us-east-2
 
       - id: commit
-        uses: pr-mpt/actions-commit-hash@v1
+        uses: pr-mpt/actions-commit-hash@v3
 
       - name: Login to Amazon ECR
         id: login-ecr
