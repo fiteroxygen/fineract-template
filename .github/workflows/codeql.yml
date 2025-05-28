@@ -45,7 +45,7 @@ jobs:
       matrix:
         include:
         - language: java-kotlin
-          build-mode: autobuild # Changed from 'none' to 'autobuild'
+          build-mode: manual # Changed to manual build
         - language: javascript-typescript
           build-mode: none
         # CodeQL supports the following values keywords for 'language': 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift'
@@ -65,8 +65,13 @@ jobs:
       if: matrix.language == 'java-kotlin'
       uses: actions/setup-java@v4
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
+
+    # Make gradlew executable
+    - name: Make gradlew executable
+      if: matrix.language == 'java-kotlin'
+      run: chmod +x ./gradlew
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -82,26 +87,13 @@ jobs:
         # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         # queries: security-extended,security-and-quality
 
-    # Autobuild will handle Java/Kotlin compilation automatically
-    - if: matrix.build-mode == 'autobuild'
-      name: Autobuild
-      uses: github/codeql-action/autobuild@v3
-
-    # If the analyze step fails for one of the languages you are analyzing with
-    # "We were unable to automatically build your code", modify the matrix above
-    # to set the build mode to "manual" for that language. Then modify this step
-    # to build your code.
-    # ℹ️ Command-line programs to run using the OS shell.
-    # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
+    # Manual build for Java/Kotlin
     - if: matrix.build-mode == 'manual'
+      name: Build Java/Kotlin
       shell: bash
       run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  ./gradlew build'
-        echo '  mvn compile'
-        exit 1
+        echo "Building Java/Kotlin project..."
+        ./gradlew clean compileJava compileTestJava --no-daemon --stacktrace
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
