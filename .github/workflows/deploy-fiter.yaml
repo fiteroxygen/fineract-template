@@ -1,5 +1,9 @@
 name: Deploy to FITER ECR
 
+# Added permissions block to resolve the CodeQL alert
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
