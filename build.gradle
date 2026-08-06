@@ -567,7 +567,7 @@ configure(project.fineractJavaProjects) {
         implementation 'org.springframework.security:spring-security-core:5.7.8'
         implementation 'org.springframework.security:spring-security-web:5.7.8'
         implementation 'org.springframework.security:spring-security-config:5.7.8'
-        implementation 'org.apache.commons:commons-text:1.10.0'
+        implementation 'org.apache.commons:commons-text:1.14.0'
 
         implementation ("ch.qos.logback:logback-classic") {
             exclude(module: "slf4j-api")
@@ -592,7 +592,7 @@ configure(project.fineractJavaProjects) {
     // Exclude older versions if necessary
     configurations.all {
         resolutionStrategy {
-            force 'org.apache.commons:commons-text:1.10.0'
+            force 'org.apache.commons:commons-text:1.14.0'
             eachDependency { DependencyResolveDetails details ->
                 if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-text') {
                     details.useVersion '1.10.0'
