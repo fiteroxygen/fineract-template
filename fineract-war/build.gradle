@@ -47,7 +47,7 @@ dependencies {
         force = true
     }
     //Fiter custom dependencies
-    implementation 'org.json:json:20171018'
+    implementation 'org.json:json:20250517'
     implementation 'org.apache.pdfbox:pdfbox:2.0.20'
 }
 
