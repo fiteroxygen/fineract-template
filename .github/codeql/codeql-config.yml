@@ -1,0 +1,30 @@
+name: "CodeQL Config"
+
+# Limit the scope to reduce alert locations
+paths-ignore:
+  - "**/*.test.*"
+  - "**/test/**"
+  - "**/tests/**"
+  - "**/target/**"
+  - "**/build/**"
+  - "**/.gradle/**"
+  - "**/node_modules/**"
+
+# Use more focused queries to reduce alert volume
+queries:
+  - uses: security-and-quality
+
+# Filter out low-priority issues to stay within limits
+query-filters:
+  - exclude:
+      problem.severity: recommendation
+  - exclude:
+      problem.severity: note
+
+# Limit analysis to critical paths only
+paths:
+  - "src/main/**"
+  - "**/*.java"
+  - "**/*.kt"
+  - "**/*.js"
+  - "**/*.ts"
