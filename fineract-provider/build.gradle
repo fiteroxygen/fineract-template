@@ -235,7 +235,7 @@ bootRun {
         implementation 'org.apache.tika:tika-core:2.9.0'
         implementation 'org.apache.tika:tika-parsers-standard-package:2.9.0'
         implementation 'org.openjdk.nashorn:nashorn-core:15.1'
-        implementation 'org.codehaus.groovy:groovy-jsr223:3.0.10'
+        implementation 'org.codehaus.groovy:groovy-jsr223:3.0.25'
 
         //Fiter custom dependencies
         implementation 'org.json:json:20171018'
