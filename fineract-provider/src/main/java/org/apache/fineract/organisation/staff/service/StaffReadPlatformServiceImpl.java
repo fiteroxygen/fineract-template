@@ -63,7 +63,9 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
         public String schema() {
             return " s.id as id,s.office_id as officeId, o.name as officeName, s.firstname as firstname, s.lastname as lastname,"
                     + " s.display_name as displayName, s.is_loan_officer as isLoanOfficer, s.external_id as externalId, s.mobile_no as mobileNo,"
-                    + " s.is_active as isActive, s.joining_date as joiningDate from m_staff s " + " join m_office o on o.id = s.office_id";
+                    + " s.is_active as isActive, s.joining_date as joiningDate, s.activation_date as activationDate,"
+                    + " s.deactivated_on_date as deactivatedOnDate, dau.username as deactivatedByUsername from m_staff s "
+                    + " join m_office o on o.id = s.office_id" + " left join m_appuser dau on dau.id = s.deactivated_by_userid";
         }
 
         @Override
@@ -80,9 +82,12 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             final String mobileNo = rs.getString("mobileNo");
             final boolean isActive = rs.getBoolean("isActive");
             final LocalDate joiningDate = JdbcSupport.getLocalDate(rs, "joiningDate");
+            final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
+            final LocalDate deactivatedOnDate = JdbcSupport.getLocalDate(rs, "deactivatedOnDate");
+            final String deactivatedByUsername = rs.getString("deactivatedByUsername");
 
             return StaffData.instance(id, firstname, lastname, displayName, officeId, officeName, isLoanOfficer, externalId, mobileNo,
-                    isActive, joiningDate);
+                    isActive, joiningDate, activationDate, deactivatedOnDate, deactivatedByUsername);
         }
     }
 
@@ -95,10 +100,13 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             sqlBuilder.append("s.id as id, s.office_id as officeId, ohierarchy.name as officeName,");
             sqlBuilder.append("s.firstname as firstname, s.lastname as lastname,");
             sqlBuilder.append("s.display_name as displayName, s.is_loan_officer as isLoanOfficer, s.external_id as externalId, ");
-            sqlBuilder.append("s.mobile_no as mobileNo, s.is_active as isActive, s.joining_date as joiningDate ");
+            sqlBuilder.append("s.mobile_no as mobileNo, s.is_active as isActive, s.joining_date as joiningDate, ");
+            sqlBuilder.append("s.activation_date as activationDate, s.deactivated_on_date as deactivatedOnDate, ");
+            sqlBuilder.append("dau.username as deactivatedByUsername ");
             sqlBuilder.append("from m_office o ");
             sqlBuilder.append("join m_office ohierarchy on o.hierarchy like concat(ohierarchy.hierarchy, '%') ");
             sqlBuilder.append("join m_staff s on s.office_id = ohierarchy.id and s.is_active=true ");
+            sqlBuilder.append("left join m_appuser dau on dau.id = s.deactivated_by_userid ");
 
             if (loanOfficersOnly) {
                 sqlBuilder.append("and s.is_loan_officer is true ");
@@ -123,9 +131,12 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             final String mobileNo = rs.getString("mobileNo");
             final boolean isActive = rs.getBoolean("isActive");
             final LocalDate joiningDate = JdbcSupport.getLocalDate(rs, "joiningDate");
+            final LocalDate activationDate = JdbcSupport.getLocalDate(rs, "activationDate");
+            final LocalDate deactivatedOnDate = JdbcSupport.getLocalDate(rs, "deactivatedOnDate");
+            final String deactivatedByUsername = rs.getString("deactivatedByUsername");
 
             return StaffData.instance(id, firstname, lastname, displayName, officeId, officeName, isLoanOfficer, externalId, mobileNo,
-                    isActive, joiningDate);
+                    isActive, joiningDate, activationDate, deactivatedOnDate, deactivatedByUsername);
         }
     }
 

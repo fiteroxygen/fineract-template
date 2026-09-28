@@ -77,7 +77,8 @@ public class StaffApiResource {
      * The set of parameters that are supported in response for {@link StaffData}.
      */
     private final Set<String> responseDataParameters = new HashSet<>(Arrays.asList("id", "firstname", "lastname", "displayName", "officeId",
-            "officeName", "isLoanOfficer", "externalId", "mobileNo", "allowedOffices", "isActive", "joiningDate"));
+            "officeName", "isLoanOfficer", "externalId", "mobileNo", "allowedOffices", "isActive", "joiningDate", "activationDate",
+            "deactivatedOnDate", "deactivatedByUsername"));
 
     private final String resourceNameForPermissions = "STAFF";
 

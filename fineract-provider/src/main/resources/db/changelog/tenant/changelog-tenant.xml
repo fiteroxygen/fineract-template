@@ -99,5 +99,6 @@
     <include file="parts/FSO-366_add_account_name_to_payment_detail.xml" relativeToChangelogFile="true" />
     <include file="parts/oxy-51_cli_charge_slab_table.xml" relativeToChangelogFile="true" />
     <include file="parts/oxy-52_add_is_cli_charge_column.xml" relativeToChangelogFile="true" />
+    <include file="parts/add_activation_deactivation_fields_to_staff.xml" relativeToChangelogFile="true" />
     <includeAll path="custom-changelog" relativeToChangelogFile="true"/>
 </databaseChangeLog>

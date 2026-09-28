@@ -39,6 +39,9 @@ public final class StaffData implements Serializable {
     private final Boolean isLoanOfficer;
     private final Boolean isActive;
     private final LocalDate joiningDate;
+    private final LocalDate activationDate;
+    private final LocalDate deactivatedOnDate;
+    private final String deactivatedByUsername;
 
     // import fields
     private transient Integer rowIndex;
@@ -70,6 +73,9 @@ public final class StaffData implements Serializable {
         this.id = null;
         this.officeName = null;
         this.displayName = null;
+        this.activationDate = null;
+        this.deactivatedOnDate = null;
+        this.deactivatedByUsername = null;
     }
 
     public Integer getRowIndex() {
@@ -81,23 +87,26 @@ public final class StaffData implements Serializable {
 
     public static StaffData templateData(final StaffData staff, final Collection<OfficeData> allowedOffices) {
         return new StaffData(staff.id, staff.firstname, staff.lastname, staff.displayName, staff.officeId, staff.officeName,
-                staff.isLoanOfficer, staff.externalId, staff.mobileNo, allowedOffices, staff.isActive, staff.joiningDate);
+                staff.isLoanOfficer, staff.externalId, staff.mobileNo, allowedOffices, staff.isActive, staff.joiningDate,
+                staff.activationDate, staff.deactivatedOnDate, staff.deactivatedByUsername);
     }
 
     public static StaffData lookup(final Long id, final String displayName) {
-        return new StaffData(id, null, null, displayName, null, null, null, null, null, null, null, null);
+        return new StaffData(id, null, null, displayName, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public static StaffData instance(final Long id, final String firstname, final String lastname, final String displayName,
             final Long officeId, final String officeName, final Boolean isLoanOfficer, final String externalId, final String mobileNo,
-            final boolean isActive, final LocalDate joiningDate) {
+            final boolean isActive, final LocalDate joiningDate, final LocalDate activationDate, final LocalDate deactivatedOnDate,
+            final String deactivatedByUsername) {
         return new StaffData(id, firstname, lastname, displayName, officeId, officeName, isLoanOfficer, externalId, mobileNo, null,
-                isActive, joiningDate);
+                isActive, joiningDate, activationDate, deactivatedOnDate, deactivatedByUsername);
     }
 
     private StaffData(final Long id, final String firstname, final String lastname, final String displayName, final Long officeId,
             final String officeName, final Boolean isLoanOfficer, final String externalId, final String mobileNo,
-            final Collection<OfficeData> allowedOffices, final Boolean isActive, final LocalDate joiningDate) {
+            final Collection<OfficeData> allowedOffices, final Boolean isActive, final LocalDate joiningDate,
+            final LocalDate activationDate, final LocalDate deactivatedOnDate, final String deactivatedByUsername) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
@@ -110,6 +119,9 @@ public final class StaffData implements Serializable {
         this.allowedOffices = allowedOffices;
         this.isActive = isActive;
         this.joiningDate = joiningDate;
+        this.activationDate = activationDate;
+        this.deactivatedOnDate = deactivatedOnDate;
+        this.deactivatedByUsername = deactivatedByUsername;
     }
 
     public Long getId() {
@@ -134,6 +146,18 @@ public final class StaffData implements Serializable {
 
     public LocalDate getJoiningDate() {
         return this.joiningDate;
+    }
+
+    public LocalDate getActivationDate() {
+        return this.activationDate;
+    }
+
+    public LocalDate getDeactivatedOnDate() {
+        return this.deactivatedOnDate;
+    }
+
+    public String getDeactivatedByUsername() {
+        return this.deactivatedByUsername;
     }
 
     public Long getOfficeId() {
