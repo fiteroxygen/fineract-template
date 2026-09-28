@@ -517,6 +517,31 @@ public final class RecurringDepositAccountData extends DepositAccountData {
                 account.recurringFrequencyType, account.withHoldTax, account.taxGroup, account.linkedAccount);
     }
 
+    /**
+     * Creates a new instance with updated tax group data. This is used to populate full tax group data with tax
+     * associations.
+     */
+    @Override
+    public RecurringDepositAccountData withTaxGroup(final TaxGroupData taxGroupData) {
+        return new RecurringDepositAccountData(this.id, this.accountNo, this.externalId, this.groupId, this.groupName, this.clientId,
+                this.clientName, this.depositProductId, this.depositProductName, this.fieldOfficerId, this.fieldOfficerName, this.status,
+                this.timeline, this.currency, this.nominalAnnualInterestRate, this.interestCompoundingPeriodType,
+                this.interestPostingPeriodType, this.interestCalculationType, this.interestCalculationDaysInYearType,
+                this.minRequiredOpeningBalance, this.lockinPeriodFrequency, this.lockinPeriodFrequencyType, this.withdrawalFeeForTransfers,
+                this.minBalanceForInterestCalculation, this.summary, this.transactions, this.productOptions, this.fieldOfficerOptions,
+                this.interestCompoundingPeriodTypeOptions, this.interestPostingPeriodTypeOptions, this.interestCalculationTypeOptions,
+                this.interestCalculationDaysInYearTypeOptions, this.lockinPeriodFrequencyTypeOptions, this.withdrawalFeeTypeOptions,
+                this.charges, this.chargeOptions, this.accountChart, this.chartTemplate, this.preClosurePenalApplicable,
+                this.preClosurePenalInterest, this.preClosurePenalInterestOnType, this.preClosurePenalInterestOnTypeOptions,
+                this.minDepositTerm, this.maxDepositTerm, this.minDepositTermType, this.maxDepositTermType, this.inMultiplesOfDepositTerm,
+                this.inMultiplesOfDepositTermType, this.depositAmount, this.maturityAmount, this.maturityDate, this.depositPeriod,
+                this.depositPeriodFrequency, this.mandatoryRecommendedDepositAmount, this.periodFrequencyTypeOptions, this.depositType,
+                this.onAccountClosure, this.onAccountClosureOptions, this.paymentTypeOptions, this.savingsAccounts,
+                this.expectedFirstDepositOnDate, this.totalOverdueAmount, this.noOfOverdueInstallments, this.isMandatoryDeposit,
+                this.allowWithdrawal, this.adjustAdvanceTowardsFuturePayments, this.isCalendarInherited, this.recurringFrequency,
+                this.recurringFrequencyType, this.withHoldTax, taxGroupData, this.linkedAccount);
+    }
+
     private RecurringDepositAccountData(final Long id, final String accountNo, final String externalId, final Long groupId,
             final String groupName, final Long clientId, final String clientName, final Long productId, final String productName,
             final Long fieldofficerId, final String fieldofficerName, final SavingsAccountStatusEnumData status,
