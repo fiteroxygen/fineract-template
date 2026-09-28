@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
@@ -32,8 +33,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.documentmanagement.domain.Image;
 import org.apache.fineract.organisation.office.domain.Office;
+import org.apache.fineract.useradministration.domain.AppUser;
 
 @Entity
 @Table(name = "m_staff", uniqueConstraints = { @UniqueConstraint(columnNames = { "display_name" }, name = "display_name"),
@@ -75,6 +78,16 @@ public class Staff extends AbstractPersistableCustom {
     @Column(name = "joining_date", nullable = true)
     private LocalDate joiningDate;
 
+    @Column(name = "activation_date", nullable = true)
+    private LocalDate activationDate;
+
+    @Column(name = "deactivated_on_date", nullable = true)
+    private LocalDate deactivatedOnDate;
+
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "deactivated_by_userid", nullable = true)
+    private AppUser deactivatedBy;
+
     @ManyToOne
     @JoinColumn(name = "organisational_role_parent_staff_id", nullable = true)
     private Staff organisationalRoleParentStaff;
@@ -83,7 +96,7 @@ public class Staff extends AbstractPersistableCustom {
     @JoinColumn(name = "image_id", nullable = true)
     private Image image;
 
-    public static Staff fromJson(final Office staffOffice, final JsonCommand command) {
+    public static Staff fromJson(final Office staffOffice, final JsonCommand command, final AppUser currentUser) {
 
         final String firstnameParamName = "firstname";
         final String firstname = command.stringValueOfParameterNamed(firstnameParamName);
@@ -110,7 +123,15 @@ public class Staff extends AbstractPersistableCustom {
             joiningDate = command.localDateValueOfParameterNamed(joiningDateParamName);
         }
 
-        return new Staff(staffOffice, firstname, lastname, externalId, mobileNo, isLoanOfficer, isActive, joiningDate);
+        LocalDate activationDate = null;
+
+        final String activationDateParamName = "activationDate";
+        if (command.hasParameter(activationDateParamName)) {
+            activationDate = command.localDateValueOfParameterNamed(activationDateParamName);
+        }
+
+        return new Staff(staffOffice, firstname, lastname, externalId, mobileNo, isLoanOfficer, isActive, joiningDate, activationDate,
+                currentUser);
     }
 
     protected Staff() {
@@ -118,7 +139,8 @@ public class Staff extends AbstractPersistableCustom {
     }
 
     private Staff(final Office staffOffice, final String firstname, final String lastname, final String externalId, final String mobileNo,
-            final boolean isLoanOfficer, final Boolean isActive, final LocalDate joiningDate) {
+            final boolean isLoanOfficer, final Boolean isActive, final LocalDate joiningDate, final LocalDate activationDate,
+            final AppUser currentUser) {
         this.office = staffOffice;
         this.firstname = StringUtils.defaultIfEmpty(firstname, null);
         this.lastname = StringUtils.defaultIfEmpty(lastname, null);
@@ -128,6 +150,13 @@ public class Staff extends AbstractPersistableCustom {
         this.active = isActive == null ? true : isActive;
         deriveDisplayName(firstname);
         this.joiningDate = joiningDate;
+        this.activationDate = activationDate;
+        if (!this.active) {
+            this.deactivatedOnDate = DateUtils.getBusinessLocalDate();
+            this.deactivatedBy = currentUser;
+        } else if (this.activationDate == null) {
+            this.activationDate = DateUtils.getBusinessLocalDate();
+        }
     }
 
     public EnumOptionData organisationalRoleData() {
@@ -142,7 +171,7 @@ public class Staff extends AbstractPersistableCustom {
         this.office = newOffice;
     }
 
-    public Map<String, Object> update(final JsonCommand command) {
+    public Map<String, Object> update(final JsonCommand command, final AppUser currentUser) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>(7);
 
@@ -200,6 +229,14 @@ public class Staff extends AbstractPersistableCustom {
             final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(isActiveParamName);
             actualChanges.put(isActiveParamName, newValue);
             this.active = newValue;
+            if (newValue) {
+                this.deactivatedOnDate = null;
+                this.deactivatedBy = null;
+            } else {
+                this.deactivatedOnDate = DateUtils.getBusinessLocalDate();
+                this.deactivatedBy = currentUser;
+                actualChanges.put("deactivatedOnDate", this.deactivatedOnDate);
+            }
         }
 
         final String joiningDateParamName = "joiningDate";
@@ -207,6 +244,18 @@ public class Staff extends AbstractPersistableCustom {
             final String valueAsInput = command.stringValueOfParameterNamed(joiningDateParamName);
             actualChanges.put(joiningDateParamName, valueAsInput);
             this.joiningDate = command.localDateValueOfParameterNamed(joiningDateParamName);
+        }
+
+        final String activationDateParamName = "activationDate";
+        if (command.isChangeInDateParameterNamed(activationDateParamName, this.activationDate)) {
+            final String valueAsInput = command.stringValueOfParameterNamed(activationDateParamName);
+            actualChanges.put(activationDateParamName, valueAsInput);
+            this.activationDate = command.localDateValueOfParameterNamed(activationDateParamName);
+        }
+
+        if (this.active && this.activationDate == null) {
+            this.activationDate = DateUtils.getBusinessLocalDate();
+            actualChanges.put(activationDateParamName, this.activationDate);
         }
 
         return actualChanges;
