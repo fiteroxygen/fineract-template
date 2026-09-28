@@ -54,6 +54,8 @@ final class StaffApiResourceSwagger {
         public Boolean isActive;
         @Schema(example = "01 January 2009")
         public LocalDate joiningDate;
+        @Schema(example = "01 January 2009")
+        public LocalDate activationDate;
         @Schema(example = "en")
         public String locale;
         @Schema(example = "dd MMMM yyyy")
@@ -101,6 +103,12 @@ final class StaffApiResourceSwagger {
         public Boolean isActive;
         @Schema(example = "[2009,8,1]")
         public LocalDate joiningDate;
+        @Schema(example = "[2009,8,1]")
+        public LocalDate activationDate;
+        @Schema(example = "[2020,1,15]")
+        public LocalDate deactivatedOnDate;
+        @Schema(example = "mifos")
+        public String deactivatedByUsername;
 
     }
 
@@ -115,6 +123,8 @@ final class StaffApiResourceSwagger {
         public Boolean isLoanOfficer;
         @Schema(example = "17Hbb")
         public String externalId;
+        @Schema(example = "01 January 2009")
+        public LocalDate activationDate;
 
     }
 

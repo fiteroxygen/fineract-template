@@ -26,12 +26,14 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.office.domain.OfficeRepositoryWrapper;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.organisation.staff.domain.StaffRepository;
 import org.apache.fineract.organisation.staff.exception.StaffNotFoundException;
 import org.apache.fineract.organisation.staff.serialization.StaffCommandFromApiJsonDeserializer;
+import org.apache.fineract.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,13 +50,16 @@ public class StaffWritePlatformServiceJpaRepositoryImpl implements StaffWritePla
     private final StaffCommandFromApiJsonDeserializer fromApiJsonDeserializer;
     private final StaffRepository staffRepository;
     private final OfficeRepositoryWrapper officeRepositoryWrapper;
+    private final PlatformSecurityContext context;
 
     @Autowired
     public StaffWritePlatformServiceJpaRepositoryImpl(final StaffCommandFromApiJsonDeserializer fromApiJsonDeserializer,
-            final StaffRepository staffRepository, final OfficeRepositoryWrapper officeRepositoryWrapper) {
+            final StaffRepository staffRepository, final OfficeRepositoryWrapper officeRepositoryWrapper,
+            final PlatformSecurityContext context) {
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.staffRepository = staffRepository;
         this.officeRepositoryWrapper = officeRepositoryWrapper;
+        this.context = context;
     }
 
     @Transactional
@@ -67,7 +72,8 @@ public class StaffWritePlatformServiceJpaRepositoryImpl implements StaffWritePla
             final Long officeId = command.longValueOfParameterNamed("officeId");
 
             final Office staffOffice = this.officeRepositoryWrapper.findOneWithNotFoundDetection(officeId);
-            final Staff staff = Staff.fromJson(staffOffice, command);
+            final AppUser currentUser = this.context.authenticatedUser();
+            final Staff staff = Staff.fromJson(staffOffice, command, currentUser);
 
             this.staffRepository.saveAndFlush(staff);
 
@@ -93,7 +99,8 @@ public class StaffWritePlatformServiceJpaRepositoryImpl implements StaffWritePla
             this.fromApiJsonDeserializer.validateForUpdate(command.json(), staffId);
 
             final Staff staffForUpdate = this.staffRepository.findById(staffId).orElseThrow(() -> new StaffNotFoundException(staffId));
-            final Map<String, Object> changesOnly = staffForUpdate.update(command);
+            final AppUser currentUser = this.context.authenticatedUser();
+            final Map<String, Object> changesOnly = staffForUpdate.update(command, currentUser);
 
             if (changesOnly.containsKey("officeId")) {
                 final Long officeId = (Long) changesOnly.get("officeId");
