@@ -18,15 +18,19 @@
  */
 package org.apache.fineract.notification.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
+import org.apache.fineract.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.apache.fineract.portfolio.businessevent.BusinessEventListener;
 import org.apache.fineract.portfolio.businessevent.domain.client.ClientCreateBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.client.ClientIdentifierCreateBusinessEvent;
@@ -35,6 +39,7 @@ import org.apache.fineract.portfolio.businessevent.domain.deposit.FixedDepositAc
 import org.apache.fineract.portfolio.businessevent.domain.deposit.FixedDepositAccountPreClosureBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.deposit.FixedDepositAccountRolloverBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.LoanCreatedBusinessEvent;
+import org.apache.fineract.portfolio.businessevent.domain.loan.LoanDisbursalBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.savings.transaction.SavingsDepositBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.service.BusinessEventNotifierService;
 import org.apache.fineract.portfolio.client.data.ClientCreationNotificationData;
@@ -45,7 +50,9 @@ import org.apache.fineract.portfolio.client.domain.ClientIdentifierRepository;
 import org.apache.fineract.portfolio.client.service.ClientFamilyMembersReadPlatformService;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.loanaccount.data.LoanCreationNotificationData;
+import org.apache.fineract.portfolio.loanaccount.data.LoanDisbursementNotificationData;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.savings.SavingsPeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.data.FDActivationNotificationData;
 import org.apache.fineract.portfolio.savings.data.FDClosureNotificationData;
@@ -74,6 +81,7 @@ public class CbaActiveMqEventNotificationService {
     private final PlatformSecurityContext context;
     private final ClientIdentifierRepository clientIdentifierRepository;
     private final ClientFamilyMembersReadPlatformService clientFamilyMembersReadPlatformService;
+    private final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService;
 
     @PostConstruct
     public void addListeners() {
@@ -81,6 +89,7 @@ public class CbaActiveMqEventNotificationService {
         businessEventNotifierService.addPostBusinessEventListener(ClientIdentifierCreateBusinessEvent.class,
                 new ClientIdentifierCreatedListener());
         businessEventNotifierService.addPostBusinessEventListener(LoanCreatedBusinessEvent.class, new LoanCreatedListener());
+        businessEventNotifierService.addPostBusinessEventListener(LoanDisbursalBusinessEvent.class, new LoanDisbursalListener());
         businessEventNotifierService.addPostBusinessEventListener(SavingsDepositBusinessEvent.class, new SavingsDepositListener());
         businessEventNotifierService.addPostBusinessEventListener(FixedDepositAccountActivateBusinessEvent.class,
                 new FixedDepositAccountActivateListener());
@@ -181,6 +190,36 @@ public class CbaActiveMqEventNotificationService {
             activeMqNotificationDomainService.buildNotification(PERMISSION, "LoanCreationConfirmation", loan.getId(),
                     fromJsonHelper.toJson(data), "created", context.authenticatedUser().getId(), loan.getOfficeId(),
                     env.getProperty("fineract.activemq.loanCreationQueue"));
+        }
+    }
+
+    private class LoanDisbursalListener implements BusinessEventListener<LoanDisbursalBusinessEvent> {
+
+        @Override
+        public void onBusinessEvent(LoanDisbursalBusinessEvent event) {
+            Loan loan = event.get();
+            PeriodFrequencyType termPeriodFrequencyType = loan.getTermPeriodFrequencyType() == null ? null
+                    : PeriodFrequencyType.fromInt(loan.getTermPeriodFrequencyType());
+
+            LoanTransaction disbursementTransaction = loan.getLoanTransactions().stream()
+                    .filter(transaction -> transaction.isDisbursement() && transaction.isNotReversed())
+                    .max(Comparator.comparing(LoanTransaction::getId)).orElse(null);
+            BigDecimal disbursedAmount = disbursementTransaction == null ? loan.getDisbursedAmount()
+                    : disbursementTransaction.getAmount(loan.getCurrency()).getAmount();
+
+            PortfolioAccountData linkedAccount = accountAssociationsReadPlatformService.retriveLoanLinkedAssociation(loan.getId());
+
+            LoanDisbursementNotificationData data = new LoanDisbursementNotificationData(loan.getId(), loan.getAccountNumber(),
+                    loan.getClientId(), loan.getClient() == null ? null : loan.getClient().getExternalId(),
+                    loan.getClient() == null ? null : loan.getClient().getDisplayName(), disbursedAmount,
+                    loan.getSummary().getTotalOutstanding(loan.getCurrency()).getAmount(), loan.getCurrency().getCode(),
+                    linkedAccount == null ? null : linkedAccount.getAccountNo(),
+                    loan.getExpectedMaturityDate() == null ? null : loan.getExpectedMaturityDate().toString(), loan.getTermFrequency(),
+                    termPeriodFrequencyType == null ? null : termPeriodFrequencyType.name());
+
+            activeMqNotificationDomainService.buildNotification(PERMISSION, "LoanDisbursementConfirmation", loan.getId(),
+                    fromJsonHelper.toJson(data), "disbursed", context.authenticatedUser().getId(), loan.getOfficeId(),
+                    env.getProperty("fineract.activemq.loanDisbursementQueue"));
         }
     }
 
