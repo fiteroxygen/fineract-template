@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <changeSet author="deepika@fiter.io" id="add_environment_identifier_to_otp_email_subject">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                select count(1) from twofactor_configuration where name = 'otp-delivery-email-subject' and value = 'Fineract Two-Factor Authentication Token'
+            </sqlCheck>
+        </preConditions>
+        <update tableName="twofactor_configuration">
+            <column name="value" value="Fineract Two-Factor Authentication Token ({{environment}} Server)"/>
+            <where>name='otp-delivery-email-subject' and value='Fineract Two-Factor Authentication Token'</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="deepika@fiter.io" id="add_environment_identifier_to_otp_email_body">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                select count(1) from twofactor_configuration where name = 'otp-delivery-email-body' and value = 'Hello {{username}}.&#10;Your OTP login token is {{token}}.'
+            </sqlCheck>
+        </preConditions>
+        <update tableName="twofactor_configuration">
+            <column name="value" value="Hello {{username}},&#10;&#10;Your One-Time Password (OTP) for your Fineract login is {{token}}.&#10;This code was generated on the {{environment}} server and will expire at {{expiretime}} on {{expiredate}}.&#10;&#10;If you did not request this code, please disregard this email or contact your administrator.&#10;&#10;This is an automated message - please do not reply."/>
+            <where>name='otp-delivery-email-body' and value='Hello {{username}}.&#10;Your OTP login token is {{token}}.'</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="deepika@fiter.io" id="add_environment_identifier_to_otp_sms_text">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                select count(1) from twofactor_configuration where name = 'otp-delivery-sms-text' and value = 'Your authentication token for Fineract is {{token}}.'
+            </sqlCheck>
+        </preConditions>
+        <update tableName="twofactor_configuration">
+            <column name="value" value="Your Fineract authentication token is {{token}}. Server: {{environment}}."/>
+            <where>name='otp-delivery-sms-text' and value='Your authentication token for Fineract is {{token}}.'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

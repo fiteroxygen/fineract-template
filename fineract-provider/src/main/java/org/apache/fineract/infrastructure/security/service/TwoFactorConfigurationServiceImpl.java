@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.security.domain.TwoFactorConfiguration
 import org.apache.fineract.infrastructure.security.domain.TwoFactorConfigurationRepository;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -45,11 +46,17 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty("fineract.security.2fa.enabled")
 public class TwoFactorConfigurationServiceImpl implements TwoFactorConfigurationService {
 
-    private static final String DEFAULT_EMAIL_SUBJECT = "Fineract Two-Factor Authentication Token";
-    private static final String DEFAULT_EMAIL_BODY = "Hello {username}.\n" + "Your OTP login token is {token}.";
-    private static final String DEFAULT_SMS_TEXT = "Your authentication token for Fineract is " + "{token}.";
+    private static final String DEFAULT_EMAIL_SUBJECT = "Fineract Two-Factor Authentication Token ({{environment}} Server)";
+    private static final String DEFAULT_EMAIL_BODY = "Hello {username},\n\n" + "Your One-Time Password (OTP) for your Fineract login is {token}.\n"
+            + "This code was generated on the {environment} server and will expire at {expiretime} on {expiredate}.\n\n"
+            + "If you did not request this code, please disregard this email or contact your administrator.\n\n"
+            + "This is an automated message - please do not reply.";
+    private static final String DEFAULT_SMS_TEXT = "Your Fineract authentication token is {token}. Server: {environment}.";
 
     private final TwoFactorConfigurationRepository configurationRepository;
+
+    @Value("${FINERACT_SERVER_ENVIRONMENT:Development}")
+    private String serverEnvironment;
 
     @Autowired
     public TwoFactorConfigurationServiceImpl(TwoFactorConfigurationRepository configurationRepository) {
@@ -249,6 +256,7 @@ public class TwoFactorConfigurationServiceImpl implements TwoFactorConfiguration
     private Map<String, Object> processTemplateDataFor(AppUser user, OTPRequest request) {
         Map<String, Object> templateData = new HashMap<>();
 
+        templateData.put("environment", serverEnvironment);
         templateData.put("username", user.getUsername());
         templateData.put("email", user.getEmail());
         templateData.put("firstname", user.getFirstname());
